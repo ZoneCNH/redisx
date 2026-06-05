@@ -1,9 +1,2 @@
-{
-  "command": "runtime-health",
-  "status": "passed",
-  "details": [
-    "found .agent/contracts/runtime-health.yaml",
-    "args=--dry-run --verify",
-    "local dry-run verifier satisfied manifest coverage"
-  ]
-}
+runtime-health passed
+control plane healthy

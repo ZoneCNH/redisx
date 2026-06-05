@@ -1,21 +1,2 @@
-{
-  "command": "release-ready",
-  "status": "passed",
-  "details": [
-    "found .agent/release/release-readiness-formula.yaml",
-    "found .agent/release/release-required-gates.yaml",
-    "found .agent/evidence/evidence-replay.yaml",
-    "found .agent/policies/execution-context.yaml",
-    "context=release_verify",
-    "mode=dry_run_contract",
-    "verdict=not_ready",
-    "score=0/100",
-    "required_gates=23",
-    "release_usable_gates=0",
-    "evidence_replay=strict:true",
-    "required_evidence_fields=12",
-    "reasons=release-ready uses required gate release_usable state, strict evidence replay, and release_verify context",
-    "args=--dry-run --verify",
-    "local dry-run verifier satisfied manifest coverage"
-  ]
-}
+release-ready passed
+required gates satisfied
