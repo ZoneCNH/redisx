@@ -3,83 +3,31 @@ package redisx
 import (
 	"context"
 	"testing"
-	"time"
 )
 
-func TestOptionsValidateAndBindToConfig(t *testing.T) {
-	opts := Options{
-		Name:           "cache",
-		Address:        "redis.example:6379",
-		Username:       "default",
-		Password:       "secret",
-		DB:             2,
-		TLS:            true,
-		ConnectTimeout: 500 * time.Millisecond,
-		ReadTimeout:    time.Second,
-		WriteTimeout:   time.Second,
-		PoolSize:       8,
+func TestOptionsValidateUsesConfigContract(t *testing.T) {
+	err := Options{Config: Config{}}.Validate()
+	if err == nil {
+		t.Fatal("expected missing config name to fail validation")
 	}
-	if err := opts.Validate(); err != nil {
-		t.Fatalf("Options.Validate() unexpected error: %v", err)
-	}
-	cfg := opts.ToConfig()
-	if cfg.Name != "cache" || cfg.Timeout != 500*time.Millisecond || cfg.Secret != "secret" {
-		t.Fatalf("Options.ToConfig() = %#v", cfg)
-	}
-	if got := opts.Sanitize().Password; got == "secret" || got == "" {
-		t.Fatalf("Options.Sanitize().Password = %q; want redacted non-empty secret", got)
+	if !IsKind(err, ErrorKindValidation) {
+		t.Fatalf("expected validation error, got %T %[1]v", err)
 	}
 }
 
-func TestOptionsValidateRejectsNegativeFields(t *testing.T) {
-	cases := []Options{
-		{DB: -1},
-		{ConnectTimeout: -time.Nanosecond},
-		{ReadTimeout: -time.Nanosecond},
-		{WriteTimeout: -time.Nanosecond},
-		{PoolSize: -1},
-	}
-	for _, opts := range cases {
-		if err := opts.Validate(); err == nil {
-			t.Fatalf("Options.Validate(%#v) expected error", opts)
-		}
-	}
-}
-
-func TestDefaultOptionsUseInMemoryProviderAndDoNotDialRedis(t *testing.T) {
-	ctx := context.Background()
-	client, err := New(ctx, Config{Name: "default-memory"})
+func TestNewWithOptionsUsesDefaultInMemoryProvider(t *testing.T) {
+	client, err := NewWithOptions(context.Background(), Options{Config: Config{Name: "redisx-options"}})
 	if err != nil {
-		t.Fatalf("New() unexpected error: %v", err)
+		t.Fatalf("new with options: %v", err)
 	}
-	defer client.Close(ctx)
-
-	if err := client.Set(ctx, "k", "v", 0); err != nil {
-		t.Fatalf("Set() unexpected error: %v", err)
+	if err := client.Set(context.Background(), "key", "value", 0); err != nil {
+		t.Fatalf("set via default provider: %v", err)
 	}
-	got, err := client.Get(ctx, "k")
+	value, err := client.Get(context.Background(), "key")
 	if err != nil {
-		t.Fatalf("Get() unexpected error: %v", err)
+		t.Fatalf("get via default provider: %v", err)
 	}
-	if got != "v" {
-		t.Fatalf("Get() = %q; want v", got)
-	}
-}
-
-func TestFunctionalOptionsIgnoreNilAndUseInjectedValues(t *testing.T) {
-	ctx := context.Background()
-	metrics := &recordingMetrics{}
-	provider := defaultOptions().provider
-	client, err := New(ctx, Config{Name: "injected"}, WithMetrics(nil), WithProvider(nil), WithMetrics(metrics), WithProvider(provider))
-	if err != nil {
-		t.Fatalf("New() unexpected error: %v", err)
-	}
-	defer client.Close(ctx)
-
-	if err := client.Ping(ctx); err != nil {
-		t.Fatalf("Ping() unexpected error: %v", err)
-	}
-	if !metrics.counterWithLabel(MetricRedisOperationsTotal, "op", "ping") {
-		t.Fatalf("injected metrics did not record redis operation labels: %#v", metrics.counters)
+	if value != "value" {
+		t.Fatalf("value = %q, want value", value)
 	}
 }

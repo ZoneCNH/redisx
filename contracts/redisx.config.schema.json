@@ -1,20 +1,22 @@
 {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "title": "Redisx Config Options",
-    "type": "object",
-    "required": [
-        "name"
-    ],
-    "properties": {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zonecnh.github.io/redisx/contracts/redisx.config.schema.json",
+  "title": "redisx.Options",
+  "type": "object",
+  "required": ["config"],
+  "properties": {
+    "config": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
         "name": { "type": "string" },
-        "address": { "type": "string" },
-        "username": { "type": "string" },
-        "password": { "type": "string" },
-        "db": { "type": "integer", "minimum": 0 },
-        "tls": { "type": "boolean" },
-        "connect_timeout_ms": { "type": "integer", "minimum": 0 },
-        "read_timeout_ms": { "type": "integer", "minimum": 0 },
-        "write_timeout_ms": { "type": "integer", "minimum": 0 },
-        "pool_size": { "type": "integer", "minimum": 0 }
-    }
+        "timeout_ms": { "type": "integer", "minimum": 0 },
+        "secret": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "provider": { "type": "string", "enum": ["in_memory", "custom"] },
+    "metrics": { "type": "string", "enum": ["noop", "custom"] }
+  },
+  "additionalProperties": false
 }

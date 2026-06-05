@@ -6,6 +6,15 @@ import (
 	"github.com/ZoneCNH/redisx/internal/provider"
 )
 
+// Options is the public configuration binder for constructing a redisx client.
+// Metrics and Provider are optional; nil values preserve the default no-op
+// metrics recorder and in-memory provider used by New.
+type Options struct {
+	Config   Config
+	Metrics  Metrics
+	Provider Provider
+}
+
 type Option func(*options)
 
 // Options is the public redisx client options contract used by schema and
@@ -27,6 +36,27 @@ func defaultOptions() options {
 		metrics:  NoopMetrics{},
 		provider: provider.NewMemory(),
 	}
+}
+
+// Validate checks the bound public configuration.
+func (o Options) Validate() error {
+	return o.Config.Validate()
+}
+
+// NewWithOptions constructs a client from the public options binder.
+func NewWithOptions(ctx context.Context, opts Options) (*Client, error) {
+	return New(ctx, opts.Config, opts.clientOptions()...)
+}
+
+func (o Options) clientOptions() []Option {
+	clientOptions := make([]Option, 0, 2)
+	if o.Metrics != nil {
+		clientOptions = append(clientOptions, WithMetrics(o.Metrics))
+	}
+	if o.Provider != nil {
+		clientOptions = append(clientOptions, WithProvider(o.Provider))
+	}
+	return clientOptions
 }
 
 func WithMetrics(metrics Metrics) Option {

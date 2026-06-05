@@ -73,3 +73,30 @@ func TestContextErrorClassifiesDeadlineAsRetryableTimeout(t *testing.T) {
 		t.Fatal("expected deadline errors to be retryable")
 	}
 }
+
+func TestRedisErrorIDKindMapping(t *testing.T) {
+	cases := map[RedisErrorID]ErrorKind{
+		ErrNil:              ErrorKindNil,
+		ErrTimeout:          ErrorKindTimeout,
+		ErrCanceled:         ErrorKindCanceled,
+		ErrNetwork:          ErrorKindConnection,
+		ErrAuth:             ErrorKindAuth,
+		ErrReadOnly:         ErrorKindConflict,
+		ErrLoading:          ErrorKindUnavailable,
+		ErrTryAgain:         ErrorKindUnavailable,
+		ErrClusterMoved:     ErrorKindUnavailable,
+		ErrClusterAsk:       ErrorKindUnavailable,
+		ErrConnectionClosed: ErrorKindClosed,
+		ErrInvalidConfig:    ErrorKindConfig,
+		ErrProvider:         ErrorKindProvider,
+	}
+
+	for id, kind := range cases {
+		if id.String() == "" {
+			t.Fatalf("%v string identifier is empty", id)
+		}
+		if got := id.Kind(); got != kind {
+			t.Fatalf("%s Kind() = %q; want %q", id, got, kind)
+		}
+	}
+}

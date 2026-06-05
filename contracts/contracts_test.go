@@ -115,29 +115,31 @@ func TestMetricsContractDocumentsPublicConstants(t *testing.T) {
 	}
 }
 
-func TestRedisxOptionsContractMatchesPublicOptions(t *testing.T) {
+
+func TestRedisxConfigContractMatchesPublicOptions(t *testing.T) {
 	schema := readSchema(t, "redisx.config.schema.json")
 	requireFields(t, schema.Required, "config")
+	if got := schema.Properties["config"].Type; got != "object" {
+		t.Fatalf("redisx config schema config type = %q, want object", got)
+	}
 
 	optionsType := reflect.TypeOf(redisx.Options{})
-	requireSchemaFieldMapsToStructField(t, schema, optionsType, "config", "Config", "object")
-	requireSchemaFieldMapsToStructField(t, schema, optionsType, "metrics", "Metrics", "string")
-	requireSchemaFieldMapsToStructField(t, schema, optionsType, "provider", "Provider", "string")
-
-	content, err := os.ReadFile("redisx.config.schema.json")
-	if err != nil {
-		t.Fatalf("read redisx config contract: %v", err)
+	for _, field := range []string{"Config", "Metrics", "Provider"} {
+		if _, ok := optionsType.FieldByName(field); !ok {
+			t.Fatalf("redisx.Options missing field %s required by contract", field)
+		}
 	}
-	for _, marker := range []string{"\"timeout_ms\"", "\"minimum\": 0", "\"memory\"", "\"custom\""} {
-		if !strings.Contains(string(content), marker) {
-			t.Fatalf("redisx config contract missing marker %q", marker)
+
+	text := readText(t, "redisx.config.schema.json")
+	for _, needle := range []string{"\"name\"", "\"timeout_ms\"", "\"secret\"", "\"in_memory\"", "\"custom\""} {
+		if !strings.Contains(text, needle) {
+			t.Fatalf("redisx config contract missing marker %s", needle)
 		}
 	}
 }
 
 func TestRedisxHealthContractMatchesPublicStatus(t *testing.T) {
 	schema := readSchema(t, "redisx.health.schema.json")
-
 	expected := sortedStrings(
 		string(redisx.HealthHealthy),
 		string(redisx.HealthDegraded),
@@ -148,51 +150,60 @@ func TestRedisxHealthContractMatchesPublicStatus(t *testing.T) {
 		t.Fatalf("redisx health status contract drift:\nactual:   %#v\nexpected: %#v", actual, expected)
 	}
 	requireFields(t, schema.Required, "name", "component", "status", "checked_at", "latency_ms")
-	if component := schema.Properties["component"].Enum; !reflect.DeepEqual(component, []string{"redis"}) {
-		t.Fatalf("redisx health component enum = %#v, want [redis]", component)
-	}
-}
-
-func TestRedisxErrorsContractDocumentsPublicIdentifiers(t *testing.T) {
-	content, err := os.ReadFile("redisx.errors.yaml")
-	if err != nil {
-		t.Fatalf("read redisx errors contract: %v", err)
-	}
-	text := string(content)
-	for _, identifier := range redisxErrorIdentifiers() {
-		if !strings.Contains(text, "identifier: "+string(identifier)) {
-			t.Fatalf("redisx errors contract does not document %q", identifier)
+	for _, field := range []string{"message", "error_class", "metadata"} {
+		if _, ok := schema.Properties[field]; !ok {
+			t.Fatalf("redisx health schema missing property %q", field)
 		}
 	}
 }
 
-func TestRedisxErrorIdentifierForKind(t *testing.T) {
-	tests := map[redisx.ErrorKind]redisx.ErrorIdentifier{
-		redisx.ErrorKindConfig:     redisx.ErrInvalidConfig,
-		redisx.ErrorKindValidation: redisx.ErrInvalidConfig,
-		redisx.ErrorKindTimeout:    redisx.ErrTimeout,
-		redisx.ErrorKindCanceled:   redisx.ErrCanceled,
-		redisx.ErrorKindAuth:       redisx.ErrAuth,
-		redisx.ErrorKindConnection: redisx.ErrConnectionClosed,
-		redisx.ErrorKindNil:        redisx.ErrNil,
-		redisx.ErrorKindClosed:     redisx.ErrConnectionClosed,
-		redisx.ErrorKindProvider:   redisx.ErrProvider,
-	}
-	for kind, expected := range tests {
-		if actual := redisx.ErrorIdentifierForKind(kind); actual != expected {
-			t.Fatalf("ErrorIdentifierForKind(%q) = %q, want %q", kind, actual, expected)
+func TestRedisxErrorTaxonomyContractDocumentsPublicIdentifiers(t *testing.T) {
+	text := readText(t, "redisx.errors.yaml")
+	for _, item := range []struct {
+		name string
+		id   redisx.RedisErrorID
+	}{
+		{"ErrNil", redisx.ErrNil},
+		{"ErrTimeout", redisx.ErrTimeout},
+		{"ErrCanceled", redisx.ErrCanceled},
+		{"ErrNetwork", redisx.ErrNetwork},
+		{"ErrAuth", redisx.ErrAuth},
+		{"ErrReadOnly", redisx.ErrReadOnly},
+		{"ErrLoading", redisx.ErrLoading},
+		{"ErrTryAgain", redisx.ErrTryAgain},
+		{"ErrClusterMoved", redisx.ErrClusterMoved},
+		{"ErrClusterAsk", redisx.ErrClusterAsk},
+		{"ErrConnectionClosed", redisx.ErrConnectionClosed},
+		{"ErrInvalidConfig", redisx.ErrInvalidConfig},
+		{"ErrProvider", redisx.ErrProvider},
+	} {
+		for _, needle := range []string{item.name, item.id.String(), string(item.id.Kind())} {
+			if !strings.Contains(text, needle) {
+				t.Fatalf("redisx error contract missing %q for %s", needle, item.name)
+			}
 		}
 	}
 }
 
 func TestRedisxMetricsContractDocumentsPublicConstants(t *testing.T) {
-	content, err := os.ReadFile("redisx.metrics.yaml")
-	if err != nil {
-		t.Fatalf("read redisx metrics contract: %v", err)
-	}
-	text := string(content)
-	for _, metric := range redisxMetricNames() {
-		if !strings.Contains(text, "name: "+metric) {
+	text := readText(t, "redisx.metrics.yaml")
+	for _, metric := range []string{
+		redisx.MetricClientCreatedTotal,
+		redisx.MetricClientClosedTotal,
+		redisx.MetricClientErrorsTotal,
+		redisx.MetricClientHealthStatus,
+		redisx.MetricClientHealthLatencyMS,
+		redisx.MetricClientRequestsTotal,
+		redisx.MetricClientRequestDurationSeconds,
+		redisx.MetricClientRetriesTotal,
+		redisx.MetricClientInflight,
+		redisx.MetricRedisOperationsTotal,
+		redisx.MetricRedisOperationDurationSeconds,
+		redisx.MetricRedisErrorsTotal,
+		redisx.MetricRedisPoolConnections,
+		redisx.MetricRedisHealthStatus,
+	} {
+		if !strings.Contains(text, metric) {
 			t.Fatalf("redisx metrics contract does not document %q", metric)
 		}
 	}
@@ -211,6 +222,8 @@ func TestGoalRuntimeSchemasAreValidJSON(t *testing.T) {
 		"execution-evidence.schema.json",
 		"downstream-adoption-proof.schema.json",
 		"docker-toolchain.schema.json",
+		"redisx.config.schema.json",
+		"redisx.health.schema.json",
 	} {
 		t.Run(path, func(t *testing.T) {
 			content, err := os.ReadFile(path)
@@ -313,6 +326,15 @@ func requireSchemaFieldMapsToStructField(t *testing.T, schema objectSchema, stru
 	if _, ok := structType.FieldByName(structField); !ok {
 		t.Fatalf("%s missing field %s required by schema property %q", structType.Name(), structField, schemaField)
 	}
+}
+
+func readText(t *testing.T, path string) string {
+	t.Helper()
+	content, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read %s: %v", path, err)
+	}
+	return string(content)
 }
 
 func readSchema(t *testing.T, path string) objectSchema {

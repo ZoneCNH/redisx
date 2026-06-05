@@ -117,7 +117,7 @@ func (m *Memory) TTL(ctx context.Context, key string) (time.Duration, error) {
 			ttl = -time.Second
 			return nil
 		}
-		ttl = time.Until(item.expiresAt)
+		ttl = item.expiresAt.Sub(now)
 		if ttl < 0 {
 			delete(m.items, key)
 			ttl = -2 * time.Second

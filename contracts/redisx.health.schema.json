@@ -1,21 +1,18 @@
 {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "title": "Redisx Health Status",
-    "type": "object",
-    "required": [
-        "name",
-        "component",
-        "status",
-        "checked_at"
-    ],
-    "properties": {
-        "name": { "type": "string" },
-        "component": { "type": "string" },
-        "status": { "enum": ["healthy", "degraded", "unhealthy"] },
-        "message": { "type": "string" },
-        "error_class": { "type": "string" },
-        "checked_at": { "type": "string" },
-        "latency_ms": { "type": "integer", "minimum": 0 },
-        "metadata": { "type": "object" }
-    }
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zonecnh.github.io/redisx/contracts/redisx.health.schema.json",
+  "title": "redisx health status",
+  "type": "object",
+  "required": ["name", "component", "status", "checked_at", "latency_ms"],
+  "properties": {
+    "name": { "type": "string" },
+    "component": { "type": "string" },
+    "status": { "type": "string", "enum": ["healthy", "degraded", "unhealthy"] },
+    "message": { "type": "string" },
+    "error_class": { "type": "string" },
+    "checked_at": { "type": "string" },
+    "latency_ms": { "type": "integer", "minimum": 0 },
+    "metadata": { "type": "object" }
+  },
+  "additionalProperties": false
 }

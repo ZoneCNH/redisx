@@ -48,6 +48,59 @@ const (
 	ErrProvider         ErrorIdentifier = "ErrProvider"
 )
 
+
+// RedisErrorID is the Redis-specific error taxonomy identifier exposed for
+// contract documents and downstream adapters. It is additive to ErrorKind so
+// existing generic error classification remains stable.
+type RedisErrorID string
+
+const (
+	ErrNil              RedisErrorID = "redis.nil"
+	ErrTimeout          RedisErrorID = "redis.timeout"
+	ErrCanceled         RedisErrorID = "redis.canceled"
+	ErrNetwork          RedisErrorID = "redis.network"
+	ErrAuth             RedisErrorID = "redis.auth"
+	ErrReadOnly         RedisErrorID = "redis.read_only"
+	ErrLoading          RedisErrorID = "redis.loading"
+	ErrTryAgain         RedisErrorID = "redis.try_again"
+	ErrClusterMoved     RedisErrorID = "redis.cluster_moved"
+	ErrClusterAsk       RedisErrorID = "redis.cluster_ask"
+	ErrConnectionClosed RedisErrorID = "redis.connection_closed"
+	ErrInvalidConfig    RedisErrorID = "redis.invalid_config"
+	ErrProvider         RedisErrorID = "redis.provider"
+)
+
+func (id RedisErrorID) String() string {
+	return string(id)
+}
+
+func (id RedisErrorID) Kind() ErrorKind {
+	switch id {
+	case ErrNil:
+		return ErrorKindNil
+	case ErrTimeout:
+		return ErrorKindTimeout
+	case ErrCanceled:
+		return ErrorKindCanceled
+	case ErrNetwork:
+		return ErrorKindConnection
+	case ErrAuth:
+		return ErrorKindAuth
+	case ErrReadOnly:
+		return ErrorKindConflict
+	case ErrLoading, ErrTryAgain, ErrClusterMoved, ErrClusterAsk:
+		return ErrorKindUnavailable
+	case ErrConnectionClosed:
+		return ErrorKindClosed
+	case ErrInvalidConfig:
+		return ErrorKindConfig
+	case ErrProvider:
+		return ErrorKindProvider
+	default:
+		return ErrorKindInternal
+	}
+}
+
 type Error struct {
 	Kind      ErrorKind
 	Op        string

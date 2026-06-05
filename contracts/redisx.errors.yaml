@@ -1,42 +1,42 @@
 schema_version: "1.0"
-name: redisx-error-taxonomy
+taxonomy: redisx.errors
 identifiers:
-  - identifier: ErrNil
+  - name: ErrNil
+    id: redis.nil
     kind: nil
-    retryable: false
-  - identifier: ErrTimeout
+  - name: ErrTimeout
+    id: redis.timeout
     kind: timeout
-    retryable: true
-  - identifier: ErrCanceled
+  - name: ErrCanceled
+    id: redis.canceled
     kind: canceled
-    retryable: false
-  - identifier: ErrNetwork
-    kind: network
-    retryable: true
-  - identifier: ErrAuth
+  - name: ErrNetwork
+    id: redis.network
+    kind: connection
+  - name: ErrAuth
+    id: redis.auth
     kind: auth
-    retryable: false
-  - identifier: ErrReadOnly
-    kind: read_only
-    retryable: true
-  - identifier: ErrLoading
-    kind: loading
-    retryable: true
-  - identifier: ErrTryAgain
-    kind: try_again
-    retryable: true
-  - identifier: ErrClusterMoved
-    kind: cluster_moved
-    retryable: true
-  - identifier: ErrClusterAsk
-    kind: cluster_ask
-    retryable: true
-  - identifier: ErrConnectionClosed
+  - name: ErrReadOnly
+    id: redis.read_only
+    kind: conflict
+  - name: ErrLoading
+    id: redis.loading
+    kind: unavailable
+  - name: ErrTryAgain
+    id: redis.try_again
+    kind: unavailable
+  - name: ErrClusterMoved
+    id: redis.cluster_moved
+    kind: unavailable
+  - name: ErrClusterAsk
+    id: redis.cluster_ask
+    kind: unavailable
+  - name: ErrConnectionClosed
+    id: redis.connection_closed
     kind: closed
-    retryable: false
-  - identifier: ErrInvalidConfig
-    kind: invalid_config
-    retryable: false
-  - identifier: ErrProvider
+  - name: ErrInvalidConfig
+    id: redis.invalid_config
+    kind: config
+  - name: ErrProvider
+    id: redis.provider
     kind: provider
-    retryable: false
