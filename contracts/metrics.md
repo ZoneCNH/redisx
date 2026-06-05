@@ -13,3 +13,9 @@
 | `client_request_duration_seconds` | histogram | `operation`, `status` | 调用方扩展请求耗时，单位为秒。 |
 | `client_retries_total` | counter | `operation`, `kind` | 调用方扩展重试计数。 |
 | `client_inflight` | gauge | `operation` | 调用方扩展并发中的请求数。 |
+
+| `redisx_operations_total` | counter | `op` | Redis command operations completed through the client API. |
+| `redisx_operation_duration_seconds` | histogram | `op` | Reserved Redis operation latency metric in seconds for provider adapters. |
+| `redisx_errors_total` | counter | `op`, `kind` | Redis operation/provider errors classified by the error contract. |
+| `redisx_pool_connections` | gauge | `state` | Reserved Redis connection pool connection count by state. |
+| `redisx_health_status` | gauge | `name`, `status` | Redis component health value, healthy as `1`, otherwise `0`. |

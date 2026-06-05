@@ -36,6 +36,10 @@ func TestErrorKindContractMatchesPublicConstants(t *testing.T) {
 		string(redisx.ErrorKindConflict),
 		string(redisx.ErrorKindRateLimit),
 		string(redisx.ErrorKindInternal),
+		string(redisx.ErrorKindCanceled),
+		string(redisx.ErrorKindNil),
+		string(redisx.ErrorKindClosed),
+		string(redisx.ErrorKindProvider),
 	)
 	actual := sortedStrings(schema.Properties["kind"].Enum...)
 	if !reflect.DeepEqual(actual, expected) {
@@ -92,6 +96,11 @@ func TestMetricsContractDocumentsPublicConstants(t *testing.T) {
 		redisx.MetricClientRequestDurationSeconds,
 		redisx.MetricClientRetriesTotal,
 		redisx.MetricClientInflight,
+		redisx.MetricRedisOperationsTotal,
+		redisx.MetricRedisOperationDurationSeconds,
+		redisx.MetricRedisErrorsTotal,
+		redisx.MetricRedisPoolConnections,
+		redisx.MetricRedisHealthStatus,
 	} {
 		if !strings.Contains(text, "`"+metric+"`") {
 			t.Fatalf("metrics contract does not document %q", metric)

@@ -17,6 +17,10 @@ const (
 	ErrorKindConflict    ErrorKind = "conflict"
 	ErrorKindRateLimit   ErrorKind = "rate_limit"
 	ErrorKindInternal    ErrorKind = "internal"
+	ErrorKindCanceled    ErrorKind = "canceled"
+	ErrorKindNil         ErrorKind = "nil"
+	ErrorKindClosed      ErrorKind = "closed"
+	ErrorKindProvider    ErrorKind = "provider"
 )
 
 type Error struct {
@@ -87,7 +91,9 @@ func validationError(op string, message string, cause error) *Error {
 func contextError(op string, cause error) *Error {
 	kind := ErrorKindUnavailable
 	retryable := false
-	if errors.Is(cause, context.DeadlineExceeded) {
+	if errors.Is(cause, context.Canceled) {
+		kind = ErrorKindCanceled
+	} else if errors.Is(cause, context.DeadlineExceeded) {
 		kind = ErrorKindTimeout
 		retryable = true
 	}
