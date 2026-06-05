@@ -984,37 +984,30 @@ files:
     validator: governance-check
     purpose: Issue 59 Phase 3/4 .agent 物理分类迁移清单、路径引用扫描与兼容例外。
   - path: .agent/retrospectives/RETRO-20260604-redisx-l2.md
-    layer: evidence
-    authority: historical_snapshot
+    layer: archive
+    authority: validated_mirror
     mutability: hand_written
     owner: governance
     validator: docs-check
-    purpose: Redis L2 standard factory closeout retrospective.
-  - path: .agent/patches/PATCH-PROMPT-20260604-redisx-l2.md
-    layer: evidence
-    authority: historical_snapshot
+    purpose: redisx L2 standard factory closeout retrospective.
+  - path: .agent/patches/PATCH-PROMPT-20260605-001.md
+    layer: documentation
+    authority: validated_mirror
     mutability: hand_written
     owner: governance
     validator: docs-check
-    purpose: Redis L2 closeout prompt hardening patch.
-  - path: .agent/patches/PATCH-HARNESS-20260604-redisx-l2.md
-    layer: evidence
-    authority: historical_snapshot
+    purpose: redisx L2 prompt patch recommendation.
+  - path: .agent/patches/PATCH-HARNESS-20260605-001.md
+    layer: machine_contract
+    authority: validated_mirror
     mutability: hand_written
     owner: gate-runtime
-    validator: contracts
-    purpose: Redis L2 closeout harness hardening patch.
-  - path: .agent/patches/PATCH-RULE-20260604-redisx-l2.md
+    validator: governance-check
+    purpose: redisx L2 harness patch recommendation.
+  - path: .agent/patches/PATCH-RULE-20260605-001.md
     layer: policy
-    authority: historical_snapshot
+    authority: validated_mirror
     mutability: hand_written
     owner: governance
     validator: governance-check
-    purpose: Redis L2 closeout rule hardening patch.
-  - path: .agent/evidence/GOAL-20260604-REDISX-L2-STANDARD-FACTORY/task-001-worker-1-audit.md
-    layer: evidence
-    authority: historical_snapshot
-    mutability: hand_written
-    owner: worker-1
-    validator: release-evidence-check
-    purpose: Task 001 REQ-001..014 closeout audit.
+    purpose: redisx L2 rule patch recommendation.
