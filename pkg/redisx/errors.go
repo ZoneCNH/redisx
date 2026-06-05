@@ -14,13 +14,36 @@ const (
 	ErrorKindUnavailable ErrorKind = "unavailable"
 	ErrorKindTimeout     ErrorKind = "timeout"
 	ErrorKindAuth        ErrorKind = "auth"
+	ErrorKindNetwork     ErrorKind = "network"
+	ErrorKindReadOnly    ErrorKind = "read_only"
+	ErrorKindLoading     ErrorKind = "loading"
+	ErrorKindTryAgain    ErrorKind = "try_again"
+	ErrorKindClusterMoved ErrorKind = "cluster_moved"
+	ErrorKindClusterAsk  ErrorKind = "cluster_ask"
 	ErrorKindConflict    ErrorKind = "conflict"
 	ErrorKindRateLimit   ErrorKind = "rate_limit"
 	ErrorKindInternal    ErrorKind = "internal"
 	ErrorKindCanceled    ErrorKind = "canceled"
 	ErrorKindNil         ErrorKind = "nil"
 	ErrorKindClosed      ErrorKind = "closed"
+	ErrorKindInvalidConfig ErrorKind = "invalid_config"
 	ErrorKindProvider    ErrorKind = "provider"
+)
+
+var (
+	ErrNil              = errors.New("redis nil")
+	ErrTimeout          = errors.New("redis timeout")
+	ErrCanceled         = errors.New("redis canceled")
+	ErrNetwork          = errors.New("redis network")
+	ErrAuth             = errors.New("redis auth")
+	ErrReadOnly         = errors.New("redis read only")
+	ErrLoading          = errors.New("redis loading")
+	ErrTryAgain         = errors.New("redis try again")
+	ErrClusterMoved     = errors.New("redis cluster moved")
+	ErrClusterAsk       = errors.New("redis cluster ask")
+	ErrConnectionClosed = errors.New("redis connection closed")
+	ErrInvalidConfig    = errors.New("redis invalid config")
+	ErrProvider         = errors.New("redis provider")
 )
 
 type Error struct {
