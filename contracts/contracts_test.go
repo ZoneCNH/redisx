@@ -115,56 +115,72 @@ func TestMetricsContractDocumentsPublicConstants(t *testing.T) {
 	}
 }
 
-func TestRedisxConfigContractMatchesPublicOptions(t *testing.T) {
+func TestRedisxOptionsContractMatchesPublicOptions(t *testing.T) {
 	schema := readSchema(t, "redisx.config.schema.json")
-	requireFields(t, schema.Required, "name")
+	requireFields(t, schema.Required, "config")
 
 	optionsType := reflect.TypeOf(redisx.Options{})
-	requireSchemaFieldMapsToStructField(t, schema, optionsType, "name", "Name", "string")
-	requireSchemaFieldMapsToStructField(t, schema, optionsType, "address", "Address", "string")
-	requireSchemaFieldMapsToStructField(t, schema, optionsType, "username", "Username", "string")
-	requireSchemaFieldMapsToStructField(t, schema, optionsType, "password", "Password", "string")
-	requireSchemaFieldMapsToStructField(t, schema, optionsType, "db", "DB", "integer")
-	requireSchemaFieldMapsToStructField(t, schema, optionsType, "tls", "TLS", "boolean")
-	requireSchemaFieldMapsToStructField(t, schema, optionsType, "connect_timeout_ms", "ConnectTimeout", "integer")
-	requireSchemaFieldMapsToStructField(t, schema, optionsType, "read_timeout_ms", "ReadTimeout", "integer")
-	requireSchemaFieldMapsToStructField(t, schema, optionsType, "write_timeout_ms", "WriteTimeout", "integer")
-	requireSchemaFieldMapsToStructField(t, schema, optionsType, "pool_size", "PoolSize", "integer")
+	requireSchemaFieldMapsToStructField(t, schema, optionsType, "config", "Config", "object")
+	requireSchemaFieldMapsToStructField(t, schema, optionsType, "metrics", "Metrics", "string")
+	requireSchemaFieldMapsToStructField(t, schema, optionsType, "provider", "Provider", "string")
+
+	content, err := os.ReadFile("redisx.config.schema.json")
+	if err != nil {
+		t.Fatalf("read redisx config contract: %v", err)
+	}
+	for _, marker := range []string{"\"timeout_ms\"", "\"minimum\": 0", "\"memory\"", "\"custom\""} {
+		if !strings.Contains(string(content), marker) {
+			t.Fatalf("redisx config contract missing marker %q", marker)
+		}
+	}
 }
 
 func TestRedisxHealthContractMatchesPublicStatus(t *testing.T) {
 	schema := readSchema(t, "redisx.health.schema.json")
-	requireFields(t, schema.Required, "name", "component", "status", "checked_at")
-	requireSchemaFieldMapsToStructField(t, schema, reflect.TypeOf(redisx.HealthStatus{}), "component", "Component", "string")
-	requireSchemaFieldMapsToStructField(t, schema, reflect.TypeOf(redisx.HealthStatus{}), "error_class", "ErrorClass", "string")
+
+	expected := sortedStrings(
+		string(redisx.HealthHealthy),
+		string(redisx.HealthDegraded),
+		string(redisx.HealthUnhealthy),
+	)
+	actual := sortedStrings(schema.Properties["status"].Enum...)
+	if !reflect.DeepEqual(actual, expected) {
+		t.Fatalf("redisx health status contract drift:\nactual:   %#v\nexpected: %#v", actual, expected)
+	}
+	requireFields(t, schema.Required, "name", "component", "status", "checked_at", "latency_ms")
+	if component := schema.Properties["component"].Enum; !reflect.DeepEqual(component, []string{"redis"}) {
+		t.Fatalf("redisx health component enum = %#v, want [redis]", component)
+	}
 }
 
-func TestRedisxErrorContractDocumentsPublicIdentifiers(t *testing.T) {
+func TestRedisxErrorsContractDocumentsPublicIdentifiers(t *testing.T) {
 	content, err := os.ReadFile("redisx.errors.yaml")
 	if err != nil {
-		t.Fatalf("read redisx.errors.yaml: %v", err)
+		t.Fatalf("read redisx errors contract: %v", err)
 	}
 	text := string(content)
-	for _, needle := range []string{
-		"ErrNil",
-		"ErrTimeout",
-		"ErrCanceled",
-		"ErrNetwork",
-		"ErrAuth",
-		"ErrReadOnly",
-		"ErrLoading",
-		"ErrTryAgain",
-		"ErrClusterMoved",
-		"ErrClusterAsk",
-		"ErrConnectionClosed",
-		"ErrInvalidConfig",
-		"ErrProvider",
-		string(redisx.ErrorKindNil),
-		string(redisx.ErrorKindNetwork),
-		string(redisx.ErrorKindClusterMoved),
-	} {
-		if !strings.Contains(text, needle) {
-			t.Fatalf("redisx error taxonomy does not document %q", needle)
+	for _, identifier := range redisxErrorIdentifiers() {
+		if !strings.Contains(text, "identifier: "+string(identifier)) {
+			t.Fatalf("redisx errors contract does not document %q", identifier)
+		}
+	}
+}
+
+func TestRedisxErrorIdentifierForKind(t *testing.T) {
+	tests := map[redisx.ErrorKind]redisx.ErrorIdentifier{
+		redisx.ErrorKindConfig:     redisx.ErrInvalidConfig,
+		redisx.ErrorKindValidation: redisx.ErrInvalidConfig,
+		redisx.ErrorKindTimeout:    redisx.ErrTimeout,
+		redisx.ErrorKindCanceled:   redisx.ErrCanceled,
+		redisx.ErrorKindAuth:       redisx.ErrAuth,
+		redisx.ErrorKindConnection: redisx.ErrConnectionClosed,
+		redisx.ErrorKindNil:        redisx.ErrNil,
+		redisx.ErrorKindClosed:     redisx.ErrConnectionClosed,
+		redisx.ErrorKindProvider:   redisx.ErrProvider,
+	}
+	for kind, expected := range tests {
+		if actual := redisx.ErrorIdentifierForKind(kind); actual != expected {
+			t.Fatalf("ErrorIdentifierForKind(%q) = %q, want %q", kind, actual, expected)
 		}
 	}
 }
@@ -172,21 +188,11 @@ func TestRedisxErrorContractDocumentsPublicIdentifiers(t *testing.T) {
 func TestRedisxMetricsContractDocumentsPublicConstants(t *testing.T) {
 	content, err := os.ReadFile("redisx.metrics.yaml")
 	if err != nil {
-		t.Fatalf("read redisx.metrics.yaml: %v", err)
+		t.Fatalf("read redisx metrics contract: %v", err)
 	}
 	text := string(content)
-	for _, metric := range []string{
-		redisx.MetricRedisOperationsTotal,
-		redisx.MetricRedisOperationDurationSeconds,
-		redisx.MetricRedisErrorsTotal,
-		redisx.MetricRedisPoolConnections,
-		redisx.MetricRedisHealthStatus,
-		"op",
-		"kind",
-		"name",
-		"status",
-	} {
-		if !strings.Contains(text, metric) {
+	for _, metric := range redisxMetricNames() {
+		if !strings.Contains(text, "name: "+metric) {
 			t.Fatalf("redisx metrics contract does not document %q", metric)
 		}
 	}
@@ -339,4 +345,41 @@ func sortedStrings(values ...string) []string {
 	copied := append([]string(nil), values...)
 	sort.Strings(copied)
 	return copied
+}
+
+func redisxErrorIdentifiers() []redisx.ErrorIdentifier {
+	return []redisx.ErrorIdentifier{
+		redisx.ErrNil,
+		redisx.ErrTimeout,
+		redisx.ErrCanceled,
+		redisx.ErrNetwork,
+		redisx.ErrAuth,
+		redisx.ErrReadOnly,
+		redisx.ErrLoading,
+		redisx.ErrTryAgain,
+		redisx.ErrClusterMoved,
+		redisx.ErrClusterAsk,
+		redisx.ErrConnectionClosed,
+		redisx.ErrInvalidConfig,
+		redisx.ErrProvider,
+	}
+}
+
+func redisxMetricNames() []string {
+	return []string{
+		redisx.MetricClientCreatedTotal,
+		redisx.MetricClientClosedTotal,
+		redisx.MetricClientErrorsTotal,
+		redisx.MetricClientHealthStatus,
+		redisx.MetricClientHealthLatencyMS,
+		redisx.MetricClientRequestsTotal,
+		redisx.MetricClientRequestDurationSeconds,
+		redisx.MetricClientRetriesTotal,
+		redisx.MetricClientInflight,
+		redisx.MetricRedisOperationsTotal,
+		redisx.MetricRedisOperationDurationSeconds,
+		redisx.MetricRedisErrorsTotal,
+		redisx.MetricRedisPoolConnections,
+		redisx.MetricRedisHealthStatus,
+	}
 }

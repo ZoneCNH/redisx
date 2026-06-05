@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ZoneCNH/redisx/contracts/redisx.health.schema.json",
+  "title": "redisx HealthStatus contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "component", "status", "checked_at", "latency_ms"],
+  "properties": {
+    "name": {"type": "string"},
+    "component": {"type": "string", "enum": ["redis"]},
+    "status": {"type": "string", "enum": ["healthy", "degraded", "unhealthy"]},
+    "message": {"type": "string"},
+    "error_class": {"type": "string"},
+    "checked_at": {"type": "string", "format": "date-time"},
+    "latency_ms": {"type": "integer", "minimum": 0},
+    "metadata": {"type": "object"}
+  }
+}

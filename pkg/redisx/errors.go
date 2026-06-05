@@ -7,6 +7,8 @@ import (
 
 type ErrorKind string
 
+type ErrorIdentifier string
+
 const (
 	ErrorKindConfig      ErrorKind = "config"
 	ErrorKindValidation  ErrorKind = "validation"
@@ -30,20 +32,20 @@ const (
 	ErrorKindProvider    ErrorKind = "provider"
 )
 
-var (
-	ErrNil              = errors.New("redis nil")
-	ErrTimeout          = errors.New("redis timeout")
-	ErrCanceled         = errors.New("redis canceled")
-	ErrNetwork          = errors.New("redis network")
-	ErrAuth             = errors.New("redis auth")
-	ErrReadOnly         = errors.New("redis read only")
-	ErrLoading          = errors.New("redis loading")
-	ErrTryAgain         = errors.New("redis try again")
-	ErrClusterMoved     = errors.New("redis cluster moved")
-	ErrClusterAsk       = errors.New("redis cluster ask")
-	ErrConnectionClosed = errors.New("redis connection closed")
-	ErrInvalidConfig    = errors.New("redis invalid config")
-	ErrProvider         = errors.New("redis provider")
+const (
+	ErrNil              ErrorIdentifier = "ErrNil"
+	ErrTimeout          ErrorIdentifier = "ErrTimeout"
+	ErrCanceled         ErrorIdentifier = "ErrCanceled"
+	ErrNetwork          ErrorIdentifier = "ErrNetwork"
+	ErrAuth             ErrorIdentifier = "ErrAuth"
+	ErrReadOnly         ErrorIdentifier = "ErrReadOnly"
+	ErrLoading          ErrorIdentifier = "ErrLoading"
+	ErrTryAgain         ErrorIdentifier = "ErrTryAgain"
+	ErrClusterMoved     ErrorIdentifier = "ErrClusterMoved"
+	ErrClusterAsk       ErrorIdentifier = "ErrClusterAsk"
+	ErrConnectionClosed ErrorIdentifier = "ErrConnectionClosed"
+	ErrInvalidConfig    ErrorIdentifier = "ErrInvalidConfig"
+	ErrProvider         ErrorIdentifier = "ErrProvider"
 )
 
 type Error struct {
@@ -92,6 +94,29 @@ func IsKind(err error, kind ErrorKind) bool {
 		return target.Kind == kind
 	}
 	return false
+}
+
+func ErrorIdentifierForKind(kind ErrorKind) ErrorIdentifier {
+	switch kind {
+	case ErrorKindConfig, ErrorKindValidation:
+		return ErrInvalidConfig
+	case ErrorKindTimeout:
+		return ErrTimeout
+	case ErrorKindCanceled:
+		return ErrCanceled
+	case ErrorKindAuth:
+		return ErrAuth
+	case ErrorKindConnection:
+		return ErrConnectionClosed
+	case ErrorKindNil:
+		return ErrNil
+	case ErrorKindClosed:
+		return ErrConnectionClosed
+	case ErrorKindProvider, ErrorKindUnavailable, ErrorKindConflict, ErrorKindRateLimit, ErrorKindInternal:
+		return ErrProvider
+	default:
+		return ErrProvider
+	}
 }
 
 func newError(kind ErrorKind, op string, message string, retryable bool, cause error) *Error {

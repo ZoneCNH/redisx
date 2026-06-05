@@ -1,0 +1,45 @@
+schema_version: 1
+contract: redisx.metrics
+metrics:
+  - name: client_created_total
+    type: counter
+    labels: [name]
+  - name: client_closed_total
+    type: counter
+    labels: [name]
+  - name: client_errors_total
+    type: counter
+    labels: [op, kind]
+  - name: client_health_status
+    type: gauge
+    labels: [name, status]
+  - name: client_health_latency_ms
+    type: histogram
+    labels: [name]
+  - name: client_requests_total
+    type: counter
+    labels: [op]
+  - name: client_request_duration_seconds
+    type: histogram
+    labels: [op]
+  - name: client_retries_total
+    type: counter
+    labels: [op]
+  - name: client_inflight
+    type: gauge
+    labels: [op]
+  - name: redisx_operations_total
+    type: counter
+    labels: [op]
+  - name: redisx_operation_duration_seconds
+    type: histogram
+    labels: [op]
+  - name: redisx_errors_total
+    type: counter
+    labels: [op, kind]
+  - name: redisx_pool_connections
+    type: gauge
+    labels: [state]
+  - name: redisx_health_status
+    type: gauge
+    labels: [name, status]

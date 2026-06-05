@@ -1,8 +1,21 @@
 package redisx
 
-import "github.com/ZoneCNH/redisx/internal/provider"
+import (
+	"context"
+
+	"github.com/ZoneCNH/redisx/internal/provider"
+)
 
 type Option func(*options)
+
+// Options is the public redisx client options contract used by schema and
+// binder integrations. It keeps the validated Config together with optional
+// Metrics and Provider overrides without changing New's functional-option API.
+type Options struct {
+	Config   Config
+	Metrics  Metrics
+	Provider Provider
+}
 
 type options struct {
 	metrics  Metrics
@@ -30,4 +43,27 @@ func WithProvider(provider Provider) Option {
 			o.provider = provider
 		}
 	}
+}
+
+func (o Options) Validate() error {
+	return o.Config.Validate()
+}
+
+func (o Options) Sanitize() SanitizedConfig {
+	return o.Config.Sanitize()
+}
+
+func (o Options) ClientOptions() []Option {
+	options := make([]Option, 0, 2)
+	if o.Metrics != nil {
+		options = append(options, WithMetrics(o.Metrics))
+	}
+	if o.Provider != nil {
+		options = append(options, WithProvider(o.Provider))
+	}
+	return options
+}
+
+func NewWithOptions(ctx context.Context, options Options) (*Client, error) {
+	return New(ctx, options.Config, options.ClientOptions()...)
 }
