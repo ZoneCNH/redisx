@@ -99,6 +99,13 @@ files:
     owner: release
     validator: evidence
     purpose: 源证据 ledger。
+  - path: .agent/evidence/GOAL-20260604-REDISX-L2-STANDARD-FACTORY/task-002-worker-2-audit.md
+    layer: evidence
+    authority: validated_mirror
+    mutability: hand_written
+    owner: release
+    validator: evidence-check
+    purpose: redisx L2 standard factory Task 2 审计证据。
   - path: .agent/policies/runtime-file-ownership.yaml
     layer: policy
     authority: source_of_truth

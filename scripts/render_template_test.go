@@ -277,9 +277,6 @@ func TestRenderTemplateGitArchiveSkipsUntrackedFiles(t *testing.T) {
 	if err := os.WriteFile(markerPath, []byte("untracked marker"), 0o600); err != nil {
 		t.Fatalf("write untracked marker: %v", err)
 	}
-	if err := marker.Close(); err != nil {
-		t.Fatalf("close untracked marker: %v", err)
-	}
 	t.Cleanup(func() {
 		_ = os.Remove(markerPath)
 	})
