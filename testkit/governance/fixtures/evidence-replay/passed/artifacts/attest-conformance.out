@@ -1,0 +1,9 @@
+{
+  "command": "attest-conformance",
+  "status": "passed",
+  "details": [
+    "found .agent/policies/conformance-profiles.yaml",
+    "args=--profile standard-source --dry-run --verify",
+    "local dry-run verifier satisfied manifest coverage"
+  ]
+}
