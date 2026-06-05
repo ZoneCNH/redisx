@@ -1,46 +1,37 @@
-# redisx L2 Standard
+# redisx 基础库总标准
 
-`redisx` is the standard authority source for `https://github.com/ZoneCNH/redisx` and the Go module `github.com/ZoneCNH/redisx`. This repository owns the redisx standard text, the generated Go library template, the generator, Harness gates, and Evidence replay contracts for the L2 Redis standard factory.
+[`redisx`](https://github.com/ZoneCNH/redisx) 是基础库 Standard Source、Go Reference Template、generator、Harness 和 Evidence Runtime 的统一实现仓库。本文是 `redisx` 仓库内的 L0/L1/L2 基础库总标准入口；具体 gate、发布证据和下游采纳状态仍以相邻标准文档、`.agent/registries/*`、`release/manifest/*` 与 `docs/downstream-matrix.md` 为准。
 
-## Repository role
+## 仓库职责
 
-This repository is the redisx Standard Source and 模板 authority. It must keep the Redis-facing API, contracts, template output, generator behavior, Harness checks, and Evidence artifacts synchronized before any downstream adoption is marked complete.
+- **Standard Source**：维护基础库公共契约、分层规则、module 边界、完成定义和 release gate；不得把标准权威源分散到下游仓库。
+- **模板 / generator**：提供 Go 基础库模板与渲染逻辑，确保 module path、package name、README/docs 和 release Evidence 的替换规则可审计。
+- **Harness**：提供 `GOWORK=off` 的本地和 CI gate，包括 boundary、contracts、docs-check、dependency-check、standard-impact-check、score 与 release-check。
+- **Evidence**：维护 release manifest、checksum、standard impact report、DOWNSTREAM 采纳结论、score 和 DONE with evidence 声明的机器可验证协议。
 
-## Layer boundary
+## 基础库契约
 
-- Public package: `pkg/redisx`.
-- Provider implementations belong behind `internal/provider`; a go-redis implementation belongs under `internal/provider/goredis`.
-- Public APIs must not expose go-redis concrete types or import business/private packages.
-- L2 redisx must not encode business key policy, application cache strategy, business schemas, or runtime secret paths.
+每个基础库层必须明确：
 
-## Target contracts
+1. module path、package name、公开 API 和禁止导出的实现细节；
+2. 配置、错误、健康检查、metrics、安全和测试边界；
+3. 与 `kernel`、L1/L2 基础库和 `x.go` 的依赖方向；
+4. release Evidence、downstream sync 和标准影响结论；
+5. 模板生成后的文档、Harness gate 和 Evidence artifact 是否与标准保持同步。
 
-The L2 Redis factory target includes:
+`redisx` 作为标准实现仓库可以保存模板、generator、Harness 和 Evidence 代码；生成库或下游仓库只能采纳对应契约和生成结果，不能反向修改标准定义。
 
-- explicit configuration through `redisx.Options` or an approved config binder, with no implicit environment lookup or global client;
-- Redis lifecycle APIs for construct, close, ping, and health with context timeout handling;
-- KV operations: Get, Set, Del, Exists, Expire, TTL, MGet, MSet, Incr, and Decr;
-- health output with component, status, latency, error class, and checked_at fields;
-- metrics named `redisx_operations_total`, `redisx_operation_duration_seconds`, `redisx_errors_total`, `redisx_pool_connections`, and `redisx_health_status`;
-- Redis error classes including nil, timeout, canceled, network, auth, readonly, loading, try-again, moved, ask, closed, invalid config, and provider errors;
-- testkit coverage with a fake Redis provider, contract assertions, and environment-gated real Redis integration tests.
+## 必跑 gate
 
-## Harness and Evidence obligations
-
-A redisx release candidate must pass the repository Harness before release evidence is accepted:
+发布式变更至少保留以下命令的证据：
 
 ```bash
-GOWORK=off go test ./...
 GOWORK=off make boundary
 GOWORK=off make contracts
 GOWORK=off make docs-check
 GOWORK=off make dependency-check
 GOWORK=off make standard-impact-check
-GOWORK=off make score
+GOWORK=off go run ./cmd/goalcli score --min 9.8
 ```
 
-Evidence must remain replayable from tracked files. Generator archive behavior must not depend on untracked workspace state, and release-ready status must not be asserted without manifest, checksum, downstream, and retrospective evidence.
-
-## Current implementation state
-
-As of 2026-06-05, the tracked code is still a generic template scaffold for redisx. It has the repository skeleton and governance Harness surface, but provider-backed Redis APIs, Redis-specific schemas, fake Redis testkit helpers, release manifest output, downstream adoption proof, and retrospective patch assets remain incomplete. Until those gaps are closed, redisx must not be treated as release-ready or downstream adopted.
+涉及模板、generator、Harness 或 Evidence Runtime 的变更还必须补充对应的 targeted Go test、渲染检查、release manifest 校验和 downstream adoption 结论。

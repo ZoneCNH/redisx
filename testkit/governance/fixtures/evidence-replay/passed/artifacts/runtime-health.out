@@ -1,2 +1,2 @@
-runtime-health passed
-control plane healthy
+runtime-health: passed
+goal runtime healthy

@@ -1,2 +1,2 @@
-release-ready passed
+release-ready: passed
 required gates satisfied

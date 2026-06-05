@@ -267,14 +267,14 @@ func TestRenderTemplateGitArchivePrunesRuntimeState(t *testing.T) {
 }
 
 func TestRenderTemplateGitArchiveSkipsUntrackedFiles(t *testing.T) {
-	marker, err := os.CreateTemp("..", ".xlib-render-untracked-marker-test-*")
-	if err != nil {
-		t.Fatalf("create untracked marker: %v", err)
+	markerName := ".xlib-render-untracked-marker-" + strings.ReplaceAll(t.Name(), "/", "-")
+	markerPath := filepath.Join("..", markerName)
+	checkTracked := exec.Command("git", "ls-files", "--error-unmatch", markerName)
+	checkTracked.Dir = ".."
+	if output, err := checkTracked.CombinedOutput(); err == nil {
+		t.Fatalf("test marker %s must be untracked, git ls-files output: %s", markerName, output)
 	}
-	markerPath := marker.Name()
-	markerName := filepath.Base(markerPath)
-	if _, err := marker.WriteString("untracked marker"); err != nil {
-		_ = marker.Close()
+	if err := os.WriteFile(markerPath, []byte("untracked marker"), 0o600); err != nil {
 		t.Fatalf("write untracked marker: %v", err)
 	}
 	if err := marker.Close(); err != nil {

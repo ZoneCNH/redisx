@@ -2242,7 +2242,24 @@ func TestEvidenceReplayRejectsChecksumAndHashMismatch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read copied ledger: %v", err)
 	}
-	content = []byte(strings.Replace(string(content), `"previous_hash":"b6d5a53d92857abed089bc574f1765365505392b4e917178fe32dbdf1db40fdc"`, `"previous_hash":"0000000000000000000000000000000000000000000000000000000000000000"`, 1))
+	entries, parseGaps := parseEvidenceReplayLedger(content, ledger)
+	if len(parseGaps) > 0 {
+		t.Fatalf("parse copied ledger gaps: %#v", parseGaps)
+	}
+	if len(entries) < 2 {
+		t.Fatalf("copied ledger has %d entries; want at least 2", len(entries))
+	}
+	entries[1].PreviousHash = strings.Repeat("f", 64)
+	var tamperedLedger strings.Builder
+	for _, entry := range entries {
+		encoded, err := json.Marshal(entry)
+		if err != nil {
+			t.Fatalf("marshal tampered ledger entry: %v", err)
+		}
+		tamperedLedger.Write(encoded)
+		tamperedLedger.WriteByte('\n')
+	}
+	content = []byte(tamperedLedger.String())
 	if err := os.WriteFile(ledger, content, 0o644); err != nil {
 		t.Fatalf("tamper ledger: %v", err)
 	}
