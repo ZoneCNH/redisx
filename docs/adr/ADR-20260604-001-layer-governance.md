@@ -1,38 +1,30 @@
-# ADR-20260604-001 分层治理
+# ADR-20260604-001: redisx layer governance boundary
 
-## 状态
+## Status
 
-已采纳。
+Accepted.
 
-## 背景
+## Context
 
-`redisx` 同时作为 Standard Source、Go Reference Template、Generator、Harness 和 Evidence Runtime。为避免标准库、下游基础库与私有业务组合层之间出现反向依赖，仓库需要一份可由文档、policy、schema 和 gate 共同引用的分层治理决策。
+`redisx` is the public Standard Source for the L2 Redis factory. It must define reusable standard, template, generator, Harness, and Evidence behavior without importing L3 private business systems or production runtime policy.
 
-本 ADR 与 `docs/standard/layer-governance-rules.md`、`.agent/policies/layer-governance.yaml` 和 `contracts/layer-governance.schema.json` 保持一致。
+The repository also documents downstream consumers and private business systems, so the governance boundary must be explicit enough for `docs-check`, dependency checks, and release Evidence gates to fail closed when L3 concerns leak into public artifacts.
 
-## 决策
+## Decision
 
-采用固定依赖方向 `L3>L2>L1>L0>Standard`，并将 `redisx` 归入 L2 基础库层。
+Adopt the layer direction `L3 -> L2 -> L1 -> L0 -> Standard` and keep `redisx` as a public L2/Standard authority surface. `x.go` and business repositories remain L3 私有 and may consume released public libraries, but public repositories must not consume L3 code, schemas, strategies, production secret paths, or customer-data semantics.
 
-- Standard：标准源与模板协议，定义生成、治理和证据边界。
-- L0：`kernel`，提供最小公共内核能力。
-- L1：`configx`、`observex`、`testkitx`，提供配置、观测和测试支撑。
-- L2：`redisx`、`kafkax`、`postgresx`、`taosx`、`ossx`、`clickhousex`、`natsx`，提供具体基础设施客户端与测试夹具。
-- L3：`x.go` 及私有业务仓库，只能组合调用 L2 及以下能力，不得被基础库依赖。
+The machine-checkable source of this rule is split across:
 
-P0 规则禁止私有业务边界泄漏与反向依赖，且不允许临时例外。P1 规则要求下游采用流程跟随标准变更。P2 规则要求迭代证据可回放、可审计。
+- `docs/standard/layer-governance-rules.md` for human policy;
+- `.agent/policies/layer-governance.yaml` for registry facts;
+- `contracts/layer-governance.schema.json` for schema validation;
+- `scripts/check_docs.sh` and `GOWORK=off make docs-check` for documentation completeness;
+- boundary, contracts, dependency, standard-impact, release, and Evidence gates for executable verification.
 
-## 影响
+## Consequences
 
-`redisx` 的公共 API、模板渲染、Harness gate 与 Evidence manifest 必须保持 L2 边界：可以依赖 Standard、L0 和 L1 能力，不得依赖 L3 私有业务层或 `x.go` 内部包。
-
-任何更新分层表、依赖方向或治理规则的变更，必须同步更新：
-
-- `docs/standard/layer-governance-rules.md`
-- `.agent/policies/layer-governance.yaml`
-- `contracts/layer-governance.schema.json`
-- 相关 Harness gate 与 release evidence
-
-## 验证
-
-验证入口包括 `make boundary`、`make contracts`、`make docs-check`、`make standard-impact-check` 和 `make score`。发布前必须将这些 gate 的结果纳入 Evidence，并保留可复现命令与输出摘要。
+- P0 violations have no temporary exception path.
+- L3 私有 systems configure `GOPRIVATE`, inject secrets, and own production wiring outside this repository.
+- redisx can document private downstream expectations only as boundary guidance; it must not commit private implementation details or secret values.
+- Any future change to layer direction or release responsibility must update the standard docs, policy registry, schema, Harness gates, docs-check requirements, and downstream sync records together.
