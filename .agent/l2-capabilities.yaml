@@ -1,0 +1,85 @@
+schema_version: "1.0"
+layer: L2
+adapter:
+  name: redisx
+  module: github.com/ZoneCNH/redisx
+  family: key_value
+  owners: []
+capabilities:
+  - name: adapter_identity
+    family: common
+    status: implemented
+    notes: Module and package identity are pinned by go.mod and the public package path.
+  - name: lifecycle
+    family: common
+    status: implemented
+    notes: New, Close, Ping, and Health are covered by local unit tests.
+  - name: health
+    family: common
+    status: implemented
+  - name: error_mapping
+    family: common
+    status: implemented
+  - name: configuration
+    family: common
+    status: declared
+    notes: Current public config remains template-level; provider-specific connection config is not exposed.
+  - name: get
+    family: key_value
+    status: implemented
+  - name: set
+    family: key_value
+    status: implemented
+  - name: delete
+    family: key_value
+    status: implemented
+  - name: exists
+    family: key_value
+    status: implemented
+  - name: compare_and_set
+    family: key_value
+    status: unsupported
+    notes: No public CAS API exists in the current surface.
+  - name: expire
+    family: key_value
+    status: implemented
+  - name: ttl
+    family: key_value
+    status: implemented
+  - name: persist
+    family: key_value
+    status: unsupported
+    notes: No public persist API exists in the current surface.
+  - name: expiration_events
+    family: key_value
+    status: declared
+    notes: Requires provider-backed contract evidence.
+  - name: pool_limits
+    family: common
+    status: declared
+    notes: Pool contract is declared for standard alignment; provider-backed pool behavior is pending.
+  - name: acquisition_timeout
+    family: common
+    status: declared
+  - name: recycle
+    family: common
+    status: declared
+  - name: idle_cleanup
+    family: common
+    status: declared
+contract_packs:
+  - common
+  - kv
+  - ttl
+  - pool
+evidence:
+  required_profiles:
+    - unit
+    - contract
+    - integration
+  output_dir: .agent/evidence/l2
+  reports:
+    - .agent/evidence/l2/contract-report.json
+    - .agent/evidence/l2/integration-report.json
+    - .agent/evidence/l2/compliance-matrix.json
+    - .agent/evidence/l2/release-readiness.json

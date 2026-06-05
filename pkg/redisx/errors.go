@@ -7,8 +7,6 @@ import (
 
 type ErrorKind string
 
-type ErrorIdentifier string
-
 const (
 	ErrorKindConfig        ErrorKind = "config"
 	ErrorKindValidation    ErrorKind = "validation"
@@ -32,27 +30,10 @@ const (
 	ErrorKindProvider      ErrorKind = "provider"
 )
 
-const (
-	ErrNil              ErrorIdentifier = "ErrNil"
-	ErrTimeout          ErrorIdentifier = "ErrTimeout"
-	ErrCanceled         ErrorIdentifier = "ErrCanceled"
-	ErrNetwork          ErrorIdentifier = "ErrNetwork"
-	ErrAuth             ErrorIdentifier = "ErrAuth"
-	ErrReadOnly         ErrorIdentifier = "ErrReadOnly"
-	ErrLoading          ErrorIdentifier = "ErrLoading"
-	ErrTryAgain         ErrorIdentifier = "ErrTryAgain"
-	ErrClusterMoved     ErrorIdentifier = "ErrClusterMoved"
-	ErrClusterAsk       ErrorIdentifier = "ErrClusterAsk"
-	ErrConnectionClosed ErrorIdentifier = "ErrConnectionClosed"
-	ErrInvalidConfig    ErrorIdentifier = "ErrInvalidConfig"
-	ErrProvider         ErrorIdentifier = "ErrProvider"
-)
-
-
 // RedisErrorID is the Redis-specific error taxonomy identifier exposed for
-// contract documents and downstream adapters. It is additive to ErrorKind so
-// existing generic error classification remains stable.
+// contract documents, downstream adapters, and errors.Is sentinels.
 type RedisErrorID string
+type ErrorIdentifier = RedisErrorID
 
 const (
 	ErrNil              RedisErrorID = "redis.nil"
@@ -74,6 +55,10 @@ func (id RedisErrorID) String() string {
 	return string(id)
 }
 
+func (id RedisErrorID) Error() string {
+	return string(id)
+}
+
 func (id RedisErrorID) Kind() ErrorKind {
 	switch id {
 	case ErrNil:
@@ -83,17 +68,23 @@ func (id RedisErrorID) Kind() ErrorKind {
 	case ErrCanceled:
 		return ErrorKindCanceled
 	case ErrNetwork:
-		return ErrorKindConnection
+		return ErrorKindNetwork
 	case ErrAuth:
 		return ErrorKindAuth
 	case ErrReadOnly:
-		return ErrorKindConflict
-	case ErrLoading, ErrTryAgain, ErrClusterMoved, ErrClusterAsk:
-		return ErrorKindUnavailable
+		return ErrorKindReadOnly
+	case ErrLoading:
+		return ErrorKindLoading
+	case ErrTryAgain:
+		return ErrorKindTryAgain
+	case ErrClusterMoved:
+		return ErrorKindClusterMoved
+	case ErrClusterAsk:
+		return ErrorKindClusterAsk
 	case ErrConnectionClosed:
 		return ErrorKindClosed
 	case ErrInvalidConfig:
-		return ErrorKindConfig
+		return ErrorKindInvalidConfig
 	case ErrProvider:
 		return ErrorKindProvider
 	default:
@@ -145,7 +136,11 @@ func (e *Error) Is(target error) bool {
 	if e == nil {
 		return false
 	}
-	switch target {
+	id, ok := target.(RedisErrorID)
+	if !ok {
+		return false
+	}
+	switch id {
 	case ErrNil:
 		return e.Kind == ErrorKindNil
 	case ErrTimeout:
@@ -172,9 +167,8 @@ func (e *Error) Is(target error) bool {
 		return e.Kind == ErrorKindInvalidConfig
 	case ErrProvider:
 		return e.Kind == ErrorKindProvider
-	default:
-		return false
 	}
+	return false
 }
 
 func IsKind(err error, kind ErrorKind) bool {
@@ -185,22 +179,32 @@ func IsKind(err error, kind ErrorKind) bool {
 	return false
 }
 
-func ErrorIdentifierForKind(kind ErrorKind) ErrorIdentifier {
+func ErrorIdentifierForKind(kind ErrorKind) RedisErrorID {
 	switch kind {
-	case ErrorKindConfig, ErrorKindValidation:
+	case ErrorKindConfig, ErrorKindValidation, ErrorKindInvalidConfig:
 		return ErrInvalidConfig
 	case ErrorKindTimeout:
 		return ErrTimeout
 	case ErrorKindCanceled:
 		return ErrCanceled
+	case ErrorKindNetwork:
+		return ErrNetwork
 	case ErrorKindAuth:
 		return ErrAuth
-	case ErrorKindConnection:
+	case ErrorKindReadOnly:
+		return ErrReadOnly
+	case ErrorKindLoading:
+		return ErrLoading
+	case ErrorKindTryAgain:
+		return ErrTryAgain
+	case ErrorKindClusterMoved:
+		return ErrClusterMoved
+	case ErrorKindClusterAsk:
+		return ErrClusterAsk
+	case ErrorKindConnection, ErrorKindClosed:
 		return ErrConnectionClosed
 	case ErrorKindNil:
 		return ErrNil
-	case ErrorKindClosed:
-		return ErrConnectionClosed
 	case ErrorKindProvider, ErrorKindUnavailable, ErrorKindConflict, ErrorKindRateLimit, ErrorKindInternal:
 		return ErrProvider
 	default:

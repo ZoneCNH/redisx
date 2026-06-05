@@ -31,7 +31,7 @@ redisx/
 │   ├── config.go           # Config + Validate + Sanitize
 │   ├── client.go           # New/Close 生命周期，mutex 保护
 │   ├── health.go           # 三态健康检查（healthy/degraded/unhealthy）
-│   ├── errors.go           # 9 种 ErrorKind + IsKind 断言
+│   ├── errors.go           # 20 种 ErrorKind + RedisErrorID + IsKind 断言
 │   ├── metrics.go          # Metrics 接口 + NoopMetrics
 │   ├── options.go          # 函数选项模式
 │   └── version.go          # 版本常量
@@ -61,7 +61,7 @@ redisx/
 1. **Config 模式**：`Validate()` 校验 → `Sanitize()` 脱敏 → 返回 `SanitizedConfig`，敏感字段不泄露
 2. **Client 生命周期**：`New()` 验证 context + config → `Close()` 幂等关闭，mutex 保护状态转换
 3. **健康检查**：三级状态（healthy/degraded/unhealthy），检测 context deadline 与 timeout 关系
-4. **错误模型**：9 种 `ErrorKind`（config/validation/connection/timeout/auth 等），`IsKind()` 支持 `errors.As` 链式断言
+4. **错误模型**：20 种 `ErrorKind`（config/validation/connection/timeout/auth/network/cluster 等）与 `RedisErrorID` sentinel，`IsKind()` 支持 `errors.As` 链式断言
 5. **Metrics 接口**：`IncCounter`/`ObserveHistogram`/`SetGauge` + `NoopMetrics` 默认实现
 6. **零外部依赖**：供应链风险极低
 

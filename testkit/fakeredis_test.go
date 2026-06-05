@@ -23,7 +23,7 @@ type fakeRedisContract struct {
 	ClosedError bool           `json:"closed_error"`
 }
 
-func TestNewFakeRedisContract(t *testing.T) {
+func TestNewFakeRedisJSONContract(t *testing.T) {
 	ctx := context.Background()
 	fake := NewFakeRedis()
 

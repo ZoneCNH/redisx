@@ -1714,20 +1714,28 @@ DoD:
 
 | Requirement | Acceptance Criteria | Design Section | Task | Test | Evidence | Status |
 |---|---|---|---|---|---|---|
-| REQ-001 | generator creates redisx module | Repo Bootstrap | TASK-002/003 | go test ./... | generator log | todo |
-| REQ-002 | no x.go / no business policy | Boundary | TASK-004 | boundary scan | boundary output | todo |
-| REQ-003 | explicit config | Config | TASK-005 | config tests | schema + test log | todo |
-| REQ-004 | lifecycle close | Client API | TASK-006 | lifecycle tests | unit/race log | todo |
-| REQ-005 | KV MVA | Client API | TASK-006/007 | KV tests | fake/integration log | todo |
-| REQ-006 | provider isolation | Provider | TASK-007 | AST/boundary | boundary output | todo |
-| REQ-007 | health | Health | TASK-009 | health tests | examples/health | todo |
-| REQ-008 | observability | Metrics | TASK-009 | metrics tests | contract output | todo |
-| REQ-009 | error taxonomy | Errors | TASK-007 | error golden | golden output | todo |
-| REQ-010 | testkit | Testing | TASK-008 | fake/golden | testkit output | todo |
-| REQ-011 | harness | Harness | TASK-011 | make gates | CI artifact | todo |
-| REQ-012 | release evidence | Release | TASK-012 | release-check | manifest + sha | todo |
-| REQ-013 | downstream adoption | Adoption | TASK-013 | downstream smoke | adoption registry | todo |
-| REQ-014 | self-improving | Retro | TASK-014 | retrospective-check | patch files | todo |
+| REQ-001 | generator creates redisx module | Repo Bootstrap | TASK-002/003 | go test ./... | generator log | closed |
+| REQ-002 | no x.go / no business policy | Boundary | TASK-004 | boundary scan | boundary output | closed |
+| REQ-003 | explicit config | Config | TASK-005 | config tests | schema + test log | partial |
+| REQ-004 | lifecycle close | Client API | TASK-006 | lifecycle tests | unit/race log | closed |
+| REQ-005 | KV MVA | Client API | TASK-006/007 | KV tests | fake/integration log | partial |
+| REQ-006 | provider isolation | Provider | TASK-007 | AST/boundary | boundary output | closed |
+| REQ-007 | health | Health | TASK-009 | health tests | examples/health | closed |
+| REQ-008 | observability | Metrics | TASK-009 | metrics tests | contract output | closed |
+| REQ-009 | error taxonomy | Errors | TASK-007 | error golden | golden output | closed |
+| REQ-010 | testkit | Testing | TASK-008 | fake/golden | testkit output | closed |
+| REQ-011 | harness | Harness | TASK-011 | make gates | CI artifact | closed |
+| REQ-012 | release evidence | Release | TASK-012 | release-check | manifest + sha | partial |
+| REQ-013 | downstream adoption | Adoption | TASK-013 | downstream smoke | adoption registry | not adopted |
+| REQ-014 | self-improving | Retro | TASK-014 | retrospective-check | patch files | closed |
+
+---
+
+### 20.1 Closeout Audit — 2026-06-05
+
+本轮 closeout 已同步 `xlib-standard` L2 standard-source 的 registry、schema、gate、testing docs、contract test 入口和 readiness/compliance evidence snapshot，并修复本地 L2 verifier 为 stdlib-only 运行路径。详细审计记录见 `docs/goal/redisx-l2-audit-20260605.md`。
+
+当前矩阵只关闭本地已有证据的范围：`l2-check`、`test-contract`、`contracts`、`docs-check`、`command-registry`、`go test ./...` 和 verifier 均已通过。`REQ-003`、`REQ-005` 与 `REQ-012` 保持 partial，因为真实 Redis-specific public config、provider-backed contract report、integration report 和 release-ready evidence 仍未完成。`REQ-013` 保持 `not adopted`，不得在缺少 downstream repo/commit 证据时声明 adoption。
 
 ---
 

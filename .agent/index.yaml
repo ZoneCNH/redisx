@@ -106,6 +106,104 @@ files:
     owner: release
     validator: evidence-check
     purpose: redisx L2 standard factory Task 2 审计证据。
+  - path: .agent/evidence/GOAL-20260604-REDISX-L2-STANDARD-FACTORY/task-001-worker-1-audit.md
+    layer: evidence
+    authority: validated_mirror
+    mutability: hand_written
+    owner: release
+    validator: evidence-check
+    purpose: redisx L2 standard factory Task 1 审计证据。
+  - path: .agent/l2-capabilities.yaml
+    layer: machine_contract
+    authority: source_of_truth
+    mutability: hand_written
+    owner: release
+    validator: l2-check
+    purpose: redisx L2 能力 manifest。
+  - path: .agent/gates/l2gate.yaml
+    layer: machine_contract
+    authority: source_of_truth
+    mutability: hand_written
+    owner: gate-runtime
+    validator: l2-check
+    purpose: redisx L2 gate 编排契约。
+  - path: .agent/registry/l2-capability-families.yaml
+    layer: registry
+    authority: source_of_truth
+    mutability: hand_written
+    owner: release
+    validator: l2-check
+    purpose: L2 capability family 注册表。
+  - path: .agent/registry/l2-contract-packs.yaml
+    layer: registry
+    authority: source_of_truth
+    mutability: hand_written
+    owner: release
+    validator: l2-check
+    purpose: L2 contract pack 注册表。
+  - path: .agent/registry/l2-golden-samples.yaml
+    layer: registry
+    authority: source_of_truth
+    mutability: hand_written
+    owner: release
+    validator: l2-check
+    purpose: L2 golden sample 注册表。
+  - path: .agent/registry/l2-release-levels.yaml
+    layer: registry
+    authority: source_of_truth
+    mutability: hand_written
+    owner: release
+    validator: l2-check
+    purpose: L2 release level 注册表。
+  - path: .agent/schemas/l2-capabilities.schema.json
+    layer: machine_contract
+    authority: source_of_truth
+    mutability: hand_written
+    owner: release
+    validator: l2-check
+    purpose: L2 capabilities manifest schema。
+  - path: .agent/schemas/l2-compliance-matrix.schema.json
+    layer: machine_contract
+    authority: source_of_truth
+    mutability: hand_written
+    owner: release
+    validator: l2-check
+    purpose: L2 compliance matrix schema。
+  - path: .agent/schemas/l2-contract-packs.schema.json
+    layer: machine_contract
+    authority: source_of_truth
+    mutability: hand_written
+    owner: release
+    validator: l2-check
+    purpose: L2 contract pack schema。
+  - path: .agent/schemas/l2-release-readiness.schema.json
+    layer: machine_contract
+    authority: source_of_truth
+    mutability: hand_written
+    owner: release
+    validator: l2-check
+    purpose: L2 release readiness schema。
+  - path: .agent/evidence/l2/README.md
+    layer: evidence
+    authority: source_of_truth
+    mutability: hand_written
+    owner: release
+    validator: docs-check
+    purpose: redisx L2 证据目录说明。
+  - path: .agent/evidence/l2/compliance-matrix.json
+    layer: evidence
+    authority: validated_mirror
+    mutability: hand_written
+    owner: release
+    validator: l2-check
+    purpose: redisx L2 合规矩阵证据。
+  - path: .agent/evidence/l2/release-readiness.json
+    layer: evidence
+    authority: validated_mirror
+    mutability: hand_written
+    owner: release
+    validator: l2-check
+    purpose: redisx L2 发布就绪状态证据。
   - path: .agent/policies/runtime-file-ownership.yaml
     layer: policy
     authority: source_of_truth
@@ -990,6 +1088,27 @@ files:
     owner: governance
     validator: docs-check
     purpose: redisx L2 standard factory closeout retrospective.
+  - path: .agent/patches/PATCH-PROMPT-20260604-redisx-l2.md
+    layer: documentation
+    authority: validated_mirror
+    mutability: hand_written
+    owner: governance
+    validator: docs-check
+    purpose: redisx L2 prompt patch recommendation.
+  - path: .agent/patches/PATCH-HARNESS-20260604-redisx-l2.md
+    layer: machine_contract
+    authority: validated_mirror
+    mutability: hand_written
+    owner: gate-runtime
+    validator: governance-check
+    purpose: redisx L2 harness patch recommendation.
+  - path: .agent/patches/PATCH-RULE-20260604-redisx-l2.md
+    layer: policy
+    authority: validated_mirror
+    mutability: hand_written
+    owner: governance
+    validator: governance-check
+    purpose: redisx L2 rule patch recommendation.
   - path: .agent/patches/PATCH-PROMPT-20260605-001.md
     layer: documentation
     authority: validated_mirror

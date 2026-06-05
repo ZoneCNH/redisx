@@ -4,6 +4,8 @@ GOAL_ID ?= GOAL-20260603-XLIB-GOALCLI-001
 GOAL_RUNTIME_MODE ?= FULL
 DOCKER_IMAGE ?= $(notdir $(CURDIR))-toolchain:local
 DOCKER_GATE ?= ./scripts/docker/docker_gate.sh
+L2_MANIFEST ?= .agent/l2-capabilities.yaml
+L2_EVIDENCE_DIR ?= .agent/evidence/l2
 
 .PHONY: require-gowork-off
 require-gowork-off:
@@ -213,6 +215,54 @@ boundary:
 .PHONY: contracts
 contracts:
 	$(GOALCLI) contracts
+
+.PHONY: l2-manifest-check
+l2-manifest-check:
+	python3 scripts/verify_l2_redisx.py --manifest-only
+
+.PHONY: l2-evidence-check
+l2-evidence-check:
+	python3 scripts/verify_l2_redisx.py --evidence-only
+
+.PHONY: l2-readiness-status l2-release-readiness-check
+l2-readiness-status l2-release-readiness-check:
+	python3 scripts/verify_l2_redisx.py --readiness-only
+
+.PHONY: l2-check
+l2-check:
+	python3 scripts/verify_l2_redisx.py
+
+.PHONY: l2-plan
+l2-plan: l2-check
+
+.PHONY: test-unit
+test-unit: test
+
+.PHONY: test-contract
+test-contract:
+	go test ./test/contract
+
+.PHONY: test-integration
+test-integration:
+	@echo "L2 integration runner pending; see $(L2_EVIDENCE_DIR)/release-readiness.json"
+
+.PHONY: test-chaos
+test-chaos:
+	@echo "L2 chaos profile pending; see $(L2_EVIDENCE_DIR)/release-readiness.json"
+
+.PHONY: test-bench
+test-bench:
+	@echo "L2 benchmark profile pending; see $(L2_EVIDENCE_DIR)/release-readiness.json"
+
+.PHONY: test-adoption
+test-adoption:
+	@echo "L2 downstream adoption proof not claimed in redisx closeout"
+
+.PHONY: test-arch
+test-arch: boundary
+
+.PHONY: test-security
+test-security: security
 
 .PHONY: property
 property:

@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "adapter": "redisx",
+  "target_level": "L2-T2",
+  "score": 35,
+  "profiles": [
+    "unit",
+    "contract",
+    "integration"
+  ],
+  "evidence": [
+    {
+      "profile": "unit",
+      "path": "GOWORK=off go test ./...",
+      "status": "pass"
+    },
+    {
+      "profile": "contract",
+      "path": ".agent/evidence/l2/contract-report.json",
+      "status": "missing"
+    },
+    {
+      "profile": "integration",
+      "path": ".agent/evidence/l2/integration-report.json",
+      "status": "missing"
+    }
+  ]
+}

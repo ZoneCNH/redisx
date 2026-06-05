@@ -12,31 +12,31 @@ identifiers:
     kind: canceled
   - name: ErrNetwork
     id: redis.network
-    kind: connection
+    kind: network
   - name: ErrAuth
     id: redis.auth
     kind: auth
   - name: ErrReadOnly
     id: redis.read_only
-    kind: conflict
+    kind: read_only
   - name: ErrLoading
     id: redis.loading
-    kind: unavailable
+    kind: loading
   - name: ErrTryAgain
     id: redis.try_again
-    kind: unavailable
+    kind: try_again
   - name: ErrClusterMoved
     id: redis.cluster_moved
-    kind: unavailable
+    kind: cluster_moved
   - name: ErrClusterAsk
     id: redis.cluster_ask
-    kind: unavailable
+    kind: cluster_ask
   - name: ErrConnectionClosed
     id: redis.connection_closed
     kind: closed
   - name: ErrInvalidConfig
     id: redis.invalid_config
-    kind: config
+    kind: invalid_config
   - name: ErrProvider
     id: redis.provider
     kind: provider
