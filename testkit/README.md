@@ -5,6 +5,8 @@
 ## 契约
 
 - `Config(name string)` 返回带 `Name` 和 `Timeout` 的最小有效配置。
+
+- `NewFakeRedis()` 返回隔离的内存 Redis provider，可通过 `redisx.WithProvider(NewFakeRedis())` 注入客户端测试；它不读取 `REDIS_URL` / `REDIS_HOST`，也不会默认连接真实 Redis。
 - `RequireNoError(t, err)` 在 `err == nil` 时保持静默，在非空错误时终止当前测试。
 - `RequireGolden(t, path, actual)` 读取 golden 文件并比较实际输出；不一致时报告 expected / actual 上下文。
 

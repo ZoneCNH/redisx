@@ -1,55 +1,42 @@
-schema_version: 1
-contract: redisx.errors
-error_identifiers:
+schema_version: "1.0"
+name: redisx-error-taxonomy
+identifiers:
   - identifier: ErrNil
     kind: nil
     retryable: false
-    description: Requested Redis key was not found.
   - identifier: ErrTimeout
     kind: timeout
     retryable: true
-    description: Operation deadline was exceeded.
   - identifier: ErrCanceled
     kind: canceled
     retryable: false
-    description: Caller canceled the operation context.
   - identifier: ErrNetwork
-    kind: connection
+    kind: network
     retryable: true
-    description: Transport or network failure surfaced by a Redis provider.
   - identifier: ErrAuth
     kind: auth
     retryable: false
-    description: Redis authentication or authorization failure.
   - identifier: ErrReadOnly
-    kind: provider
+    kind: read_only
     retryable: true
-    description: Redis replica rejected a write with READONLY semantics.
   - identifier: ErrLoading
-    kind: unavailable
+    kind: loading
     retryable: true
-    description: Redis is loading data and cannot serve the request yet.
   - identifier: ErrTryAgain
-    kind: unavailable
+    kind: try_again
     retryable: true
-    description: Redis asked the caller to retry later.
   - identifier: ErrClusterMoved
-    kind: provider
+    kind: cluster_moved
     retryable: true
-    description: Redis Cluster MOVED redirection.
   - identifier: ErrClusterAsk
-    kind: provider
+    kind: cluster_ask
     retryable: true
-    description: Redis Cluster ASK redirection.
   - identifier: ErrConnectionClosed
     kind: closed
     retryable: false
-    description: The redisx client or provider has been closed.
   - identifier: ErrInvalidConfig
-    kind: validation
+    kind: invalid_config
     retryable: false
-    description: redisx configuration or input validation failed.
   - identifier: ErrProvider
     kind: provider
     retryable: false
-    description: Provider-specific failure that does not map to a narrower identifier.

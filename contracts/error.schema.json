@@ -23,7 +23,14 @@
                 "canceled",
                 "nil",
                 "closed",
-                "provider"
+                "provider",
+                "network",
+                "read_only",
+                "loading",
+                "try_again",
+                "cluster_moved",
+                "cluster_ask",
+                "invalid_config"
             ]
         },
         "op": {
