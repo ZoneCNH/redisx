@@ -267,7 +267,8 @@ func TestRenderTemplateGitArchivePrunesRuntimeState(t *testing.T) {
 }
 
 func TestRenderTemplateGitArchiveSkipsUntrackedFiles(t *testing.T) {
-	markerPath := filepath.Join("..", ".xlib-render-untracked-marker-test")
+	markerName := ".xlib-render-untracked-marker-test-" + strings.ReplaceAll(t.Name(), "/", "-")
+	markerPath := filepath.Join("..", markerName)
 	if err := os.WriteFile(markerPath, []byte("untracked marker"), 0o600); err != nil {
 		t.Fatalf("write untracked marker: %v", err)
 	}
@@ -295,7 +296,7 @@ func TestRenderTemplateGitArchiveSkipsUntrackedFiles(t *testing.T) {
 		t.Fatalf("render template: %v\n%s", err, output)
 	}
 
-	if _, err := os.Stat(filepath.Join(outDir, ".xlib-render-untracked-marker-test")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(outDir, markerName)); !os.IsNotExist(err) {
 		t.Fatalf("expected git archive render to skip untracked marker, stat err=%v", err)
 	}
 }
