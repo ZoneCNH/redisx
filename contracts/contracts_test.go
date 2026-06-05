@@ -33,12 +33,19 @@ func TestErrorKindContractMatchesPublicConstants(t *testing.T) {
 		string(redisx.ErrorKindUnavailable),
 		string(redisx.ErrorKindTimeout),
 		string(redisx.ErrorKindAuth),
+		string(redisx.ErrorKindNetwork),
+		string(redisx.ErrorKindReadOnly),
+		string(redisx.ErrorKindLoading),
+		string(redisx.ErrorKindTryAgain),
+		string(redisx.ErrorKindClusterMoved),
+		string(redisx.ErrorKindClusterAsk),
 		string(redisx.ErrorKindConflict),
 		string(redisx.ErrorKindRateLimit),
 		string(redisx.ErrorKindInternal),
 		string(redisx.ErrorKindCanceled),
 		string(redisx.ErrorKindNil),
 		string(redisx.ErrorKindClosed),
+		string(redisx.ErrorKindInvalidConfig),
 		string(redisx.ErrorKindProvider),
 	)
 	actual := sortedStrings(schema.Properties["kind"].Enum...)
@@ -104,6 +111,83 @@ func TestMetricsContractDocumentsPublicConstants(t *testing.T) {
 	} {
 		if !strings.Contains(text, "`"+metric+"`") {
 			t.Fatalf("metrics contract does not document %q", metric)
+		}
+	}
+}
+
+func TestRedisxConfigContractMatchesPublicOptions(t *testing.T) {
+	schema := readSchema(t, "redisx.config.schema.json")
+	requireFields(t, schema.Required, "name")
+
+	optionsType := reflect.TypeOf(redisx.Options{})
+	requireSchemaFieldMapsToStructField(t, schema, optionsType, "name", "Name", "string")
+	requireSchemaFieldMapsToStructField(t, schema, optionsType, "address", "Address", "string")
+	requireSchemaFieldMapsToStructField(t, schema, optionsType, "username", "Username", "string")
+	requireSchemaFieldMapsToStructField(t, schema, optionsType, "password", "Password", "string")
+	requireSchemaFieldMapsToStructField(t, schema, optionsType, "db", "DB", "integer")
+	requireSchemaFieldMapsToStructField(t, schema, optionsType, "tls", "TLS", "boolean")
+	requireSchemaFieldMapsToStructField(t, schema, optionsType, "connect_timeout_ms", "ConnectTimeout", "integer")
+	requireSchemaFieldMapsToStructField(t, schema, optionsType, "read_timeout_ms", "ReadTimeout", "integer")
+	requireSchemaFieldMapsToStructField(t, schema, optionsType, "write_timeout_ms", "WriteTimeout", "integer")
+	requireSchemaFieldMapsToStructField(t, schema, optionsType, "pool_size", "PoolSize", "integer")
+}
+
+func TestRedisxHealthContractMatchesPublicStatus(t *testing.T) {
+	schema := readSchema(t, "redisx.health.schema.json")
+	requireFields(t, schema.Required, "name", "component", "status", "checked_at")
+	requireSchemaFieldMapsToStructField(t, schema, reflect.TypeOf(redisx.HealthStatus{}), "component", "Component", "string")
+	requireSchemaFieldMapsToStructField(t, schema, reflect.TypeOf(redisx.HealthStatus{}), "error_class", "ErrorClass", "string")
+}
+
+func TestRedisxErrorContractDocumentsPublicIdentifiers(t *testing.T) {
+	content, err := os.ReadFile("redisx.errors.yaml")
+	if err != nil {
+		t.Fatalf("read redisx.errors.yaml: %v", err)
+	}
+	text := string(content)
+	for _, needle := range []string{
+		"ErrNil",
+		"ErrTimeout",
+		"ErrCanceled",
+		"ErrNetwork",
+		"ErrAuth",
+		"ErrReadOnly",
+		"ErrLoading",
+		"ErrTryAgain",
+		"ErrClusterMoved",
+		"ErrClusterAsk",
+		"ErrConnectionClosed",
+		"ErrInvalidConfig",
+		"ErrProvider",
+		string(redisx.ErrorKindNil),
+		string(redisx.ErrorKindNetwork),
+		string(redisx.ErrorKindClusterMoved),
+	} {
+		if !strings.Contains(text, needle) {
+			t.Fatalf("redisx error taxonomy does not document %q", needle)
+		}
+	}
+}
+
+func TestRedisxMetricsContractDocumentsPublicConstants(t *testing.T) {
+	content, err := os.ReadFile("redisx.metrics.yaml")
+	if err != nil {
+		t.Fatalf("read redisx.metrics.yaml: %v", err)
+	}
+	text := string(content)
+	for _, metric := range []string{
+		redisx.MetricRedisOperationsTotal,
+		redisx.MetricRedisOperationDurationSeconds,
+		redisx.MetricRedisErrorsTotal,
+		redisx.MetricRedisPoolConnections,
+		redisx.MetricRedisHealthStatus,
+		"op",
+		"kind",
+		"name",
+		"status",
+	} {
+		if !strings.Contains(text, metric) {
+			t.Fatalf("redisx metrics contract does not document %q", metric)
 		}
 	}
 }

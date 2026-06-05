@@ -343,14 +343,47 @@ func validateKeys(op string, keys []string) error {
 }
 
 func providerError(op string, cause error) *Error {
-	if errors.Is(cause, internalprovider.ErrNil) {
+	if errors.Is(cause, internalprovider.ErrNil) || errors.Is(cause, ErrNil) {
 		return newError(ErrorKindNil, op, cause.Error(), false, cause)
 	}
-	if errors.Is(cause, internalprovider.ErrClosed) {
+	if errors.Is(cause, internalprovider.ErrClosed) || errors.Is(cause, ErrConnectionClosed) {
 		return newError(ErrorKindClosed, op, cause.Error(), false, cause)
 	}
 	if errors.Is(cause, context.DeadlineExceeded) || errors.Is(cause, context.Canceled) {
 		return contextError(op, cause)
+	}
+	if errors.Is(cause, ErrTimeout) {
+		return newError(ErrorKindTimeout, op, cause.Error(), true, cause)
+	}
+	if errors.Is(cause, ErrCanceled) {
+		return newError(ErrorKindCanceled, op, cause.Error(), false, cause)
+	}
+	if errors.Is(cause, ErrNetwork) {
+		return newError(ErrorKindNetwork, op, cause.Error(), true, cause)
+	}
+	if errors.Is(cause, ErrAuth) {
+		return newError(ErrorKindAuth, op, cause.Error(), false, cause)
+	}
+	if errors.Is(cause, ErrReadOnly) {
+		return newError(ErrorKindReadOnly, op, cause.Error(), true, cause)
+	}
+	if errors.Is(cause, ErrLoading) {
+		return newError(ErrorKindLoading, op, cause.Error(), true, cause)
+	}
+	if errors.Is(cause, ErrTryAgain) {
+		return newError(ErrorKindTryAgain, op, cause.Error(), true, cause)
+	}
+	if errors.Is(cause, ErrClusterMoved) {
+		return newError(ErrorKindClusterMoved, op, cause.Error(), true, cause)
+	}
+	if errors.Is(cause, ErrClusterAsk) {
+		return newError(ErrorKindClusterAsk, op, cause.Error(), true, cause)
+	}
+	if errors.Is(cause, ErrInvalidConfig) {
+		return newError(ErrorKindInvalidConfig, op, cause.Error(), false, cause)
+	}
+	if errors.Is(cause, ErrProvider) {
+		return newError(ErrorKindProvider, op, cause.Error(), false, cause)
 	}
 	var parseErr *strconv.NumError
 	if errors.As(cause, &parseErr) {
