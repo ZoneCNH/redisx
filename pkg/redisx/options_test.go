@@ -6,20 +6,6 @@ import (
 	"time"
 )
 
-type recordingMetrics struct {
-	counters map[string]map[string]string
-}
-
-func (m *recordingMetrics) IncCounter(name string, labels map[string]string) {
-	if m.counters == nil {
-		m.counters = make(map[string]map[string]string)
-	}
-	m.counters[name] = labels
-}
-
-func (m *recordingMetrics) ObserveHistogram(string, float64, map[string]string) {}
-func (m *recordingMetrics) SetGauge(string, float64, map[string]string)          {}
-
 func TestOptionsValidateAndBindToConfig(t *testing.T) {
 	opts := Options{
 		Name:           "cache",
@@ -93,7 +79,7 @@ func TestFunctionalOptionsIgnoreNilAndUseInjectedValues(t *testing.T) {
 	if err := client.Ping(ctx); err != nil {
 		t.Fatalf("Ping() unexpected error: %v", err)
 	}
-	if labels := metrics.counters[MetricRedisOperationsTotal]; labels["op"] != "ping" {
-		t.Fatalf("injected metrics did not record redis operation labels: %#v", labels)
+	if !metrics.counterWithLabel(MetricRedisOperationsTotal, "op", "ping") {
+		t.Fatalf("injected metrics did not record redis operation labels: %#v", metrics.counters)
 	}
 }

@@ -10,26 +10,26 @@ type ErrorKind string
 type ErrorIdentifier string
 
 const (
-	ErrorKindConfig      ErrorKind = "config"
-	ErrorKindValidation  ErrorKind = "validation"
-	ErrorKindConnection  ErrorKind = "connection"
-	ErrorKindUnavailable ErrorKind = "unavailable"
-	ErrorKindTimeout     ErrorKind = "timeout"
-	ErrorKindAuth        ErrorKind = "auth"
-	ErrorKindNetwork     ErrorKind = "network"
-	ErrorKindReadOnly    ErrorKind = "read_only"
-	ErrorKindLoading     ErrorKind = "loading"
-	ErrorKindTryAgain    ErrorKind = "try_again"
-	ErrorKindClusterMoved ErrorKind = "cluster_moved"
-	ErrorKindClusterAsk  ErrorKind = "cluster_ask"
-	ErrorKindConflict    ErrorKind = "conflict"
-	ErrorKindRateLimit   ErrorKind = "rate_limit"
-	ErrorKindInternal    ErrorKind = "internal"
-	ErrorKindCanceled    ErrorKind = "canceled"
-	ErrorKindNil         ErrorKind = "nil"
-	ErrorKindClosed      ErrorKind = "closed"
+	ErrorKindConfig        ErrorKind = "config"
+	ErrorKindValidation    ErrorKind = "validation"
+	ErrorKindConnection    ErrorKind = "connection"
+	ErrorKindUnavailable   ErrorKind = "unavailable"
+	ErrorKindTimeout       ErrorKind = "timeout"
+	ErrorKindAuth          ErrorKind = "auth"
+	ErrorKindNetwork       ErrorKind = "network"
+	ErrorKindReadOnly      ErrorKind = "read_only"
+	ErrorKindLoading       ErrorKind = "loading"
+	ErrorKindTryAgain      ErrorKind = "try_again"
+	ErrorKindClusterMoved  ErrorKind = "cluster_moved"
+	ErrorKindClusterAsk    ErrorKind = "cluster_ask"
+	ErrorKindConflict      ErrorKind = "conflict"
+	ErrorKindRateLimit     ErrorKind = "rate_limit"
+	ErrorKindInternal      ErrorKind = "internal"
+	ErrorKindCanceled      ErrorKind = "canceled"
+	ErrorKindNil           ErrorKind = "nil"
+	ErrorKindClosed        ErrorKind = "closed"
 	ErrorKindInvalidConfig ErrorKind = "invalid_config"
-	ErrorKindProvider    ErrorKind = "provider"
+	ErrorKindProvider      ErrorKind = "provider"
 )
 
 const (
@@ -86,6 +86,42 @@ func (e *Error) Unwrap() error {
 		return nil
 	}
 	return e.Cause
+}
+
+func (e *Error) Is(target error) bool {
+	if e == nil {
+		return false
+	}
+	switch target {
+	case ErrNil:
+		return e.Kind == ErrorKindNil
+	case ErrTimeout:
+		return e.Kind == ErrorKindTimeout
+	case ErrCanceled:
+		return e.Kind == ErrorKindCanceled
+	case ErrNetwork:
+		return e.Kind == ErrorKindNetwork
+	case ErrAuth:
+		return e.Kind == ErrorKindAuth
+	case ErrReadOnly:
+		return e.Kind == ErrorKindReadOnly
+	case ErrLoading:
+		return e.Kind == ErrorKindLoading
+	case ErrTryAgain:
+		return e.Kind == ErrorKindTryAgain
+	case ErrClusterMoved:
+		return e.Kind == ErrorKindClusterMoved
+	case ErrClusterAsk:
+		return e.Kind == ErrorKindClusterAsk
+	case ErrConnectionClosed:
+		return e.Kind == ErrorKindClosed
+	case ErrInvalidConfig:
+		return e.Kind == ErrorKindInvalidConfig
+	case ErrProvider:
+		return e.Kind == ErrorKindProvider
+	default:
+		return false
+	}
 }
 
 func IsKind(err error, kind ErrorKind) bool {

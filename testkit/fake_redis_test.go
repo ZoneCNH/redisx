@@ -2,6 +2,7 @@ package testkit
 
 import (
 	"context"
+	"errors"
 	"os"
 	"testing"
 	"time"
@@ -76,7 +77,7 @@ func TestNewFakeRedisMissingKeyMapsToRedisNil(t *testing.T) {
 	}
 	defer client.Close(ctx)
 	_, err = client.Get(ctx, "missing")
-	if !redisx.IsKind(err, redisx.ErrorKindNil) {
+	if !redisx.IsKind(err, redisx.ErrorKindNil) || !errors.Is(err, redisx.ErrNil) {
 		t.Fatalf("missing key error = %v; want redis nil taxonomy", err)
 	}
 }
