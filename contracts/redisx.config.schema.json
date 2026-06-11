@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zonecnh.github.io/redisx/contracts/redisx.config.schema.json",
+  "title": "redisx.Options",
+  "type": "object",
+  "required": ["config"],
+  "properties": {
+    "config": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string" },
+        "timeout_ms": { "type": "integer", "minimum": 0 },
+        "secret": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "provider": { "type": "string", "enum": ["in_memory", "custom"] },
+    "metrics": { "type": "string", "enum": ["noop", "custom"] }
+  },
+  "additionalProperties": false
+}

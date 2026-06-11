@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0",
+  "adapter": "redisx",
+  "rows": [
+    {
+      "requirement": "adapter_identity",
+      "contract_pack": "common",
+      "profile": "unit",
+      "evidence": "go.mod; .agent/l2-capabilities.yaml",
+      "status": "pass",
+      "notes": "Module path and adapter identity are fixed for redisx."
+    },
+    {
+      "requirement": "lifecycle",
+      "contract_pack": "common",
+      "profile": "unit",
+      "evidence": "pkg/redisx/client.go; pkg/redisx/health.go",
+      "status": "pass",
+      "notes": "Local tests cover construction, close behavior, ping, and health."
+    },
+    {
+      "requirement": "error_mapping",
+      "contract_pack": "common",
+      "profile": "unit",
+      "evidence": "contracts/redisx.errors.yaml; pkg/redisx/errors_test.go",
+      "status": "pass",
+      "notes": "Stable Redis error identifiers and ErrorKind mapping are covered locally."
+    },
+    {
+      "requirement": "kv-basic",
+      "contract_pack": "kv",
+      "profile": "unit",
+      "evidence": "testkit/fake_redis.go; testkit/fake_redis_test.go",
+      "status": "pass",
+      "notes": "Fake provider covers local get/set/delete/exists style behavior."
+    },
+    {
+      "requirement": "kv-contract",
+      "contract_pack": "kv",
+      "profile": "contract",
+      "evidence": ".agent/evidence/l2/contract-report.json",
+      "status": "missing",
+      "notes": "Executable testkitx contract-pack evidence is not generated yet."
+    },
+    {
+      "requirement": "ttl-contract",
+      "contract_pack": "ttl",
+      "profile": "contract",
+      "evidence": ".agent/evidence/l2/contract-report.json",
+      "status": "missing",
+      "notes": "TTL contract-pack evidence is not generated yet."
+    },
+    {
+      "requirement": "ttl-integration",
+      "contract_pack": "ttl",
+      "profile": "integration",
+      "evidence": ".agent/evidence/l2/integration-report.json",
+      "status": "missing",
+      "notes": "Provider-backed TTL integration evidence is not generated yet."
+    },
+    {
+      "requirement": "pool-contract",
+      "contract_pack": "pool",
+      "profile": "contract",
+      "evidence": ".agent/evidence/l2/contract-report.json",
+      "status": "missing",
+      "notes": "Pool contract is declared for standard alignment; provider-backed behavior is pending."
+    }
+  ]
+}

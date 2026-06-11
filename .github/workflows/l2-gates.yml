@@ -1,0 +1,19 @@
+name: L2 Gates
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  l2-standards-shape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+      - name: Check L2 manifest and evidence shape
+        run: GOWORK=off make l2-check
+      - name: Check L2 local contract snapshot
+        run: GOWORK=off make test-contract

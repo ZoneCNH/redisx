@@ -1,0 +1,3 @@
+schema_version: "1.0"
+canonical_module: "github.com/ZoneCNH/redisx"
+legacy_names: ["redisx", "foundationx"]

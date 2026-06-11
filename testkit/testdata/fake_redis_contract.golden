@@ -1,0 +1,26 @@
+{
+  "ping": "ok",
+  "get": "one",
+  "mget": [
+    {
+      "value": "one",
+      "found": true
+    },
+    {
+      "value": "two",
+      "found": true
+    },
+    {
+      "value": "",
+      "found": false
+    }
+  ],
+  "exists": 2,
+  "expire": true,
+  "ttl": "-1s",
+  "incr": 2,
+  "decr": 1,
+  "deleted": 2,
+  "missing_ttl": "-2s",
+  "closed_error": true
+}

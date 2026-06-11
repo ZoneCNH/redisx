@@ -1,0 +1,42 @@
+schema_version: "1.0"
+taxonomy: redisx.errors
+identifiers:
+  - name: ErrNil
+    id: redis.nil
+    kind: nil
+  - name: ErrTimeout
+    id: redis.timeout
+    kind: timeout
+  - name: ErrCanceled
+    id: redis.canceled
+    kind: canceled
+  - name: ErrNetwork
+    id: redis.network
+    kind: network
+  - name: ErrAuth
+    id: redis.auth
+    kind: auth
+  - name: ErrReadOnly
+    id: redis.read_only
+    kind: read_only
+  - name: ErrLoading
+    id: redis.loading
+    kind: loading
+  - name: ErrTryAgain
+    id: redis.try_again
+    kind: try_again
+  - name: ErrClusterMoved
+    id: redis.cluster_moved
+    kind: cluster_moved
+  - name: ErrClusterAsk
+    id: redis.cluster_ask
+    kind: cluster_ask
+  - name: ErrConnectionClosed
+    id: redis.connection_closed
+    kind: closed
+  - name: ErrInvalidConfig
+    id: redis.invalid_config
+    kind: invalid_config
+  - name: ErrProvider
+    id: redis.provider
+    kind: provider
