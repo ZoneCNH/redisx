@@ -6,14 +6,14 @@ run_go_integration() {
 }
 
 cleanup_container=""
-cleanup_data_dir=""
+cleanup_volume=""
 
 cleanup_docker_integration() {
   if [ -n "$cleanup_container" ]; then
     docker rm -f "$cleanup_container" >/dev/null 2>&1 || true
   fi
-  if [ -n "$cleanup_data_dir" ]; then
-    rm -rf "$cleanup_data_dir"
+  if [ -n "$cleanup_volume" ]; then
+    docker volume rm "$cleanup_volume" >/dev/null 2>&1 || true
   fi
 }
 
@@ -32,21 +32,6 @@ wait_for_container_redis() {
   return 1
 }
 
-wait_for_host_port() {
-  local port="$1"
-  local attempt
-
-  for attempt in $(seq 1 30); do
-    if (echo >"/dev/tcp/127.0.0.1/$port") >/dev/null 2>&1; then
-      return 0
-    fi
-    sleep 1
-  done
-
-  echo "Redis host port did not become ready" >&2
-  return 1
-}
-
 run_docker_integration() {
   if ! command -v docker >/dev/null 2>&1; then
     echo "Docker Redis integration requested but docker is not installed" >&2
@@ -57,34 +42,33 @@ run_docker_integration() {
     return 1
   fi
 
-  local data_dir container port marker actual
-  data_dir="$(mktemp -d)"
+  local volume container addr marker actual
+  volume="redisx-integration-$RANDOM-$$"
   container="redisx-integration-$RANDOM-$$"
   cleanup_container="$container"
-  cleanup_data_dir="$data_dir"
+  cleanup_volume="$volume"
   trap cleanup_docker_integration EXIT
+  docker volume create "$volume" >/dev/null
 
   docker run -d --rm \
     --name "$container" \
-    -p 127.0.0.1::6379 \
-    -v "$data_dir:/data" \
+    -v "$volume:/data" \
     redis:7-alpine \
     redis-server --appendonly yes --save 1 1 >/dev/null
 
   wait_for_container_redis "$container"
-  port="$(docker port "$container" 6379/tcp | awk -F: 'NR == 1 {print $NF}')"
-  if [ -z "$port" ]; then
-    echo "Could not determine Redis container host port" >&2
+  addr="$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$container"):6379"
+  if [ "$addr" = ":6379" ]; then
+    echo "Could not determine Redis container address" >&2
     return 1
   fi
-  wait_for_host_port "$port"
 
   marker="redisx-persistence-$RANDOM-$$"
   docker exec "$container" redis-cli SET redisx:persistence:marker "$marker" >/dev/null
   docker exec "$container" redis-cli SAVE >/dev/null
   docker restart "$container" >/dev/null
   wait_for_container_redis "$container"
-  wait_for_host_port "$port"
+  addr="$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$container"):6379"
 
   actual="$(docker exec "$container" redis-cli GET redisx:persistence:marker)"
   if [ "$actual" != "$marker" ]; then
@@ -93,7 +77,7 @@ run_docker_integration() {
   fi
 
   REDISX_INTEGRATION=1 \
-    REDISX_REDIS_ADDR="127.0.0.1:$port" \
+    REDISX_REDIS_ADDR="$addr" \
     REDISX_REDIS_DB="${REDISX_REDIS_DB:-0}" \
     GOWORK="${GOWORK:-off}" \
     go test ./pkg/redisx -run TestRedisIntegrationWithEnv -count=1
