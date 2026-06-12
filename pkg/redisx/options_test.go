@@ -33,16 +33,16 @@ func TestNewWithOptionsUsesDefaultInMemoryProvider(t *testing.T) {
 	}
 }
 
-func TestNewUsesRedisProviderWhenConfigured(t *testing.T) {
-	client, err := New(context.Background(), Config{
+func TestNewWithOptionsUsesRedisProviderWhenConfigured(t *testing.T) {
+	client, err := NewWithOptions(context.Background(), Options{Config: Config{
 		Name: "redisx-options-redis",
 		Redis: RedisConfig{
 			Addr:        "127.0.0.1:0",
 			DialTimeout: time.Second,
 		},
-	})
+	}})
 	if err != nil {
-		t.Fatalf("new with redis config: %v", err)
+		t.Fatalf("new with options redis config: %v", err)
 	}
 	if err := client.Close(context.Background()); err != nil {
 		t.Fatalf("close redis-configured client: %v", err)
