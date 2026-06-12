@@ -117,6 +117,46 @@ func TestClientExpirationAndCounters(t *testing.T) {
 		t.Fatalf("expected redis operation metric, got %#v", metrics.counters)
 	}
 
+	if err := client.Set(context.Background(), "non-numeric", "not-an-integer", 0); err != nil {
+		t.Fatalf("set non-numeric: %v", err)
+	}
+	if _, err := client.Incr(context.Background(), "non-numeric"); !IsKind(err, ErrorKindValidation) {
+		t.Fatalf("incr non-numeric kind = %v, want validation", err)
+	}
+	if _, err := client.Decr(context.Background(), "non-numeric"); !IsKind(err, ErrorKindValidation) {
+		t.Fatalf("decr non-numeric kind = %v, want validation", err)
+	}
+
+	if err := client.Set(context.Background(), "permanent", "value", 0); err != nil {
+		t.Fatalf("set permanent: %v", err)
+	}
+	ttl, err := client.TTL(context.Background(), "permanent")
+	if err != nil {
+		t.Fatalf("ttl permanent: %v", err)
+	}
+	if ttl != -time.Second {
+		t.Fatalf("ttl permanent = %v, want -1s", ttl)
+	}
+
+	if err := client.Set(context.Background(), "direct-ttl", "value", time.Minute); err != nil {
+		t.Fatalf("set direct ttl: %v", err)
+	}
+	ttl, err = client.TTL(context.Background(), "direct-ttl")
+	if err != nil {
+		t.Fatalf("ttl direct ttl: %v", err)
+	}
+	if ttl <= 0 {
+		t.Fatalf("ttl direct ttl = %v, want positive", ttl)
+	}
+
+	ttl, err = client.TTL(context.Background(), "missing")
+	if err != nil {
+		t.Fatalf("ttl missing: %v", err)
+	}
+	if ttl != -2*time.Second {
+		t.Fatalf("ttl missing = %v, want -2s", ttl)
+	}
+
 	if err := client.Set(context.Background(), "ttl", "value", 0); err != nil {
 		t.Fatalf("set ttl: %v", err)
 	}
@@ -127,7 +167,7 @@ func TestClientExpirationAndCounters(t *testing.T) {
 	if !ok {
 		t.Fatal("expected expire to update existing key")
 	}
-	ttl, err := client.TTL(context.Background(), "ttl")
+	ttl, err = client.TTL(context.Background(), "ttl")
 	if err != nil {
 		t.Fatalf("ttl: %v", err)
 	}

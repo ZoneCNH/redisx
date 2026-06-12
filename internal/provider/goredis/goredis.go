@@ -31,6 +31,11 @@ type Provider struct {
 
 var _ provider.Provider = (*Provider)(nil)
 
+const (
+	redisTTLNoExpire = -time.Nanosecond
+	redisTTLMissing  = -2 * time.Nanosecond
+)
+
 func New(cfg Config) (*Provider, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
@@ -170,7 +175,10 @@ func (p *Provider) TTL(ctx context.Context, key string) (time.Duration, error) {
 		return 0, err
 	}
 	ttl, err := client.TTL(ctx, key).Result()
-	return ttl, mapError(err)
+	if err := mapError(err); err != nil {
+		return 0, err
+	}
+	return normalizeTTL(ttl), nil
 }
 
 func (p *Provider) MGet(ctx context.Context, keys ...string) ([]provider.Value, error) {
@@ -255,6 +263,17 @@ func contextError(ctx context.Context) error {
 	return ctx.Err()
 }
 
+func normalizeTTL(ttl time.Duration) time.Duration {
+	switch ttl {
+	case redisTTLNoExpire:
+		return -time.Second
+	case redisTTLMissing:
+		return -2 * time.Second
+	default:
+		return ttl
+	}
+}
+
 func mapError(err error) error {
 	if err == nil {
 		return nil
@@ -279,6 +298,9 @@ func mapError(err error) error {
 		strings.Contains(message, "invalid username-password pair"),
 		strings.Contains(message, "auth"):
 		return fmt.Errorf("%w: %v", provider.ErrAuth, err)
+	case strings.Contains(message, "not an integer"),
+		strings.Contains(message, "out of range"):
+		return fmt.Errorf("%w: %v", provider.ErrInvalidInt, err)
 	case strings.Contains(message, "readonly"):
 		return fmt.Errorf("%w: %v", provider.ErrReadOnly, err)
 	case strings.Contains(message, "misconf"),

@@ -12,6 +12,7 @@ var (
 	ErrTimeout      = errors.New("redis timeout")
 	ErrNetwork      = errors.New("redis network")
 	ErrAuth         = errors.New("redis auth")
+	ErrInvalidInt   = errors.New("redis value is not an integer")
 	ErrReadOnly     = errors.New("redis read only")
 	ErrLoading      = errors.New("redis loading")
 	ErrTryAgain     = errors.New("redis try again")

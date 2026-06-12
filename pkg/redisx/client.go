@@ -394,6 +394,9 @@ func providerError(op string, cause error) *Error {
 	if errors.Is(cause, ErrAuth) {
 		return newError(ErrorKindAuth, op, cause.Error(), false, cause)
 	}
+	if errors.Is(cause, internalprovider.ErrInvalidInt) {
+		return newError(ErrorKindValidation, op, "value is not an integer", false, cause)
+	}
 	if errors.Is(cause, ErrReadOnly) {
 		return newError(ErrorKindReadOnly, op, cause.Error(), true, cause)
 	}
