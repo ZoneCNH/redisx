@@ -78,12 +78,22 @@ func TestConfigContractMatchesPublicConfig(t *testing.T) {
 	requireSchemaFieldMapsToStructField(t, schema, configType, "name", "Name", "string")
 	requireSchemaFieldMapsToStructField(t, schema, configType, "timeout_ms", "Timeout", "integer")
 	requireSchemaFieldMapsToStructField(t, schema, configType, "secret", "Secret", "string")
+	requireSchemaFieldMapsToStructField(t, schema, configType, "redis", "Redis", "object")
 
 	if timeoutField, ok := configType.FieldByName("Timeout"); !ok || timeoutField.Type != reflect.TypeOf(time.Duration(0)) {
 		t.Fatalf("Config.Timeout must remain time.Duration, got %v", timeoutField.Type)
 	}
+	if redisField, ok := configType.FieldByName("Redis"); !ok || redisField.Type != reflect.TypeOf(redisx.RedisConfig{}) {
+		t.Fatalf("Config.Redis must remain redisx.RedisConfig, got %v", redisField.Type)
+	}
 	if minimum := schema.Properties["timeout_ms"].Minimum; minimum == nil || *minimum != 0 {
 		t.Fatalf("timeout_ms must define minimum 0, got %#v", minimum)
+	}
+	text := readText(t, "config.schema.json")
+	for _, needle := range redisConfigSchemaMarkers() {
+		if !strings.Contains(text, needle) {
+			t.Fatalf("config contract missing marker %s", needle)
+		}
 	}
 }
 
@@ -115,7 +125,6 @@ func TestMetricsContractDocumentsPublicConstants(t *testing.T) {
 	}
 }
 
-
 func TestRedisxConfigContractMatchesPublicOptions(t *testing.T) {
 	schema := readSchema(t, "redisx.config.schema.json")
 	requireFields(t, schema.Required, "config")
@@ -131,10 +140,25 @@ func TestRedisxConfigContractMatchesPublicOptions(t *testing.T) {
 	}
 
 	text := readText(t, "redisx.config.schema.json")
-	for _, needle := range []string{"\"name\"", "\"timeout_ms\"", "\"secret\"", "\"in_memory\"", "\"custom\""} {
+	for _, needle := range append([]string{"\"name\"", "\"timeout_ms\"", "\"secret\"", "\"in_memory\"", "\"redis\"", "\"custom\""}, redisConfigSchemaMarkers()...) {
 		if !strings.Contains(text, needle) {
 			t.Fatalf("redisx config contract missing marker %s", needle)
 		}
+	}
+}
+
+func redisConfigSchemaMarkers() []string {
+	return []string{
+		"\"addr\"",
+		"\"username\"",
+		"\"password\"",
+		"\"db\"",
+		"\"dial_timeout_ms\"",
+		"\"read_timeout_ms\"",
+		"\"write_timeout_ms\"",
+		"\"pool_size\"",
+		"\"min_idle_conns\"",
+		"\"max_retries\"",
 	}
 }
 

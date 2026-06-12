@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ZoneCNH/redisx/internal/provider"
+	redisprovider "github.com/ZoneCNH/redisx/internal/provider/goredis"
 )
 
 type Option func(*options)
@@ -18,14 +19,14 @@ type Options struct {
 }
 
 type options struct {
-	metrics  Metrics
-	provider Provider
+	metrics     Metrics
+	provider    Provider
+	providerSet bool
 }
 
 func defaultOptions() options {
 	return options{
-		metrics:  NoopMetrics{},
-		provider: provider.NewMemory(),
+		metrics: NoopMetrics{},
 	}
 }
 
@@ -50,6 +51,27 @@ func (o Options) clientOptions() []Option {
 	return clientOptions
 }
 
+func (o options) providerForConfig(cfg Config) (Provider, error) {
+	if o.providerSet {
+		return o.provider, nil
+	}
+	if cfg.Redis.Enabled() {
+		return redisprovider.New(redisprovider.Config{
+			Addr:         cfg.Redis.Addr,
+			Username:     cfg.Redis.Username,
+			Password:     cfg.Redis.Password,
+			DB:           cfg.Redis.DB,
+			DialTimeout:  cfg.Redis.DialTimeout,
+			ReadTimeout:  cfg.Redis.ReadTimeout,
+			WriteTimeout: cfg.Redis.WriteTimeout,
+			PoolSize:     cfg.Redis.PoolSize,
+			MinIdleConns: cfg.Redis.MinIdleConns,
+			MaxRetries:   cfg.Redis.MaxRetries,
+		})
+	}
+	return provider.NewMemory(), nil
+}
+
 func WithMetrics(metrics Metrics) Option {
 	return func(o *options) {
 		if metrics != nil {
@@ -62,6 +84,7 @@ func WithProvider(provider Provider) Option {
 	return func(o *options) {
 		if provider != nil {
 			o.provider = provider
+			o.providerSet = true
 		}
 	}
 }

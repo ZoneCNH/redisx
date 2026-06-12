@@ -11,11 +11,27 @@
       "properties": {
         "name": { "type": "string" },
         "timeout_ms": { "type": "integer", "minimum": 0 },
-        "secret": { "type": "string" }
+        "secret": { "type": "string" },
+        "redis": {
+          "type": "object",
+          "properties": {
+            "addr": { "type": "string" },
+            "username": { "type": "string" },
+            "password": { "type": "string" },
+            "db": { "type": "integer", "minimum": 0 },
+            "dial_timeout_ms": { "type": "integer", "minimum": 0 },
+            "read_timeout_ms": { "type": "integer", "minimum": 0 },
+            "write_timeout_ms": { "type": "integer", "minimum": 0 },
+            "pool_size": { "type": "integer", "minimum": 0 },
+            "min_idle_conns": { "type": "integer", "minimum": 0 },
+            "max_retries": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        }
       },
       "additionalProperties": false
     },
-    "provider": { "type": "string", "enum": ["in_memory", "custom"] },
+    "provider": { "type": "string", "enum": ["in_memory", "redis", "custom"] },
     "metrics": { "type": "string", "enum": ["noop", "custom"] }
   },
   "additionalProperties": false
