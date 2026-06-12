@@ -48,7 +48,21 @@ func TestClientKeyValueOperations(t *testing.T) {
 	if count != 2 {
 		t.Fatalf("exists count = %d, want 2", count)
 	}
-	deleted, err := client.Del(context.Background(), "alpha", "missing")
+	deleted, err := client.Del(context.Background(), "beta", "gamma", "missing")
+	if err != nil {
+		t.Fatalf("del beta gamma missing: %v", err)
+	}
+	if deleted != 2 {
+		t.Fatalf("deleted beta gamma missing = %d, want 2", deleted)
+	}
+	count, err = client.Exists(context.Background(), "alpha", "beta", "gamma", "missing")
+	if err != nil {
+		t.Fatalf("exists after del: %v", err)
+	}
+	if count != 1 {
+		t.Fatalf("exists after del count = %d, want 1", count)
+	}
+	deleted, err = client.Del(context.Background(), "alpha", "missing")
 	if err != nil {
 		t.Fatalf("del: %v", err)
 	}
