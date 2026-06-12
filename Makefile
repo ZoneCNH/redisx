@@ -244,7 +244,7 @@ test-contract:
 
 .PHONY: test-integration
 test-integration:
-	./scripts/run_redis_integration.sh
+	GOWORK=off go test ./pkg/redisx -run 'TestRedisIntegration' -count=1
 
 .PHONY: test-chaos
 test-chaos:

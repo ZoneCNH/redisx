@@ -13,30 +13,10 @@ func TestRedisIntegrationWithEnv(t *testing.T) {
 		t.Skip("set REDISX_INTEGRATION=1 with REDISX_REDIS_* to run real Redis integration")
 	}
 
-	db, err := strconv.Atoi(envOrDefault("REDISX_REDIS_DB", "0"))
-	if err != nil {
-		t.Fatalf("parse REDISX_REDIS_DB: %v", err)
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	client, err := NewWithOptions(ctx, Options{Config: Config{
-		Name: "redisx-integration",
-		Redis: RedisConfig{
-			Addr:         os.Getenv("REDISX_REDIS_ADDR"),
-			Username:     os.Getenv("REDISX_REDIS_USERNAME"),
-			Password:     os.Getenv("REDISX_REDIS_PASSWORD"),
-			DB:           db,
-			DialTimeout:  time.Second,
-			ReadTimeout:  time.Second,
-			WriteTimeout: time.Second,
-			MaxRetries:   1,
-		},
-	}})
-	if err != nil {
-		t.Fatalf("new redis client with options: %v", err)
-	}
+	client := newRedisIntegrationClient(t, ctx, "redisx-integration")
 
 	prefix := "redisx:integration:" + strconv.FormatInt(time.Now().UnixNano(), 10)
 	alpha := prefix + ":alpha"
@@ -192,6 +172,107 @@ func TestRedisIntegrationWithEnv(t *testing.T) {
 	closed = true
 	if err := client.Ping(ctx); !IsKind(err, ErrorKindClosed) {
 		t.Fatalf("ping after close kind = %v, want closed", err)
+	}
+}
+
+func TestRedisIntegrationPersistenceRecoveryWithEnv(t *testing.T) {
+	if os.Getenv("REDISX_INTEGRATION") != "1" {
+		t.Skip("set REDISX_INTEGRATION=1 with REDISX_REDIS_* to run real Redis integration")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	key := "redisx:integration:persistence:" + strconv.FormatInt(time.Now().UnixNano(), 10)
+	value := "survives-client-reconnect"
+
+	writer := newRedisIntegrationClient(t, ctx, "redisx-integration-persistence-writer")
+	writerClosed := false
+	t.Cleanup(func() {
+		if writerClosed {
+			return
+		}
+		_ = writer.Close(context.Background())
+	})
+
+	if err := writer.Ping(ctx); err != nil {
+		skipIfRedisEnvironmentBlocked(t, "ping", err)
+		t.Fatalf("ping writer: %v", err)
+	}
+	if err := writer.Set(ctx, key, value, 0); err != nil {
+		skipIfRedisEnvironmentBlocked(t, "set persistence key", err)
+		t.Fatalf("set persistence key: %v", err)
+	}
+	ttl, err := writer.TTL(ctx, key)
+	if err != nil {
+		t.Fatalf("ttl persistence key before reconnect: %v", err)
+	}
+	if ttl != -time.Second {
+		t.Fatalf("ttl persistence key before reconnect = %v, want -1s", ttl)
+	}
+	if err := writer.Close(ctx); err != nil {
+		t.Fatalf("close writer: %v", err)
+	}
+	writerClosed = true
+
+	reader := newRedisIntegrationClient(t, ctx, "redisx-integration-persistence-reader")
+	t.Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cleanupCancel()
+		_, _ = reader.Del(cleanupCtx, key)
+		_ = reader.Close(context.Background())
+	})
+
+	if err := reader.Ping(ctx); err != nil {
+		skipIfRedisEnvironmentBlocked(t, "ping after reconnect", err)
+		t.Fatalf("ping reader: %v", err)
+	}
+	got, err := reader.Get(ctx, key)
+	if err != nil {
+		t.Fatalf("get persistence key after reconnect: %v", err)
+	}
+	if got != value {
+		t.Fatalf("persistence key after reconnect = %q, want %q", got, value)
+	}
+	ttl, err = reader.TTL(ctx, key)
+	if err != nil {
+		t.Fatalf("ttl persistence key after reconnect: %v", err)
+	}
+	if ttl != -time.Second {
+		t.Fatalf("ttl persistence key after reconnect = %v, want -1s", ttl)
+	}
+}
+
+func newRedisIntegrationClient(t *testing.T, ctx context.Context, name string) *Client {
+	t.Helper()
+
+	client, err := NewWithOptions(ctx, Options{Config: redisIntegrationConfig(t, name)})
+	if err != nil {
+		t.Fatalf("new redis client with options: %v", err)
+	}
+	return client
+}
+
+func redisIntegrationConfig(t *testing.T, name string) Config {
+	t.Helper()
+
+	db, err := strconv.Atoi(envOrDefault("REDISX_REDIS_DB", "0"))
+	if err != nil {
+		t.Fatalf("parse REDISX_REDIS_DB: %v", err)
+	}
+
+	return Config{
+		Name: name,
+		Redis: RedisConfig{
+			Addr:         os.Getenv("REDISX_REDIS_ADDR"),
+			Username:     os.Getenv("REDISX_REDIS_USERNAME"),
+			Password:     os.Getenv("REDISX_REDIS_PASSWORD"),
+			DB:           db,
+			DialTimeout:  time.Second,
+			ReadTimeout:  time.Second,
+			WriteTimeout: time.Second,
+			MaxRetries:   1,
+		},
 	}
 }
 
