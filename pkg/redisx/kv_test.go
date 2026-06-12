@@ -34,6 +34,13 @@ func TestClientKeyValueOperations(t *testing.T) {
 	if err := client.MSet(context.Background(), map[string]string{"beta": "2", "gamma": "3"}); err != nil {
 		t.Fatalf("mset: %v", err)
 	}
+	values, err = client.MGet(context.Background(), "beta", "missing", "gamma")
+	if err != nil {
+		t.Fatalf("mget after mset: %v", err)
+	}
+	if len(values) != 3 || !values[0].Found || values[0].Value != "2" || values[1].Found || !values[2].Found || values[2].Value != "3" {
+		t.Fatalf("unexpected mget after mset values: %#v", values)
+	}
 	count, err := client.Exists(context.Background(), "alpha", "beta", "missing")
 	if err != nil {
 		t.Fatalf("exists: %v", err)
