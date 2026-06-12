@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "adapter": "redisx",
+  "profile": "integration",
+  "status": "pass",
+  "env_gate": "REDISX_INTEGRATION=1",
+  "credential_source": "external environment only; values are not committed",
+  "command": "GOWORK=off REDISX_INTEGRATION=1 go test ./pkg/redisx -run TestRedisIntegrationWithEnv -count=1",
+  "scenarios": [
+    {
+      "name": "real_redis_ping_health",
+      "status": "pass"
+    },
+    {
+      "name": "kv_ttl_multi_counter_delete",
+      "status": "pass"
+    },
+    {
+      "name": "client_reconnect_persistence",
+      "status": "pass",
+      "notes": "A second client reads a non-TTL key written by the first client before cleanup."
+    },
+    {
+      "name": "server_restart_recovery",
+      "status": "not_applicable",
+      "notes": "External dev Redis restart is not performed by this env-gated test; local Docker restart path is documented in test/integration/README.md."
+    }
+  ],
+  "runtime": "real Redis selected by REDISX_REDIS_* at test time",
+  "data_hygiene": "test keys are nonce-prefixed and deleted during cleanup"
+}

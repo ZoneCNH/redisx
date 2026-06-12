@@ -22,8 +22,8 @@ capabilities:
     status: implemented
   - name: configuration
     family: common
-    status: declared
-    notes: Current public config remains template-level; provider-specific connection config is not exposed.
+    status: implemented
+    notes: Public RedisConfig exposes address, username, masked password handling, DB, timeouts, pool size, min idle, and retry controls.
   - name: get
     family: key_value
     status: implemented
@@ -52,21 +52,24 @@ capabilities:
     notes: No public persist API exists in the current surface.
   - name: expiration_events
     family: key_value
-    status: declared
-    notes: Requires provider-backed contract evidence.
+    status: unsupported
+    notes: No public expiration event subscription API exists in the current surface.
   - name: pool_limits
     family: common
-    status: declared
-    notes: Pool contract is declared for standard alignment; provider-backed pool behavior is pending.
+    status: implemented
+    notes: Public pool size and min idle settings are validated and passed through to go-redis; exhaustion and recycle behavior are not claimed.
   - name: acquisition_timeout
     family: common
     status: declared
+    notes: Public dial/read/write timeouts exist; no dedicated pool acquisition timeout is claimed.
   - name: recycle
     family: common
-    status: declared
+    status: unsupported
+    notes: No public connection recycle control exists in the current surface.
   - name: idle_cleanup
     family: common
-    status: declared
+    status: unsupported
+    notes: No public idle cleanup policy control exists in the current surface.
 contract_packs:
   - common
   - kv

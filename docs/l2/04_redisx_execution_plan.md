@@ -59,12 +59,12 @@ kv.validation.empty_key
 kv.context_cancel
 ttl.expire
 ttl.not_found_after_expire
-lock.no_foreign_release
-stream.read_group
-pubsub.publish_subscribe
-chaos.redis.restart_recovery
-chaos.redis.pool_exhaustion
+pool.config_passthrough
+integration.redis.ping_health
+integration.redis.client_reconnect_persistence
 ```
+
+L2-T2 当前只声明 common / kv / ttl / pool 的本地证据。Lock、Stream、PubSub、server restart recovery、pool exhaustion 属于 L2-T3+ 扩展或 chaos profile，未在当前 readiness 中声明通过。
 
 ## 5. 错误映射重点
 
@@ -136,10 +136,12 @@ make release-check
 make l2-plan
 make test-unit
 make test-contract
-make test-integration
-make evidence
+REDISX_INTEGRATION=1 GOWORK=off make test-integration
+make l2-check
 make release-check
 ```
+
+`make test-integration` 默认在未设置 `REDISX_INTEGRATION=1` 时跳过真实 Redis 连接；release 或人工验收应通过外部环境注入 `REDISX_REDIS_*` 后执行。
 
 
 ## Evidence 标准
@@ -183,7 +185,7 @@ DONE with evidence:
 
 ```text
 L2-T2:
-  common + 主能力族 + integration + release-readiness
+  common + kv + ttl + pool config pass-through + env-gated integration + release-readiness
 
 L2-T3:
   chaos + benchmark + adoption + layer guard + secret scan

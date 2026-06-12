@@ -3,6 +3,7 @@ package contract
 import (
 	"encoding/json"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -92,18 +93,24 @@ func TestL2ReleaseReadinessSnapshot(t *testing.T) {
 		}
 	}
 
+	if readiness.Score < 75 {
+		t.Fatalf("readiness score = %d, want >= 75", readiness.Score)
+	}
+
 	statuses := map[string]string{}
 	for _, evidence := range readiness.Evidence {
 		statuses[evidence.Profile] = evidence.Status
+		if evidence.Status == "pass" && strings.HasPrefix(evidence.Path, ".agent/") {
+			evidencePath := filepath.Join("..", "..", filepath.FromSlash(evidence.Path))
+			if _, err := os.Stat(evidencePath); err != nil {
+				t.Fatalf("pass evidence %q for profile %q must exist: %v", evidence.Path, evidence.Profile, err)
+			}
+		}
 	}
-	if statuses["unit"] != "pass" {
-		t.Fatalf("unit evidence status = %q, want pass", statuses["unit"])
-	}
-	if statuses["contract"] != "missing" {
-		t.Fatalf("contract evidence status = %q, want missing until contract report exists", statuses["contract"])
-	}
-	if statuses["integration"] != "missing" {
-		t.Fatalf("integration evidence status = %q, want missing until integration report exists", statuses["integration"])
+	for _, profile := range []string{"unit", "contract", "integration"} {
+		if statuses[profile] != "pass" {
+			t.Fatalf("%s evidence status = %q, want pass", profile, statuses[profile])
+		}
 	}
 }
 

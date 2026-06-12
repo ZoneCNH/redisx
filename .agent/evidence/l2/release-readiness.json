@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "adapter": "redisx",
   "target_level": "L2-T2",
-  "score": 35,
+  "score": 86,
   "profiles": [
     "unit",
     "contract",
@@ -17,12 +17,12 @@
     {
       "profile": "contract",
       "path": ".agent/evidence/l2/contract-report.json",
-      "status": "missing"
+      "status": "pass"
     },
     {
       "profile": "integration",
       "path": ".agent/evidence/l2/integration-report.json",
-      "status": "missing"
+      "status": "pass"
     }
   ]
 }
