@@ -21,7 +21,7 @@ func TestRedisIntegrationWithEnv(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	client, err := New(ctx, Config{
+	client, err := NewWithOptions(ctx, Options{Config: Config{
 		Name: "redisx-integration",
 		Redis: RedisConfig{
 			Addr:         os.Getenv("REDISX_REDIS_ADDR"),
@@ -33,9 +33,9 @@ func TestRedisIntegrationWithEnv(t *testing.T) {
 			WriteTimeout: time.Second,
 			MaxRetries:   1,
 		},
-	})
+	}})
 	if err != nil {
-		t.Fatalf("new redis client: %v", err)
+		t.Fatalf("new redis client with options: %v", err)
 	}
 
 	prefix := "redisx:integration:" + strconv.FormatInt(time.Now().UnixNano(), 10)
