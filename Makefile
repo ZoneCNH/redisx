@@ -244,7 +244,7 @@ test-contract:
 
 .PHONY: test-integration
 test-integration:
-	@echo "L2 integration runner pending; see $(L2_EVIDENCE_DIR)/release-readiness.json"
+	./scripts/run_redis_integration.sh
 
 .PHONY: test-chaos
 test-chaos:
