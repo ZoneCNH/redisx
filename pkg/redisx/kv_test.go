@@ -53,6 +53,21 @@ func TestClientKeyValueOperations(t *testing.T) {
 	}
 }
 
+func TestClientPingRecordsOperationMetric(t *testing.T) {
+	metrics := &recordingMetrics{}
+	client, err := New(context.Background(), Config{Name: "redisx"}, WithMetrics(metrics))
+	if err != nil {
+		t.Fatalf("new client: %v", err)
+	}
+
+	if err := client.Ping(context.Background()); err != nil {
+		t.Fatalf("ping: %v", err)
+	}
+	if !metrics.counterWithLabel(MetricRedisOperationsTotal, "op", "ping") {
+		t.Fatalf("expected ping operation metric, got %#v", metrics.counters)
+	}
+}
+
 func TestClientExpirationAndCounters(t *testing.T) {
 	metrics := &recordingMetrics{}
 	client, err := New(context.Background(), Config{Name: "redisx"}, WithMetrics(metrics))
