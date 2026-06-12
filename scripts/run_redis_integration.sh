@@ -52,6 +52,7 @@ run_docker_integration() {
 
   docker run -d --rm \
     --name "$container" \
+    -p 127.0.0.1::6379 \
     -v "$volume:/data" \
     redis:7-alpine \
     redis-server --appendonly yes --save 1 1 >/dev/null
