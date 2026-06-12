@@ -113,6 +113,14 @@ func TestClientExpirationAndCounters(t *testing.T) {
 	if ttl <= 0 {
 		t.Fatalf("ttl = %v, want positive", ttl)
 	}
+
+	updated, err := client.Expire(context.Background(), "missing", time.Minute)
+	if err != nil {
+		t.Fatalf("expire missing: %v", err)
+	}
+	if updated {
+		t.Fatal("expire missing updated = true, want false")
+	}
 }
 
 func TestClientOperationsRejectClosedClient(t *testing.T) {
