@@ -33,6 +33,31 @@ func TestHealthCheckHealthy(t *testing.T) {
 	}
 }
 
+func TestHealthCheckMatchesHealth(t *testing.T) {
+	client, err := New(context.Background(), Config{Name: "redisx"})
+	if err != nil {
+		t.Fatalf("new client: %v", err)
+	}
+
+	health := client.Health(context.Background())
+	check := client.HealthCheck(context.Background())
+	if health.Status != check.Status {
+		t.Fatalf("Health status = %q, HealthCheck status = %q", health.Status, check.Status)
+	}
+	if health.Name != check.Name {
+		t.Fatalf("Health name = %q, HealthCheck name = %q", health.Name, check.Name)
+	}
+	if health.Component != check.Component {
+		t.Fatalf("Health component = %q, HealthCheck component = %q", health.Component, check.Component)
+	}
+	if health.Message != check.Message {
+		t.Fatalf("Health message = %q, HealthCheck message = %q", health.Message, check.Message)
+	}
+	if health.ErrorClass != check.ErrorClass {
+		t.Fatalf("Health error class = %q, HealthCheck error class = %q", health.ErrorClass, check.ErrorClass)
+	}
+}
+
 func TestHealthCheckClosedClientUnhealthy(t *testing.T) {
 	client, err := New(context.Background(), Config{Name: "redisx"})
 	if err != nil {
