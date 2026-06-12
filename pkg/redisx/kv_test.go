@@ -153,10 +153,28 @@ func TestClientOperationsRejectClosedClient(t *testing.T) {
 		t.Fatalf("close client: %v", err)
 	}
 
-	if err := client.Ping(context.Background()); !IsKind(err, ErrorKindClosed) {
-		t.Fatalf("ping after close kind = %v, want closed", err)
+	tests := []struct {
+		name string
+		run  func() error
+	}{
+		{name: "ping", run: func() error { return client.Ping(context.Background()) }},
+		{name: "get", run: func() error { _, err := client.Get(context.Background(), "key"); return err }},
+		{name: "set", run: func() error { return client.Set(context.Background(), "key", "value", 0) }},
+		{name: "mget", run: func() error { _, err := client.MGet(context.Background(), "key", "other"); return err }},
+		{name: "mset", run: func() error { return client.MSet(context.Background(), map[string]string{"key": "value"}) }},
+		{name: "exists", run: func() error { _, err := client.Exists(context.Background(), "key", "other"); return err }},
+		{name: "del", run: func() error { _, err := client.Del(context.Background(), "key", "other"); return err }},
+		{name: "expire", run: func() error { _, err := client.Expire(context.Background(), "key", time.Minute); return err }},
+		{name: "ttl", run: func() error { _, err := client.TTL(context.Background(), "key"); return err }},
+		{name: "incr", run: func() error { _, err := client.Incr(context.Background(), "key"); return err }},
+		{name: "decr", run: func() error { _, err := client.Decr(context.Background(), "key"); return err }},
 	}
-	if _, err := client.Get(context.Background(), "key"); !IsKind(err, ErrorKindClosed) {
-		t.Fatalf("get after close kind = %v, want closed", err)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.run(); !IsKind(err, ErrorKindClosed) {
+				t.Fatalf("%s after close kind = %v, want closed", tt.name, err)
+			}
+		})
 	}
 }
