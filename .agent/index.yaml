@@ -190,6 +190,20 @@ files:
     owner: release
     validator: docs-check
     purpose: redisx L2 证据目录说明。
+  - path: .agent/evidence/l2/contract-report.json
+    layer: evidence
+    authority: validated_mirror
+    mutability: hand_written
+    owner: release
+    validator: l2-check
+    purpose: redisx L2 contract profile 证据。
+  - path: .agent/evidence/l2/integration-report.json
+    layer: evidence
+    authority: validated_mirror
+    mutability: hand_written
+    owner: release
+    validator: l2-check
+    purpose: redisx L2 integration profile 证据。
   - path: .agent/evidence/l2/compliance-matrix.json
     layer: evidence
     authority: validated_mirror
