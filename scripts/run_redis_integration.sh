@@ -5,6 +5,18 @@ run_go_integration() {
   REDISX_INTEGRATION=1 GOWORK="${GOWORK:-off}" go test ./pkg/redisx -run TestRedisIntegrationWithEnv -count=1
 }
 
+cleanup_container=""
+cleanup_data_dir=""
+
+cleanup_docker_integration() {
+  if [ -n "$cleanup_container" ]; then
+    docker rm -f "$cleanup_container" >/dev/null 2>&1 || true
+  fi
+  if [ -n "$cleanup_data_dir" ]; then
+    rm -rf "$cleanup_data_dir"
+  fi
+}
+
 wait_for_container_redis() {
   local container="$1"
   local attempt
@@ -17,6 +29,21 @@ wait_for_container_redis() {
   done
 
   echo "Redis container did not become ready" >&2
+  return 1
+}
+
+wait_for_host_port() {
+  local port="$1"
+  local attempt
+
+  for attempt in $(seq 1 30); do
+    if (echo >"/dev/tcp/127.0.0.1/$port") >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 1
+  done
+
+  echo "Redis host port did not become ready" >&2
   return 1
 }
 
@@ -33,7 +60,9 @@ run_docker_integration() {
   local data_dir container port marker actual
   data_dir="$(mktemp -d)"
   container="redisx-integration-$RANDOM-$$"
-  trap 'docker rm -f "$container" >/dev/null 2>&1 || true; rm -rf "$data_dir"' EXIT
+  cleanup_container="$container"
+  cleanup_data_dir="$data_dir"
+  trap cleanup_docker_integration EXIT
 
   docker run -d --rm \
     --name "$container" \
@@ -48,12 +77,14 @@ run_docker_integration() {
     echo "Could not determine Redis container host port" >&2
     return 1
   fi
+  wait_for_host_port "$port"
 
   marker="redisx-persistence-$RANDOM-$$"
   docker exec "$container" redis-cli SET redisx:persistence:marker "$marker" >/dev/null
   docker exec "$container" redis-cli SAVE >/dev/null
   docker restart "$container" >/dev/null
   wait_for_container_redis "$container"
+  wait_for_host_port "$port"
 
   actual="$(docker exec "$container" redis-cli GET redisx:persistence:marker)"
   if [ "$actual" != "$marker" ]; then
