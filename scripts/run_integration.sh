@@ -49,4 +49,6 @@ for spec in "${cases[@]}"; do
   )
 done
 
+GOWORK=off make test-integration
+
 echo "integration check passed"
