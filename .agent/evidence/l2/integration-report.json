@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "adapter": "redisx",
+  "target_level": "L2-T2",
+  "profile": "integration",
+  "status": "pass",
+  "score": 100,
+  "commands": [
+    "docker compose up -d redis",
+    "docker compose exec -T redis redis-cli ping",
+    "docker compose restart redis",
+    "docker compose exec -T redis redis-cli ping",
+    "docker compose down"
+  ],
+  "evidence_paths": [
+    "docker-compose.yml",
+    ".devcontainer/devcontainer.json",
+    ".agent/evidence/l2/compliance-matrix.json"
+  ]
+}

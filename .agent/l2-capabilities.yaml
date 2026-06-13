@@ -23,7 +23,7 @@ capabilities:
   - name: configuration
     family: common
     status: declared
-    notes: Current public config remains template-level; provider-specific connection config is not exposed.
+    notes: Docker/devcontainer expose non-sensitive REDISX_REDIS_ADDR, REDISX_REDIS_URL, and REDISX_REDIS_DB defaults without password/token/secret values.
   - name: get
     family: key_value
     status: implemented
@@ -53,11 +53,11 @@ capabilities:
   - name: expiration_events
     family: key_value
     status: declared
-    notes: Requires provider-backed contract evidence.
+    notes: Covered by contract and Docker-backed integration evidence.
   - name: pool_limits
     family: common
     status: declared
-    notes: Pool contract is declared for standard alignment; provider-backed pool behavior is pending.
+    notes: Covered by contract evidence and Redis restart smoke.
   - name: acquisition_timeout
     family: common
     status: declared

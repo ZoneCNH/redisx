@@ -2,6 +2,14 @@
 
 ## 未发布
 
+## v1.0.0 - 2026-06-13
+
+### 发布
+
+- L2 Redis adapter release readiness 提升到 `score=100` 与 `release_ready=true`，补齐 contract、integration 与 persistence 证据索引。
+- Docker/devcontainer 默认暴露非敏感 `REDISX_REDIS_ADDR`、`REDISX_REDIS_URL`、`REDISX_REDIS_DB`，并保留 no secret 默认值约束。
+- `pkg/redisx.Version` 同步为 `v1.0.0`，发布前命令示例同步到 `VERSION=v1.0.0`。
+
 ## v0.4.13 - 2026-06-05
 
 ### 治理

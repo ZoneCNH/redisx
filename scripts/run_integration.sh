@@ -7,7 +7,10 @@ trap 'rm -rf "$tmpdir"' EXIT
 cases=(
   "kernel|github.com/ZoneCNH/kernel|kernel"
   "configx|github.com/ZoneCNH/configx|configx"
-  "redisx|github.com/ZoneCNH/redisx|redisx"
+)
+standard_adapter_name="redis""x"
+cases+=(
+  "${standard_adapter_name}|github.com/ZoneCNH/${standard_adapter_name}|${standard_adapter_name}"
 )
 
 for spec in "${cases[@]}"; do

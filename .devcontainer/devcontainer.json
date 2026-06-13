@@ -5,7 +5,10 @@
   "workspaceFolder": "/workspace",
   "remoteEnv": {
     "GOWORK": "off",
-    "XLIB_CONTEXT": "docker_toolchain"
+    "XLIB_CONTEXT": "docker_toolchain",
+    "REDISX_REDIS_ADDR": "redis:6379",
+    "REDISX_REDIS_URL": "redis://redis:6379/0",
+    "REDISX_REDIS_DB": "0"
   },
   "customizations": {
     "vscode": {

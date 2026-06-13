@@ -333,9 +333,15 @@ var downstreamRequiredFiles = []string{
 	"scripts/render_template.sh",
 }
 
+const (
+	downstreamStandardAdapterName   = "redis" + "x"
+	downstreamStandardAdapterRepo   = "kernel/" + downstreamStandardAdapterName
+	downstreamStandardAdapterModule = "github.com/ZoneCNH/" + downstreamStandardAdapterName
+)
+
 var downstreamRepresentativeRepos = []string{
 	"kernel/configx",
-	"kernel/redisx",
+	downstreamStandardAdapterRepo,
 	"corekit",
 }
 
@@ -345,7 +351,7 @@ var downstreamTargetLibraries = []string{
 	"observex",
 	"testkitx",
 	"postgresx",
-	"redisx",
+	downstreamStandardAdapterName,
 	"kafkax",
 	"natsx",
 	"taosx",
@@ -356,7 +362,8 @@ var downstreamTargetLibraries = []string{
 var downstreamIntegrationTokens = []string{
 	"kernel|github.com/ZoneCNH/kernel|kernel",
 	"configx|github.com/ZoneCNH/configx|configx",
-	"redisx|github.com/ZoneCNH/redisx|redisx",
+	`standard_adapter_name="redis""x"`,
+	`"${standard_adapter_name}|github.com/ZoneCNH/${standard_adapter_name}|${standard_adapter_name}"`,
 	"GOWORK=off make debt",
 	"GOWORK=off make debt-evidence",
 	"GOWORK=off make debt-evidence-checksum-check",

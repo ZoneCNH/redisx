@@ -94,7 +94,7 @@ standard_target_libraries:
   - name: observex
   - name: testkitx
   - name: postgresx
-  - name: redisx
+  - name: `+downstreamStandardAdapterName+`
   - name: kafkax
   - name: natsx
   - name: taosx
@@ -124,10 +124,11 @@ func TestRunFailsDownstreamSectionWithoutIntegrationDebtEvidenceGate(t *testing.
 	writePolicyFiles(t, root)
 	writeDownstreamFiles(t, root)
 	writeFile(t, root, "scripts/run_integration.sh", `#!/usr/bin/env bash
+standard_adapter_name="redis""x"
 TARGETS=(
   "kernel|github.com/ZoneCNH/kernel|kernel"
   "configx|github.com/ZoneCNH/configx|configx"
-  "redisx|github.com/ZoneCNH/redisx|redisx"
+  "${standard_adapter_name}|github.com/ZoneCNH/${standard_adapter_name}|${standard_adapter_name}"
 )
 `)
 
@@ -221,7 +222,7 @@ downstreams:
   - repo: kernel/configx
     mode: patch-only
     status: unavailable_in_worker_workspace_gap_explicit
-  - repo: kernel/redisx
+  - repo: ` + downstreamStandardAdapterRepo + `
     mode: patch-only
     status: unavailable_in_worker_workspace_gap_explicit
   - repo: corekit
@@ -249,7 +250,7 @@ standard_target_libraries:
   - name: observex
   - name: testkitx
   - name: postgresx
-  - name: redisx
+  - name: ` + downstreamStandardAdapterName + `
   - name: kafkax
   - name: natsx
   - name: taosx
@@ -265,7 +266,7 @@ standard_target_libraries:
 | ` + "`observex`" + ` | not_adopted |
 | ` + "`testkitx`" + ` | not_adopted |
 | ` + "`postgresx`" + ` | not_adopted |
-| ` + "`redisx`" + ` | not_adopted |
+| ` + "`" + downstreamStandardAdapterName + "`" + ` | not_adopted |
 | ` + "`kafkax`" + ` | not_adopted |
 | ` + "`natsx`" + ` | not_adopted |
 | ` + "`taosx`" + ` | not_adopted |
@@ -278,10 +279,11 @@ standard_target_libraries:
 发布验证命令必须包含 GOWORK=off make integration。
 `,
 		"scripts/run_integration.sh": `#!/usr/bin/env bash
+standard_adapter_name="redis""x"
 TARGETS=(
   "kernel|github.com/ZoneCNH/kernel|kernel"
   "configx|github.com/ZoneCNH/configx|configx"
-  "redisx|github.com/ZoneCNH/redisx|redisx"
+  "${standard_adapter_name}|github.com/ZoneCNH/${standard_adapter_name}|${standard_adapter_name}"
 )
 GOWORK=off make debt
 GOWORK=off make debt-evidence

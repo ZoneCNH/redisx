@@ -3,6 +3,7 @@ package contract
 import (
 	"encoding/json"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -18,6 +19,7 @@ type releaseReadiness struct {
 	Adapter       string              `json:"adapter"`
 	TargetLevel   string              `json:"target_level"`
 	Score         int                 `json:"score"`
+	ReleaseReady  bool                `json:"release_ready"`
 	Profiles      []string            `json:"profiles"`
 	Evidence      []readinessEvidence `json:"evidence"`
 }
@@ -86,6 +88,12 @@ func TestL2ReleaseReadinessSnapshot(t *testing.T) {
 	if readiness.TargetLevel != "L2-T2" {
 		t.Fatalf("unexpected target level %q", readiness.TargetLevel)
 	}
+	if readiness.Score != 100 {
+		t.Fatalf("readiness score = %d, want 100", readiness.Score)
+	}
+	if !readiness.ReleaseReady {
+		t.Fatal("readiness release_ready = false, want true")
+	}
 	for _, profile := range []string{"unit", "contract", "integration"} {
 		if !contains(readiness.Profiles, profile) {
 			t.Fatalf("readiness missing profile %q", profile)
@@ -95,15 +103,60 @@ func TestL2ReleaseReadinessSnapshot(t *testing.T) {
 	statuses := map[string]string{}
 	for _, evidence := range readiness.Evidence {
 		statuses[evidence.Profile] = evidence.Status
+		if strings.HasPrefix(evidence.Path, ".agent/") {
+			path := filepath.Clean(filepath.Join("../..", evidence.Path))
+			if _, err := os.Stat(path); err != nil {
+				t.Fatalf("readiness evidence path %q is not available: %v", evidence.Path, err)
+			}
+		}
 	}
-	if statuses["unit"] != "pass" {
-		t.Fatalf("unit evidence status = %q, want pass", statuses["unit"])
+	for _, profile := range []string{"unit", "contract", "integration"} {
+		if statuses[profile] != "pass" {
+			t.Fatalf("%s evidence status = %q, want pass", profile, statuses[profile])
+		}
 	}
-	if statuses["contract"] != "missing" {
-		t.Fatalf("contract evidence status = %q, want missing until contract report exists", statuses["contract"])
+}
+
+func TestL2DevRedisEndpointConfig(t *testing.T) {
+	compose, err := os.ReadFile("../../docker-compose.yml")
+	if err != nil {
+		t.Fatalf("read docker compose config: %v", err)
 	}
-	if statuses["integration"] != "missing" {
-		t.Fatalf("integration evidence status = %q, want missing until integration report exists", statuses["integration"])
+	devcontainer, err := os.ReadFile("../../.devcontainer/devcontainer.json")
+	if err != nil {
+		t.Fatalf("read devcontainer config: %v", err)
+	}
+
+	composeText := string(compose)
+	devcontainerText := string(devcontainer)
+	requiredComposeSnippets := []string{
+		"image: redis:7.2-alpine",
+		"REDISX_REDIS_ADDR: ${REDISX_REDIS_ADDR:-redis:6379}",
+		"REDISX_REDIS_URL: ${REDISX_REDIS_URL:-redis://redis:6379/0}",
+		"REDISX_REDIS_DB: ${REDISX_REDIS_DB:-0}",
+	}
+	for _, snippet := range requiredComposeSnippets {
+		if !strings.Contains(composeText, snippet) {
+			t.Fatalf("docker-compose missing required Redis endpoint snippet %q", snippet)
+		}
+	}
+
+	requiredDevcontainerSnippets := []string{
+		`"REDISX_REDIS_ADDR": "redis:6379"`,
+		`"REDISX_REDIS_URL": "redis://redis:6379/0"`,
+		`"REDISX_REDIS_DB": "0"`,
+	}
+	for _, snippet := range requiredDevcontainerSnippets {
+		if !strings.Contains(devcontainerText, snippet) {
+			t.Fatalf("devcontainer missing required Redis endpoint snippet %q", snippet)
+		}
+	}
+
+	combined := strings.ToLower(composeText + "\n" + devcontainerText)
+	for _, forbidden := range []string{"REDISX_REDIS_PASSWORD", "REDISX_REDIS_TOKEN", "REDISX_REDIS_SECRET"} {
+		if strings.Contains(combined, strings.ToLower(forbidden)) {
+			t.Fatalf("dev Redis endpoint config exposes forbidden secret env var %q", forbidden)
+		}
 	}
 }
 

@@ -39,32 +39,40 @@
       "contract_pack": "kv",
       "profile": "contract",
       "evidence": ".agent/evidence/l2/contract-report.json",
-      "status": "missing",
-      "notes": "Executable testkitx contract-pack evidence is not generated yet."
+      "status": "pass",
+      "notes": "Executable contract evidence is generated and checked by l2-check."
     },
     {
       "requirement": "ttl-contract",
       "contract_pack": "ttl",
       "profile": "contract",
       "evidence": ".agent/evidence/l2/contract-report.json",
-      "status": "missing",
-      "notes": "TTL contract-pack evidence is not generated yet."
+      "status": "pass",
+      "notes": "TTL contract evidence is generated and checked by l2-check."
     },
     {
       "requirement": "ttl-integration",
       "contract_pack": "ttl",
       "profile": "integration",
       "evidence": ".agent/evidence/l2/integration-report.json",
-      "status": "missing",
-      "notes": "Provider-backed TTL integration evidence is not generated yet."
+      "status": "pass",
+      "notes": "Docker-backed Redis integration evidence covers endpoint availability and restart smoke."
     },
     {
       "requirement": "pool-contract",
       "contract_pack": "pool",
       "profile": "contract",
       "evidence": ".agent/evidence/l2/contract-report.json",
-      "status": "missing",
-      "notes": "Pool contract is declared for standard alignment; provider-backed behavior is pending."
+      "status": "pass",
+      "notes": "Pool contract evidence is generated and linked to the L2 contract report."
+    },
+    {
+      "requirement": "dev-redis-endpoint",
+      "contract_pack": "common",
+      "profile": "integration",
+      "evidence": "docker-compose.yml; .devcontainer/devcontainer.json; .agent/evidence/l2/integration-report.json",
+      "status": "pass",
+      "notes": "Docker/devcontainer expose compatible REDISX_REDIS_* endpoint variables without secret defaults."
     }
   ]
 }

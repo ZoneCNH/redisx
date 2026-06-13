@@ -83,7 +83,7 @@ GOWORK=off make standard-impact-check
 GOWORK=off make docs-check
 XLIB_CONTEXT=release_verify GOWORK=off make release-check
 XLIB_CONTEXT=release_verify GOWORK=off make release-final-check
-XLIB_CONTEXT=release_verify GOWORK=off make release-preflight VERSION=v0.4.13
+XLIB_CONTEXT=release_verify GOWORK=off make release-preflight VERSION=v1.0.0
 make evidence
 ```
 
@@ -122,7 +122,9 @@ Full Goal Runtime v3.1 位于 [.agent](.agent/)，其中 [goal-runtime](.agent/r
 
 ## Docker Toolchain Runtime
 
-[Docker Toolchain Runtime](docs/standard/docker-toolchain-standard.md) 是工具链运行时，不是第二套 gate。它定义 `.dockerignore` / `.git` build context 边界、BuildKit/cache/volume、环境变量 pass-through（`XLIB_CONTEXT`、`GOWORK`、`VERSION`、`DOWNSTREAM`、`XLIB_ENABLE_VULNCHECK`）和下游模板继承规则。
+[Docker Toolchain Runtime](docs/standard/docker-toolchain-standard.md) 是工具链运行时，不是第二套 gate。它定义 `.dockerignore` / `.git` build context 边界、BuildKit/cache/volume、环境变量 pass-through（`XLIB_CONTEXT`、`GOWORK`、`VERSION`、`DOWNSTREAM`、`XLIB_ENABLE_VULNCHECK`、`REDISX_REDIS_ADDR`、`REDISX_REDIS_URL`、`REDISX_REDIS_DB`）和下游模板继承规则。
+
+本地 Docker/devcontainer 默认提供 Redis 7.2 服务，并暴露非敏感端点变量：`REDISX_REDIS_ADDR=redis:6379`、`REDISX_REDIS_URL=redis://redis:6379/0`、`REDISX_REDIS_DB=0`；不设置 password、token 或 secret 默认值。
 
 ```bash
 GOWORK=off make docker-toolchain-check

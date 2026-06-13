@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "adapter": "redisx",
+  "target_level": "L2-T2",
+  "profile": "contract",
+  "status": "pass",
+  "score": 100,
+  "commands": [
+    "GOWORK=off go test ./test/contract ./contracts",
+    "GOWORK=off make l2-check"
+  ],
+  "evidence_paths": [
+    "test/contract/l2_contract_test.go",
+    "contracts/contracts_test.go",
+    ".agent/evidence/l2/compliance-matrix.json"
+  ]
+}

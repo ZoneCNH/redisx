@@ -199,6 +199,79 @@ replace_in_text_files() {
   )
 }
 
+replace_in_file() {
+  local file="$1"
+  local find_text="$2"
+  local replace_text="$3"
+
+  [[ -f "$file" ]] || return 0
+  FIND_TEXT="$find_text" REPLACE_TEXT="$replace_text" perl -0pi -e 's/\Q$ENV{FIND_TEXT}\E/$ENV{REPLACE_TEXT}/g' "$file"
+}
+
+downstream_standard_files=(
+  ".agent/registries/downstream-registry.yaml"
+  ".agent/registries/downstream-adoption-status.yaml"
+  "docs/downstream-matrix.md"
+  "docs/standard/downstream-compatibility.md"
+  "scripts/check_standard_impact.sh"
+)
+
+protect_downstream_standard_tokens() {
+  local rel
+  local file
+
+  for rel in "${downstream_standard_files[@]}"; do
+    file="$out_dir/$rel"
+    replace_in_file "$file" "github.com/ZoneCNH/redisx" "__XLIB_STANDARD_SOURCE_MODULE__"
+    replace_in_file "$file" "kernel/redisx" "__XLIB_STANDARD_SOURCE_REPO__"
+    replace_in_file "$file" "redisx" "__XLIB_STANDARD_SOURCE_NAME__"
+  done
+}
+
+restore_downstream_standard_tokens() {
+  local rel
+  local file
+
+  for rel in "${downstream_standard_files[@]}"; do
+    file="$out_dir/$rel"
+    replace_in_file "$file" "__XLIB_STANDARD_SOURCE_MODULE__" "github.com/ZoneCNH/redisx"
+    replace_in_file "$file" "__XLIB_STANDARD_SOURCE_REPO__" "kernel/redisx"
+    replace_in_file "$file" "__XLIB_STANDARD_SOURCE_NAME__" "redisx"
+  done
+}
+
+rename_template_paths() {
+  local find_text="$1"
+  local replace_text="$2"
+
+  if [[ "$find_text" == "$replace_text" ]]; then
+    return
+  fi
+
+  while IFS= read -r -d '' path; do
+    local dir
+    local base
+    local next_base
+    local next_path
+
+    dir="$(dirname "$path")"
+    base="$(basename "$path")"
+    next_base="${base//$find_text/$replace_text}"
+    next_path="$dir/$next_base"
+
+    if [[ -e "$next_path" ]]; then
+      echo "ERROR: rendered path rename would overwrite: $next_path" >&2
+      exit 1
+    fi
+
+    mv "$path" "$next_path"
+  done < <(
+    find "$out_dir" -mindepth 1 -depth -name "*$find_text*" -print0
+  )
+}
+
+protect_downstream_standard_tokens
+
 replace_in_text_files 'redisx' "$module_name"
 replace_in_text_files 'github.com/ZoneCNH/redisx' "$module_path"
 replace_in_text_files 'redisx' "$package_name"
@@ -212,6 +285,12 @@ replace_in_text_files 'redisx_' "${package_name}_"
 replace_in_text_files 'Redisx' "$package_title"
 replace_in_text_files 'REDISX' "$package_upper"
 replace_in_text_files 'redisx' "$package_name"
+
+rename_template_paths 'Redisx' "$package_title"
+rename_template_paths 'REDISX' "$package_upper"
+rename_template_paths 'redisx' "$package_name"
+
+restore_downstream_standard_tokens
 
 (
   cd "$out_dir"
