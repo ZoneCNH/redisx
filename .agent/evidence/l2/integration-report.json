@@ -6,13 +6,8 @@
   "env_gate": "REDISX_INTEGRATION=1",
   "credential_source": "external environment only; values are not committed or printed",
   "command": "GOWORK=off REDISX_INTEGRATION=1 go test ./pkg/redisx -run '^TestRedisIntegrationWithEnv$' -count=1",
-  "generated_at": "2026-06-12T20:57:23.968823+00:00",
-  "config_keys": [
-    "REDISX_REDIS_ADDR",
-    "REDISX_REDIS_USERNAME",
-    "REDISX_REDIS_PASSWORD",
-    "REDISX_REDIS_DB"
-  ],
+  "generated_at": "2026-06-13T05:01:38.089802+00:00",
+  "config_keys": [],
   "checklist": [
     {
       "name": "ping",
@@ -59,11 +54,87 @@
       "status": "pass"
     },
     {
+      "name": "hset",
+      "status": "pass"
+    },
+    {
+      "name": "hget",
+      "status": "pass"
+    },
+    {
+      "name": "hgetall",
+      "status": "pass"
+    },
+    {
+      "name": "hdel",
+      "status": "pass"
+    },
+    {
+      "name": "lpush",
+      "status": "pass"
+    },
+    {
+      "name": "rpush",
+      "status": "pass"
+    },
+    {
+      "name": "lrange",
+      "status": "pass"
+    },
+    {
+      "name": "llen",
+      "status": "pass"
+    },
+    {
+      "name": "pipeline_set_get",
+      "status": "pass"
+    },
+    {
+      "name": "pipeline_missing_reads",
+      "status": "pass"
+    },
+    {
+      "name": "pipeline_hash",
+      "status": "pass"
+    },
+    {
+      "name": "pipeline_list",
+      "status": "pass"
+    },
+    {
+      "name": "pipeline_counter",
+      "status": "pass"
+    },
+    {
       "name": "incr",
       "status": "pass"
     },
     {
       "name": "decr",
+      "status": "pass"
+    },
+    {
+      "name": "hash_hset_hget_hgetall_hdel",
+      "status": "pass"
+    },
+    {
+      "name": "list_lpush_rpush_lpop_rpop_lrange",
+      "status": "pass"
+    },
+    {
+      "name": "setnx",
+      "status": "pass"
+    },
+    {
+      "name": "lock_acquire_release",
+      "status": "pass"
+    },
+    {
+      "name": "fixed_window_rate_limit",
+      "status": "pass"
+    },
+    {
+      "name": "pipeline_set_get_hset_rpush_incr",
       "status": "pass"
     },
     {
@@ -95,6 +166,6 @@
       "status": "pass"
     }
   ],
-  "runtime": "real Redis selected by REDISX_REDIS_* at test time",
+  "runtime": "Docker Redis selected by REDISX_INTEGRATION_DOCKER=1 with restart persistence preflight",
   "data_hygiene": "test keys are nonce-prefixed and deleted during cleanup"
 }

@@ -5,12 +5,32 @@
   "status": "pass",
   "env_gate": "REDISX_PERSISTENCE_INTEGRATION=1",
   "command": "GOWORK=off REDISX_INTEGRATION=1 REDISX_PERSISTENCE_RECOVERY=1 go test ./pkg/redisx -run '^TestRedisIntegrationPersistenceRecoveryWithEnv$' -count=1",
-  "generated_at": "2026-06-12T20:50:14.108904+00:00",
+  "generated_at": "2026-06-13T05:00:57.695978+00:00",
   "runtime": "Redis with AOF and RDB enabled on retained test storage",
   "credential_source": "local ephemeral Redis without external credentials",
   "checklist": [
     {
       "name": "set_without_ttl",
+      "status": "pass"
+    },
+    {
+      "name": "mset_without_ttl",
+      "status": "pass"
+    },
+    {
+      "name": "hash_without_ttl",
+      "status": "pass"
+    },
+    {
+      "name": "list_without_ttl",
+      "status": "pass"
+    },
+    {
+      "name": "counter_without_ttl",
+      "status": "pass"
+    },
+    {
+      "name": "pipeline_without_ttl",
       "status": "pass"
     },
     {
@@ -27,6 +47,22 @@
     },
     {
       "name": "get_after_restart",
+      "status": "pass"
+    },
+    {
+      "name": "hash_after_restart",
+      "status": "pass"
+    },
+    {
+      "name": "list_after_restart",
+      "status": "pass"
+    },
+    {
+      "name": "counter_after_restart",
+      "status": "pass"
+    },
+    {
+      "name": "pipeline_writes_after_restart",
       "status": "pass"
     },
     {
