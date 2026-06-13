@@ -13,7 +13,7 @@ var exit = os.Exit
 
 // Release manifest CLI 的 gate 以 main.go 作为契约锚点。
 const (
-	defaultReleaseVersion       = "v0.4.13"
+	defaultReleaseVersion       = "v1.0.0"
 	defaultManifestOutputPath   = "release/manifest/latest.json"
 	defaultManifestChecksumPath = "release/manifest/latest.json.sha256"
 )

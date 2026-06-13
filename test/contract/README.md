@@ -4,9 +4,9 @@
 
 `l2_contract_test.go` 验证：
 
-- `.agent/l2-capabilities.yaml` 声明了 L2、redisx identity、common/kv/ttl/persist/pool contract packs 与必需 profiles。
+- `.agent/l2-capabilities.yaml` 声明了 L2、redisx identity、common/kv/ttl/pool contract packs 与必需 profiles。
 - Manifest 不包含 provider 边界禁止的明文连接键。
-- `.agent/evidence/l2/release-readiness.json` 达到 L2-T2 最低 readiness score，并且 `unit`、`contract`、`integration`、`persistence` 证据均为 `pass`。
+- `.agent/evidence/l2/release-readiness.json` 达到 L2-T2 readiness score 100，声明 `release_ready=true`，并且 `unit`、`contract`、`integration`、`persistence` 证据均为 `pass`。
 - readiness 中声明为 `pass` 的 `.agent/...` 证据文件实际存在。
 
 运行：

@@ -2,10 +2,15 @@
 
 ## 未发布
 
+- 暂无。
+
+## v1.0.0 - 2026-06-13
+
 ### 治理
 
 - 同步 Redis L2 integration、persistence recovery、release-readiness 与 Evidence 文档口径。
 - 记录 Redis integration/persistence runner 的环境变量门禁和公开文档脱敏约束。
+- 补齐 Docker 与 devcontainer 的非敏感 `REDISX_REDIS_*` 默认端点声明，并锁定 secret 不进入配置默认值、Evidence、日志或提交。
 
 ## v0.4.13 - 2026-06-05
 

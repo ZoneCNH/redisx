@@ -1,12 +1,24 @@
 {
   "schema_version": "1.0",
   "adapter": "redisx",
+  "target_level": "L2-T2",
   "profile": "integration",
   "status": "pass",
+  "score": 100,
   "env_gate": "REDISX_INTEGRATION=1",
   "credential_source": "external environment only; values are not committed or printed",
   "command": "GOWORK=off REDISX_INTEGRATION=1 go test ./pkg/redisx -run '^TestRedisIntegrationWithEnv$' -count=1",
-  "generated_at": "2026-06-13T05:01:38.089802+00:00",
+  "commands": [
+    "GOWORK=off REDISX_INTEGRATION=1 go test ./pkg/redisx -run '^TestRedisIntegrationWithEnv$' -count=1",
+    "GOWORK=off REDISX_INTEGRATION_DOCKER=1 make test-integration"
+  ],
+  "evidence_paths": [
+    "pkg/redisx/redis_integration_test.go",
+    "scripts/run_redis_integration.sh",
+    "docker-compose.yml",
+    ".agent/evidence/l2/compliance-matrix.json"
+  ],
+  "generated_at": "2026-06-13T08:21:53.736157+00:00",
   "config_keys": [],
   "checklist": [
     {

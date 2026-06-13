@@ -68,10 +68,22 @@ scenario_status = "pass" if status == "pass" else ("not_applicable" if status ==
 data = {
     "schema_version": "1.0",
     "adapter": "redisx",
+    "target_level": "L2-T2",
     "profile": "persistence",
     "status": status,
+    "score": 100 if status == "pass" else 0,
     "env_gate": "REDISX_PERSISTENCE_INTEGRATION=1",
     "command": command,
+    "commands": [
+        command,
+        "GOWORK=off REDISX_PERSISTENCE_INTEGRATION=1 make test-persistence-integration",
+    ],
+    "evidence_paths": [
+        "pkg/redisx/redis_integration_test.go",
+        "scripts/run_redis_persistence_integration.sh",
+        "docker-compose.test.yml",
+        ".agent/evidence/l2/compliance-matrix.json",
+    ],
     "generated_at": datetime.now(timezone.utc).isoformat(),
     "runtime": "Redis with AOF and RDB enabled on retained test storage",
     "credential_source": "local ephemeral Redis without external credentials",

@@ -81,17 +81,40 @@ for required_target in "${docker_targets[@]}"; do
   fi
 done
 
+stale_identifier_rg_excludes=(
+  --glob '!**/.git/**'
+  --glob '!.agent/registries/downstream-registry.yaml'
+  --glob '!**/.agent/registries/downstream-registry.yaml'
+  --glob '!.agent/registries/downstream-adoption-status.yaml'
+  --glob '!**/.agent/registries/downstream-adoption-status.yaml'
+  --glob '!docs/downstream-matrix.md'
+  --glob '!**/docs/downstream-matrix.md'
+  --glob '!docs/standard/downstream-compatibility.md'
+  --glob '!**/docs/standard/downstream-compatibility.md'
+  --glob '!scripts/check_standard_impact.sh'
+  --glob '!**/scripts/check_standard_impact.sh'
+)
+
+stale_identifier_grep_excludes=(
+  --exclude-dir=.git
+  --exclude=downstream-registry.yaml
+  --exclude=downstream-adoption-status.yaml
+  --exclude=downstream-matrix.md
+  --exclude=downstream-compatibility.md
+  --exclude=check_standard_impact.sh
+)
+
 scan_regex() {
   local pattern="$1"
   local label="$2"
 
   if command -v rg >/dev/null 2>&1; then
-    if rg -n --hidden --glob '!.git/**' "$pattern" "$repo_dir"; then
+    if rg -n --hidden --glob '!.git/**' "${stale_identifier_rg_excludes[@]}" "$pattern" "$repo_dir"; then
       echo "ERROR: found stale $label" >&2
       exit 1
     fi
   else
-    if grep -RInE --exclude-dir=.git "$pattern" "$repo_dir"; then
+    if grep -RInE "${stale_identifier_grep_excludes[@]}" "$pattern" "$repo_dir"; then
       echo "ERROR: found stale $label" >&2
       exit 1
     fi
@@ -103,12 +126,12 @@ scan_fixed() {
   local label="$2"
 
   if command -v rg >/dev/null 2>&1; then
-    if rg -n --hidden --glob '!.git/**' --fixed-strings "$pattern" "$repo_dir"; then
+    if rg -n --hidden --glob '!.git/**' "${stale_identifier_rg_excludes[@]}" --fixed-strings "$pattern" "$repo_dir"; then
       echo "ERROR: found stale $label" >&2
       exit 1
     fi
   else
-    if grep -RInF --exclude-dir=.git "$pattern" "$repo_dir"; then
+    if grep -RInF "${stale_identifier_grep_excludes[@]}" "$pattern" "$repo_dir"; then
       echo "ERROR: found stale $label" >&2
       exit 1
     fi

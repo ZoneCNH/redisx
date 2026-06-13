@@ -23,7 +23,7 @@ capabilities:
   - name: configuration
     family: common
     status: implemented
-    notes: Public RedisConfig exposes address, username, masked password handling, DB, timeouts, pool size, min idle, and retry controls.
+    notes: Public RedisConfig exposes address, username, masked password handling, DB, timeouts, pool size, min idle, and retry controls; docker-compose and devcontainer expose non-sensitive REDISX_REDIS_ADDR, REDISX_REDIS_URL, and REDISX_REDIS_DB endpoint defaults without password/token/secret values.
   - name: get
     family: key_value
     status: implemented
