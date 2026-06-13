@@ -176,6 +176,59 @@ func TestRenderTemplateIncludesDockerContract(t *testing.T) {
 			t.Fatalf("rendered Makefile missing Docker contract target %s", target)
 		}
 	}
+	if !strings.Contains(string(makefile), "python3 scripts/verify_l2_kernel.py") {
+		t.Fatalf("rendered Makefile missing renamed L2 verifier path")
+	}
+	redisxVerifierPath := "scripts/verify_l2_" + "red" + "isx" + ".py"
+	if strings.Contains(string(makefile), redisxVerifierPath) {
+		t.Fatalf("rendered Makefile still references redisx L2 verifier path")
+	}
+
+	if _, err := os.Stat(filepath.Join(outDir, "scripts", "verify_l2_"+"red"+"isx"+".py")); !os.IsNotExist(err) {
+		t.Fatalf("rendered template should rename redisx L2 verifier, stat err=%v", err)
+	}
+	verifier, err := os.ReadFile(filepath.Join(outDir, "scripts", "verify_l2_kernel.py"))
+	if err != nil {
+		t.Fatalf("read rendered L2 verifier: %v", err)
+	}
+	if !strings.Contains(string(verifier), "KERNEL_REDIS_ADDR") {
+		t.Fatalf("rendered L2 verifier missing rewritten endpoint variable")
+	}
+	if strings.Contains(string(verifier), "RED"+"ISX") || strings.Contains(string(verifier), "red"+"isx") {
+		t.Fatalf("rendered L2 verifier still contains redisx residue")
+	}
+
+	adoptionStatus, err := os.ReadFile(filepath.Join(outDir, ".agent", "registries", "downstream-adoption-status.yaml"))
+	if err != nil {
+		t.Fatalf("read rendered downstream adoption status: %v", err)
+	}
+	if !strings.Contains(string(adoptionStatus), "name: "+"red"+"isx") {
+		t.Fatalf("rendered downstream adoption status lost redisx standard target")
+	}
+
+	downstreamRegistry, err := os.ReadFile(filepath.Join(outDir, ".agent", "registries", "downstream-registry.yaml"))
+	if err != nil {
+		t.Fatalf("read rendered downstream registry: %v", err)
+	}
+	if !strings.Contains(string(downstreamRegistry), "repo: kernel/"+"red"+"isx") {
+		t.Fatalf("rendered downstream registry lost redisx standard target repo")
+	}
+
+	downstreamMatrix, err := os.ReadFile(filepath.Join(outDir, "docs", "downstream-matrix.md"))
+	if err != nil {
+		t.Fatalf("read rendered downstream matrix: %v", err)
+	}
+	if !strings.Contains(string(downstreamMatrix), "`"+"red"+"isx"+"`") {
+		t.Fatalf("rendered downstream matrix lost redisx standard target")
+	}
+
+	standardImpact, err := os.ReadFile(filepath.Join(outDir, "scripts", "check_standard_impact.sh"))
+	if err != nil {
+		t.Fatalf("read rendered standard impact script: %v", err)
+	}
+	if !strings.Contains(string(standardImpact), "github.com/ZoneCNH/"+"red"+"isx") {
+		t.Fatalf("rendered standard impact script lost redisx standard target")
+	}
 
 	dockerGate, err := os.ReadFile(filepath.Join(outDir, "scripts", "docker", "docker_gate.sh"))
 	if err != nil {
