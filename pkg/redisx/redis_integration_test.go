@@ -16,6 +16,7 @@ func TestRedisIntegrationWithEnv(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	db := redisIntegrationDB(t)
 	client, err := newRedisIntegrationClient(ctx, "redisx-integration", db)
 	if err != nil {
 		t.Fatalf("new redis client with options: %v", err)
@@ -202,6 +203,79 @@ func TestRedisIntegrationWithEnv(t *testing.T) {
 	}
 }
 
+func TestRedisIntegrationPersistenceRecoveryWithEnv(t *testing.T) {
+	if os.Getenv("REDISX_INTEGRATION") != "1" {
+		t.Skip("set REDISX_INTEGRATION=1 with REDISX_REDIS_* to run real Redis integration")
+	}
+	if os.Getenv("REDISX_PERSISTENCE_RECOVERY") != "1" {
+		t.Skip("set REDISX_PERSISTENCE_RECOVERY=1 to run persistence recovery integration")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	db := redisIntegrationDB(t)
+	client, err := newRedisIntegrationClient(ctx, "redisx-persistence", db)
+	if err != nil {
+		t.Fatalf("new redis persistence client with options: %v", err)
+	}
+	defer func() {
+		if err := client.Close(context.Background()); err != nil && !IsKind(err, ErrorKindClosed) {
+			t.Fatalf("close persistence redis client: %v", err)
+		}
+	}()
+
+	if err := client.Ping(ctx); err != nil {
+		skipIfRedisEnvironmentBlocked(t, "ping", err)
+		t.Fatalf("ping persistence redis: %v", err)
+	}
+
+	key := envOrDefault("REDISX_PERSISTENCE_KEY", "redisx:integration:persistence:"+strconv.FormatInt(time.Now().UnixNano(), 10))
+	value := envOrDefault("REDISX_PERSISTENCE_VALUE", "survives-redis-restart")
+
+	if os.Getenv("REDISX_PERSISTENCE_EXPECT_EXISTING") == "1" {
+		recovered, err := client.Get(ctx, key)
+		if err != nil {
+			t.Fatalf("get persisted key after restart: %v", err)
+		}
+		if recovered != value {
+			t.Fatalf("persisted key = %q, want configured value", recovered)
+		}
+		ttl, err := client.TTL(ctx, key)
+		if err != nil {
+			t.Fatalf("ttl persisted key: %v", err)
+		}
+		if ttl != -time.Second {
+			t.Fatalf("ttl persisted key = %v, want -1s", ttl)
+		}
+		if os.Getenv("REDISX_PERSISTENCE_CLEANUP") != "0" {
+			if deleted, err := client.Del(ctx, key); err != nil || deleted != 1 {
+				t.Fatalf("cleanup persisted key deleted = %d, err = %v; want 1, nil", deleted, err)
+			}
+		}
+		return
+	}
+
+	if err := client.Set(ctx, key, value, 0); err != nil {
+		skipIfRedisEnvironmentBlocked(t, "set persistence key", err)
+		t.Fatalf("set persistence key: %v", err)
+	}
+	recovered, err := client.Get(ctx, key)
+	if err != nil {
+		t.Fatalf("get persistence key before restart: %v", err)
+	}
+	if recovered != value {
+		t.Fatalf("persistence key = %q, want configured value", recovered)
+	}
+	ttl, err := client.TTL(ctx, key)
+	if err != nil {
+		t.Fatalf("ttl persistence key before restart: %v", err)
+	}
+	if ttl != -time.Second {
+		t.Fatalf("ttl persistence key before restart = %v, want -1s", ttl)
+	}
+}
+
 func newRedisIntegrationClient(ctx context.Context, name string, db int) (*Client, error) {
 	return NewWithOptions(ctx, Options{Config: Config{
 		Name: name,
@@ -218,6 +292,16 @@ func newRedisIntegrationClient(ctx context.Context, name string, db int) (*Clien
 			MaxRetries:   1,
 		},
 	}})
+}
+
+func redisIntegrationDB(t *testing.T) int {
+	t.Helper()
+	dbText := envOrDefault("REDISX_REDIS_DB", "0")
+	db, err := strconv.Atoi(dbText)
+	if err != nil {
+		t.Fatalf("parse REDISX_REDIS_DB: %v", err)
+	}
+	return db
 }
 
 func envOrDefault(name string, fallback string) string {

@@ -47,6 +47,10 @@
 - [Harness gate](docs/standard/harness-gates.md)：required、extended、generator、docs、score 和 final gate 命令。
 - [Evidence 协议](docs/standard/evidence-protocol.md)：`DONE with evidence:` 和 release manifest 要求。
 - [测试策略](docs/testing.md)：单元、示例 smoke、release quality 和 release manifest fixture 隔离要求。
+- [当前状态](STATUS.md)：Redis L2-T2 能力、integration、persistence、Evidence 和 release-readiness 对齐快照。
+- [Redis L2 执行方案](docs/l2/04_redisx_execution_plan.md)：Redis adapter 的 L2-T2 profile、真实 Redis integration、persistence recovery 和 release-readiness 证据口径。
+- [Redis integration 测试](test/integration/README.md)：环境变量门禁、Docker-backed Redis、真实 Redis 占位符命令和覆盖清单。
+- [L2 Evidence 目录](.agent/evidence/l2/README.md)：`unit`、`contract`、`integration`、`persistence` profiles 的 evidence 文件与通过标准。
 - [安全与密钥策略](docs/standard/security-and-secret-policy.md)：secret scan、每周窗口 `govulncheck` 和 Agent runtime 目录排除边界。
 - [供应链与 Evidence](docs/supply-chain.md)：workflow Action SHA pinning、每周窗口 `govulncheck` 固定版本、release manifest 和 CI artifact 对齐。
 - [Release Scorecard](docs/scorecard.md)：`goalcli score --min 9.8` 的评分维度、阈值和语义边界。
@@ -81,11 +85,16 @@ make ci-extended
 GOWORK=off make dependency-check
 GOWORK=off make standard-impact-check
 GOWORK=off make docs-check
+GOWORK=off make test-integration
+REDISX_PERSISTENCE_INTEGRATION=1 GOWORK=off make test-persistence-integration
+GOWORK=off make l2-check
 XLIB_CONTEXT=release_verify GOWORK=off make release-check
 XLIB_CONTEXT=release_verify GOWORK=off make release-final-check
 XLIB_CONTEXT=release_verify GOWORK=off make release-preflight VERSION=v0.4.13
 make evidence
 ```
+
+`make integration` 会先执行 downstream template smoke，再进入 Redis L2 integration runner。真实 Redis profile 必须由调用方显式注入 `REDISX_INTEGRATION=1` 和 `REDISX_REDIS_*` 环境变量；persistence recovery 使用 `REDISX_PERSISTENCE_INTEGRATION=1` 触发。文档、日志和 Evidence 只允许记录变量名与占位符，不得记录真实 host、password、TLS material 或 secret file 内容。
 
 `release-check` 和 `release-check-extended` 已依赖 `dependency-check`、`standard-impact-check` 和 `docs-check`，用于在生成 Evidence 前确认依赖漂移自动化、标准影响报告、标准文档入口、下游同步策略、链接、模板占位符、当前命名、关键文本和 release manifest 协议没有漂移。`dependency-check` 读取 `renovate.json`、`.github/dependabot.yml` 和 `go.mod`；`standard-impact-check` 生成 `release/standard-impact/latest.md`，并把 `downstream_sync_required`、`downstream_release_decision`（只允许 `required` / `not_required`）和 `repository_rules_release_decision`（只允许 `audit_required` / `not_required`）结论交给 release manifest。`docs-check` 是结构性 gate，不替代人工语义审查。
 
@@ -111,6 +120,8 @@ XLIB_CONTEXT=release_verify GOWORK=off make release-check
 ## Evidence
 
 完成需要 release manifest 和 CI Evidence。`release/manifest/latest.json` 是生成产物，不提交到源码历史；对应的 `release/manifest/latest.json.sha256` 也是生成产物，两者都必须保持在 `.gitignore` 中。manifest 会记录 module、commit、tree SHA、源码摘要、contract 指纹、`dependencies`、`tools`、生成时间、工作区状态、gate 结果、`standard_impact`、`downstream_sync_required`、`generator_evidence`、`score`、`workflow` 和这两个 Evidence artifact；其中 `standard_impact.downstream_release_decision` 只能使用 `required` 或 `not_required`，`standard_impact.repository_rules_release_decision` 只能使用 `audit_required` 或 `not_required`。`release-check` 会生成并校验 checksum，CI 会上传两者作为 artifact。`make release-evidence-check` 会验证 manifest 与当前仓库事实一致，`make release-final-check` 会额外要求工作区为 `clean`。Release manifest 测试必须在临时 fixture 仓库中构造所需 `.omc` state，不得依赖当前工作区的 Agent 运行态文件。最终完成声明必须包含 `DONE with evidence:`。
+
+Redis L2 evidence 固定在 `.agent/evidence/l2/`：`integration-report.json` 记录 live Redis command coverage，`persistence-report.json` 记录 restart recovery，`release-readiness.json` 汇总 `unit`、`contract`、`integration`、`persistence` 必需 profile。公开 Evidence 只记录 profile 状态、覆盖项和占位符变量名。
 
 Full Goal Runtime v3.1 位于 [.agent](.agent/)，其中 [goal-runtime](.agent/runtime/goal-runtime.md)、[object-model](.agent/runtime/object-model.md)、[state-machine](.agent/runtime/state-machine.md)、[traceability-matrix](.agent/traceability/traceability-matrix.md)、[harness](.agent/harness/harness.yaml)、[evidence-protocol](.agent/evidence/evidence-protocol.md)、[release-template](.agent/release/release-template.md)、[retrospective-template](.agent/docs/retrospective-template.md)、[risk-register](.agent/traceability/risk-register.md)、[decision-log](.agent/traceability/decision-log.md)、[rollback-protocol](.agent/runtime/rollback-protocol.md) 和 patch 文档用于把标准、执行、评审、发布和复盘连接到同一套 Evidence 协议。
 

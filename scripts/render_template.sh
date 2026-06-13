@@ -199,6 +199,39 @@ replace_in_text_files() {
   )
 }
 
+rename_if_exists() {
+  local from="$1"
+  local to="$2"
+
+  if [[ "$from" == "$to" || ! -e "$from" ]]; then
+    return
+  fi
+  if [[ -e "$to" ]]; then
+    echo "ERROR: rendered path already exists: $to" >&2
+    exit 1
+  fi
+  mkdir -p "$(dirname "$to")"
+  mv "$from" "$to"
+}
+
+rename_rendered_template_paths() {
+  local target_upper="$1"
+
+  if [[ "$package_name" == "redisx" ]]; then
+    return
+  fi
+
+  rename_if_exists "$out_dir/contracts/redisx.config.schema.json" "$out_dir/contracts/$package_name.config.schema.json"
+  rename_if_exists "$out_dir/contracts/redisx.health.schema.json" "$out_dir/contracts/$package_name.health.schema.json"
+  rename_if_exists "$out_dir/contracts/redisx.errors.yaml" "$out_dir/contracts/$package_name.errors.yaml"
+  rename_if_exists "$out_dir/contracts/redisx.metrics.yaml" "$out_dir/contracts/$package_name.metrics.yaml"
+  rename_if_exists "$out_dir/.agent/evidence/GOAL-20260604-REDISX-L2-STANDARD-FACTORY" "$out_dir/.agent/evidence/GOAL-20260604-$target_upper-L2-STANDARD-FACTORY"
+  rename_if_exists "$out_dir/.agent/retrospectives/RETRO-20260604-redisx-l2.md" "$out_dir/.agent/retrospectives/RETRO-20260604-$package_name-l2.md"
+  rename_if_exists "$out_dir/.agent/patches/PATCH-PROMPT-20260604-redisx-l2.md" "$out_dir/.agent/patches/PATCH-PROMPT-20260604-$package_name-l2.md"
+  rename_if_exists "$out_dir/.agent/patches/PATCH-HARNESS-20260604-redisx-l2.md" "$out_dir/.agent/patches/PATCH-HARNESS-20260604-$package_name-l2.md"
+  rename_if_exists "$out_dir/.agent/patches/PATCH-RULE-20260604-redisx-l2.md" "$out_dir/.agent/patches/PATCH-RULE-20260604-$package_name-l2.md"
+}
+
 replace_in_text_files 'redisx' "$module_name"
 replace_in_text_files 'github.com/ZoneCNH/redisx' "$module_path"
 replace_in_text_files 'redisx' "$package_name"
@@ -212,6 +245,7 @@ replace_in_text_files 'redisx_' "${package_name}_"
 replace_in_text_files 'Redisx' "$package_title"
 replace_in_text_files 'REDISX' "$package_upper"
 replace_in_text_files 'redisx' "$package_name"
+rename_rendered_template_paths "$package_upper"
 
 (
   cd "$out_dir"

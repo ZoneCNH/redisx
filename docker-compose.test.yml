@@ -1,10 +1,14 @@
 services:
   redis:
     image: redis:7-alpine
-    expose:
-      - "6379"
+    command: ["redis-server", "--appendonly", "yes", "--save", "1", "1"]
+    volumes:
+      - redis-test-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 12
+
+volumes:
+  redis-test-data: {}

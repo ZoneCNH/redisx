@@ -2,11 +2,12 @@
   "schema_version": "1.0",
   "adapter": "redisx",
   "target_level": "L2-T2",
-  "score": 86,
+  "score": 92,
   "profiles": [
     "unit",
     "contract",
-    "integration"
+    "integration",
+    "persistence"
   ],
   "evidence": [
     {
@@ -22,6 +23,11 @@
     {
       "profile": "integration",
       "path": ".agent/evidence/l2/integration-report.json",
+      "status": "pass"
+    },
+    {
+      "profile": "persistence",
+      "path": ".agent/evidence/l2/persistence-report.json",
       "status": "pass"
     }
   ]

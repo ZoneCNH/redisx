@@ -60,7 +60,7 @@ lint:
 .PHONY: integration
 integration:
 	$(GOALCLI) integration
-	$(MAKE) test-integration
+	GOWORK=$${GOWORK:-off} $(MAKE) test-integration
 
 .PHONY: docker-toolchain-check
 docker-toolchain-check:
@@ -241,15 +241,15 @@ test-unit: test
 
 .PHONY: test-contract
 test-contract:
-	go test ./test/contract
+	GOWORK=$${GOWORK:-off} go test ./test/contract -count=1
 
 .PHONY: test-integration
 test-integration:
-	@if [ "$${REDISX_INTEGRATION:-}" != "1" ]; then \
-		echo "REDISX_INTEGRATION=1 not set; skipping real Redis integration"; \
-		exit 0; \
-	fi
-	GOWORK=$${GOWORK:-off} go test ./pkg/redisx -run TestRedisIntegrationWithEnv -count=1
+	./scripts/run_redis_integration.sh
+
+.PHONY: test-persistence-integration
+test-persistence-integration:
+	./scripts/run_redis_persistence_integration.sh
 
 .PHONY: test-chaos
 test-chaos:

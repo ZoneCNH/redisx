@@ -67,6 +67,14 @@
       "notes": "Provider-backed TTL evidence is env-gated by REDISX_INTEGRATION=1 and REDISX_REDIS_* values."
     },
     {
+      "requirement": "kv-persistence-recovery",
+      "contract_pack": "kv",
+      "profile": "persistence",
+      "evidence": ".agent/evidence/l2/persistence-report.json; pkg/redisx/redis_integration_test.go; docker-compose.test.yml",
+      "status": "pass",
+      "notes": "Non-expiring Set values are verified after Redis restart on the same AOF/RDB-backed data volume."
+    },
+    {
       "requirement": "pool-contract",
       "contract_pack": "pool",
       "profile": "contract",

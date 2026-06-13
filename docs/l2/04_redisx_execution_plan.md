@@ -1,223 +1,190 @@
-# redisx 执行方案：KV / TTL / Lock / Stream / PubSub
+# redisx 执行方案：KV / TTL / Persistence
 
-> 文档用途：独立仓库执行方案，可直接作为 Goal / Issue / PR / Harness / Evidence 落地依据。  
-> 统一原则：禁止 main 直接开发；必须使用 git worktree；没有 Evidence 不允许 DONE；没有 release-readiness 不允许 Release。
-
-
+> 文档用途：独立仓库执行方案，可直接作为 Goal / Issue / PR / Harness / Evidence 落地依据。
+> 统一原则：禁止 main 直接开发；必须使用 git worktree；没有 Evidence 不允许 DONE；没有 release-readiness 不允许 Release；不得把真实 Redis 连接信息写入源码、文档、日志或 Evidence。
 
 ## 1. 定位
 
-`redisx` 是 L2 基础设施适配库。目标是纳入统一 L2 测试工厂：
+`redisx` 是 L2 infrastructure adapter，不是业务缓存模块。它向上暴露稳定 KV / TTL / persistence contract，向下封装 Redis client、连接池、超时、错误映射和序列化边界。
+
+L2-T2 完成口径如下：
 
 ```text
 capability manifest
-  → contract pack
-  → testkitx runner
-  → xlibgate/l2 release-check
-  → Evidence
-  → release-readiness.json
+  -> contract pack
+  -> env-gated live Redis integration
+  -> persistence recovery profile
+  -> Evidence
+  -> release-readiness.json
 ```
 
 ## 2. 能力族
 
 ```text
-common / kv / ttl / pipeline / lock / stream / pubsub
+common
+kv
+ttl
+persist
+pipeline
+lock
+stream
+pubsub
 ```
+
+L2-T2 只开放 `common`、`kv`、`ttl`、`persist` 和 pool config pass-through。`lock`、`stream`、`pubsub`、pool exhaustion、chaos 和 benchmark 进入后续 L2-T3/L2-T4。
 
 ## 3. L2-T2 Capability Manifest
 
 ```yaml
-repo: redisx
-layer: L2
-version: "1.0"
-
-capabilities:
-  common: { required: true, level: core }
-  kv: { required: true, level: core }
-  ttl: { required: true, level: core }
-  pipeline: { required: false, level: optional }
-  lock: { required: false, level: optional }
-  stream: { required: false, level: optional }
-  pubsub: { required: false, level: optional }
-
-provider:
-  name: redis
-  test_image: redis:7-alpine
-
-required_profiles: [unit, contract, integration]
+module: redisx
 release_level: L2-T2
+capabilities:
+  common:
+    required: true
+  kv:
+    required: true
+  ttl:
+    required: true
+  persist:
+    required: true
+  pipeline:
+    required: false
+  lock:
+    required: false
+  stream:
+    required: false
+  pubsub:
+    required: false
+required_profiles:
+  - unit
+  - contract
+  - integration
+  - persistence
 ```
 
-## 4. P0 Contract Tests
+真实 Redis profile 必须由调用方显式注入 `REDISX_INTEGRATION=1` 和 `REDISX_REDIS_*` 环境变量。公开文档只允许写变量名和占位符，不允许写真实 host、password、TLS material 或 secret file 内容。
+
+## 4. P0 Contract And Integration Coverage
+
+L2-T2 必需覆盖：
+
+- `kv.set_get`
+- `kv.delete`
+- `kv.exists`
+- `kv.not_found`
+- `kv.validation.empty_key`
+- `kv.context_cancel`
+- `ttl.expire`
+- `ttl.not_found_after_expire`
+- `pool.config_passthrough`
+- `integration.redis.ping_health`
+- `integration.redis.commands_set_get_ttl_mset_mget_counter_expire_exists_del`
+- `integration.redis.client_reconnect`
+- `persistence.redis.restart_recovery`
+
+上述 coverage 同时体现在 `.agent/l2-capabilities.yaml`、contract tests、integration report、persistence report 和 compliance matrix 中。
+
+## 5. 错误映射
+
+Redis provider 错误必须映射到稳定 adapter 错误：
+
+| 场景 | 对外语义 |
+| --- | --- |
+| key 不存在 | `ErrNotFound` 或 contract 指定的 not found 结果 |
+| 空 key / 非法 TTL | validation error |
+| context timeout / cancel | context error |
+| Redis 暂不可用 | transient provider error |
+| Close 后继续使用 | closed client error |
+
+contract tests 不依赖具体 Redis 错误字符串，只验证稳定语义。
+
+## 6. 文件与证据布局
 
 ```text
-kv.set_get
-kv.delete
-kv.exists
-kv.not_found
-kv.validation.empty_key
-kv.context_cancel
-ttl.expire
-ttl.not_found_after_expire
-pool.config_passthrough
-integration.redis.ping_health
-integration.redis.client_reconnect_persistence
+.agent/l2-capabilities.yaml
+.agent/evidence/l2/README.md
+.agent/evidence/l2/compliance-matrix.json
+.agent/evidence/l2/integration-report.json
+.agent/evidence/l2/persistence-report.json
+.agent/evidence/l2/release-readiness.json
+test/contract/l2_contract_test.go
+test/integration/README.md
+pkg/redisx/redis_integration_test.go
+scripts/run_redis_integration.sh
+scripts/run_redis_persistence_integration.sh
+scripts/verify_l2_redisx.py
+docker-compose.test.yml
+Makefile
 ```
 
-L2-T2 当前只声明 common / kv / ttl / pool 的本地证据。Lock、Stream、PubSub、server restart recovery、pool exhaustion 属于 L2-T3+ 扩展或 chaos profile，未在当前 readiness 中声明通过。
+Evidence 只记录 profile 状态、覆盖项、命令入口和文件路径，不记录真实 Redis 配置值。
 
-## 5. 错误映射重点
-
-```text
-NOAUTH→auth
-WRONGPASS→auth
-nil key→not_found
-context deadline→timeout
-context canceled→canceled
-cluster down→unavailable
-pool exhausted→resource_exhausted/timeout
-```
-
-## 6. 目录结构
-
-```text
-redisx/
-  .agent/
-    l2-capabilities.yaml
-    registry/l2-contract-packs.yaml
-    gates/l2gate.yaml
-    evidence/
-      raw/
-      normalized/
-      decision/
-      trace/
-
-  test/
-    contract/
-      l2_contract_test.go
-    integration/
-    chaos/
-    benchmark/
-    adoption/
-    redisxtest/
-      factory.go
-      adapter.go
-      config.go
-
-  examples/
-    basic/
-    with-configx/
-    with-observex/
-    with-resiliencx/
-
-  docker-compose.test.yml
-  Makefile
-```
-
-## 标准命令面
+## 7. 标准命令
 
 ```bash
-make l2-plan
-make test-unit
-make test-contract
-make test-integration
-make test-chaos
-make test-bench
-make test-adoption
-make test-arch
-make test-security
-make evidence
-make release-check
-```
-
-最小 MVA 阶段可以先保留：
-
-```bash
-make l2-plan
-make test-unit
-make test-contract
+GOWORK=off make test-unit
+GOWORK=off make test-contract
+GOWORK=off make test-integration
 REDISX_INTEGRATION=1 GOWORK=off make test-integration
-make l2-check
-make release-check
+REDISX_PERSISTENCE_INTEGRATION=1 GOWORK=off make test-persistence-integration
+GOWORK=off make l2-check
+XLIB_CONTEXT=release_verify GOWORK=off make release-check
 ```
 
-`make test-integration` 默认在未设置 `REDISX_INTEGRATION=1` 时跳过真实 Redis 连接；release 或人工验收应通过外部环境注入 `REDISX_REDIS_*` 后执行。
+`GOWORK=off make test-integration` 默认可使用 Docker-backed Redis runner。真实 Redis 验收必须设置 `REDISX_INTEGRATION=1` 并由外部环境提供 `REDISX_REDIS_ADDR`、`REDISX_REDIS_PASSWORD`、`REDISX_REDIS_DB` 和 TLS 相关变量。persistence recovery 使用 `REDISX_PERSISTENCE_INTEGRATION=1` 触发，并生成 `.agent/evidence/l2/persistence-report.json`。
 
+## 8. Evidence Standard
 
-## Evidence 标准
-
-```text
-.agent/evidence/
-  raw/
-    unit-test.json
-    contract-test.json
-    integration-test.json
-    chaos-test.json
-    adoption-test.json
-    benchmark.txt
-  normalized/
-    contract-check.json
-    integration-check.json
-    chaos-check.json
-    adoption-check.json
-    layer-guard.json
-    secret-scan.json
-  decision/
-    test-plan.json
-    release-readiness.json
-  trace/
-    traceability-matrix.json
-  retrospective.json
-  manifest.json
-```
-
-完成声明必须使用：
+完成声明必须包含：
 
 ```text
 DONE with evidence:
-- .agent/evidence/decision/release-readiness.json
-- .agent/evidence/trace/traceability-matrix.json
-- .agent/evidence/retrospective.json
+- .agent/evidence/l2/release-readiness.json
+- .agent/evidence/l2/compliance-matrix.json
+- .agent/evidence/l2/integration-report.json
+- .agent/evidence/l2/persistence-report.json
 ```
 
+`release-readiness.json` 必须满足：
 
-## 7. 分阶段路线
+- `release_level_actual` 为 `L2-T2`。
+- `readiness_score` 不低于 release gate 阈值。
+- `required_profiles.unit.status` 为 `pass`。
+- `required_profiles.contract.status` 为 `pass`。
+- `required_profiles.integration.status` 为 `pass`。
+- `required_profiles.persistence.status` 为 `pass`。
+- `blockers` 为空。
 
-```text
-L2-T2:
-  common + kv + ttl + pool config pass-through + env-gated integration + release-readiness
+## 9. 分阶段路线
 
-L2-T3:
-  chaos + benchmark + adoption + layer guard + secret scan
+| 阶段 | 范围 | Gate |
+| --- | --- | --- |
+| L2-T2 | common、kv、ttl、persist、pool config pass-through、env-gated integration、persistence recovery、release-readiness | `GOWORK=off make l2-check` |
+| L2-T3 | chaos、benchmark、adoption、layer guard、secret scan | release extended gate |
+| L2-T4 | lock、stream、pubsub、traceability、retrospective、factory-grade evidence | full factory-grade gate |
 
-L2-T4:
-  extended capabilities + traceability + retrospective + factory_grade=true
-```
+## 10. Rollout
 
-## 8. Rollout
+L2-T2 只允许下游依赖 `common`、`kv`、`ttl` 和 `persist`。调用方不得假设 lock、stream、pubsub 或 pool exhaustion 已经完成。
 
-```text
-L2-T2 只开 common/kv/ttl。
-L2-T3 增加 chaos/benchmark/adoption。
-L2-T4 打开 pipeline/lock/stream/pubsub required。
-```
+## 11. 特殊约束
 
-## 9. 特殊注意
+- `lock` 不在 L2-T2 中承诺，避免把 Redis 单节点锁误认为分布式一致性锁。
+- `pubsub` 不承诺 persistence；需要独立 loss/reconnect 语义。
+- `stream` 需要消费组、ack、claim 和 pending list contract，不混入 KV/TTL 验收。
+- persistence recovery 只验证隔离测试 key 的写入、重启和读取恢复，不复用生产 keyspace。
+- integration runner 必须支持跳过语义，但 release 验收必须显式提供 live Redis profile evidence。
 
-```text
-Redis Lock 必须防止误删他人锁：release 必须校验 token。
-Redis PubSub 不保证持久化，不要测成 Kafka EventLog。
-Stream 要明确 read group / ack / pending 语义。
-```
+## 12. Acceptance
 
-## 10. 验收标准
+L2-T2 完成必须同时满足：
 
-```text
-make release-check 通过
-release_level_actual 符合目标等级
-hard_failures 全部 false
-required_contract_tests 全部通过
-required_evidence 全部存在
-正式代码不依赖 testkitx
-不依赖其它 L2
-```
+- `GOWORK=off make docs-check` 通过。
+- `GOWORK=off make test-contract` 通过。
+- `GOWORK=off make test-integration` 通过。
+- `REDISX_PERSISTENCE_INTEGRATION=1 GOWORK=off make test-persistence-integration` 通过。
+- `GOWORK=off make l2-check` 通过。
+- `XLIB_CONTEXT=release_verify GOWORK=off make release-check` 通过或记录明确 release-scope gap。
+- `.agent/evidence/l2/release-readiness.json` 声明 `unit`、`contract`、`integration`、`persistence` 全部 pass。
+- `.agent/evidence/l2/compliance-matrix.json` 包含 `kv-persistence-recovery`。
+- 公开文档和 Evidence 不包含真实 Redis 凭据、端点或 secret file 内容。

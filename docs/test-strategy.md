@@ -40,6 +40,7 @@ GOWORK=off make security
 GOWORK=off make contracts
 GOWORK=off make docs-check
 GOWORK=off make integration
+GOWORK=off make l2-check
 GOWORK=off make evidence
 GOWORK=off make release-check
 ```
@@ -51,3 +52,5 @@ GOWORK=off make release-check
 - Observability Library：`observex`。
 - Storage Library：`postgresx`、`redisx`、`taosx`、`ossx`、`clickhousex`。
 - Messaging Library：`kafkax`。
+
+Storage Library 的 L2 adapter 必须维护 env-gated live provider profiles。Redis L2 的当前必需 profile 是 `unit`、`contract`、`integration` 和 `persistence`；真实 Redis profile 通过 `REDISX_INTEGRATION=1` 与 `REDISX_REDIS_*` 变量显式启用，persistence recovery 通过 `REDISX_PERSISTENCE_INTEGRATION=1` 启用。测试文档和 Evidence 只记录变量名、profile 状态和覆盖项，不记录真实连接值。

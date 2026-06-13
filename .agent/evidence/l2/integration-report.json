@@ -4,26 +4,95 @@
   "profile": "integration",
   "status": "pass",
   "env_gate": "REDISX_INTEGRATION=1",
-  "credential_source": "external environment only; values are not committed",
-  "command": "GOWORK=off REDISX_INTEGRATION=1 go test ./pkg/redisx -run TestRedisIntegrationWithEnv -count=1",
-  "scenarios": [
+  "credential_source": "external environment only; values are not committed or printed",
+  "command": "GOWORK=off REDISX_INTEGRATION=1 go test ./pkg/redisx -run '^TestRedisIntegrationWithEnv$' -count=1",
+  "generated_at": "2026-06-12T20:57:23.968823+00:00",
+  "config_keys": [
+    "REDISX_REDIS_ADDR",
+    "REDISX_REDIS_USERNAME",
+    "REDISX_REDIS_PASSWORD",
+    "REDISX_REDIS_DB"
+  ],
+  "checklist": [
     {
-      "name": "real_redis_ping_health",
+      "name": "ping",
       "status": "pass"
     },
     {
-      "name": "kv_ttl_multi_counter_delete",
+      "name": "health",
       "status": "pass"
     },
     {
-      "name": "client_reconnect_persistence",
-      "status": "pass",
-      "notes": "A second client reads a non-TTL key written by the first client before cleanup."
+      "name": "health_check",
+      "status": "pass"
     },
     {
-      "name": "server_restart_recovery",
-      "status": "not_applicable",
-      "notes": "External dev Redis restart is not performed by this env-gated test; local Docker restart path is documented in test/integration/README.md."
+      "name": "set",
+      "status": "pass"
+    },
+    {
+      "name": "get",
+      "status": "pass"
+    },
+    {
+      "name": "ttl_permanent",
+      "status": "pass"
+    },
+    {
+      "name": "set_with_ttl",
+      "status": "pass"
+    },
+    {
+      "name": "ttl_missing",
+      "status": "pass"
+    },
+    {
+      "name": "missing_get_nil",
+      "status": "pass"
+    },
+    {
+      "name": "mset",
+      "status": "pass"
+    },
+    {
+      "name": "mget",
+      "status": "pass"
+    },
+    {
+      "name": "incr",
+      "status": "pass"
+    },
+    {
+      "name": "decr",
+      "status": "pass"
+    },
+    {
+      "name": "validation_error",
+      "status": "pass"
+    },
+    {
+      "name": "expire_existing",
+      "status": "pass"
+    },
+    {
+      "name": "expire_missing",
+      "status": "pass"
+    },
+    {
+      "name": "exists",
+      "status": "pass"
+    },
+    {
+      "name": "del",
+      "status": "pass"
+    },
+    {
+      "name": "close",
+      "status": "pass"
+    },
+    {
+      "name": "client_reconnect_read",
+      "status": "pass"
     }
   ],
   "runtime": "real Redis selected by REDISX_REDIS_* at test time",

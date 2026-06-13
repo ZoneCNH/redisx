@@ -19,6 +19,8 @@
 XLIB_CONTEXT=release_verify GOWORK=off make release-check
 ```
 
+Redis L2 adapter 的发布验收还必须保留 L2 profile evidence：`GOWORK=off make test-integration` 证明 env-gated Redis integration runner，`REDISX_PERSISTENCE_INTEGRATION=1 GOWORK=off make test-persistence-integration` 证明 persistence recovery，`GOWORK=off make l2-check` 汇总 `.agent/evidence/l2/release-readiness.json`。真实 Redis 连接信息只能通过 `REDISX_REDIS_*` 环境变量从外部注入，release 文档和 manifest 不记录具体值。
+
 `GOWORK=off` 用于证明模板不依赖父级 workspace。Makefile 的 gate 入口统一通过 `cmd/goalcli` 调度；shell 脚本仍保留为兼容实现层，供本地排障和旧自动化复用。
 
 Full Goal Runtime v3.1 的评分入口是：
@@ -155,6 +157,8 @@ Extended Evidence 推荐额外记录：
 - `RELEASE_EVIDENCE_REQUIRE_PASSED=1 GOWORK=off make release-evidence-check`
 
 这一步用于证明模板替换、包目录迁移、imports、contracts、边界检查和生成后 release Evidence 都能在下游库中独立工作。
+
+在 `redisx` 仓库中，`make integration` 还会继续执行 Redis L2 integration runner。未显式设置 `REDISX_INTEGRATION=1` 时可使用 Docker-backed Redis smoke；真实 Redis profile 和 persistence recovery 必须由调用方提供环境变量并输出 `.agent/evidence/l2/integration-report.json` 与 `.agent/evidence/l2/persistence-report.json`。
 
 ## 规则
 

@@ -8,7 +8,7 @@
 2. 填写 adapter metadata、declared capabilities、selected contract packs 和 evidence report paths。
 3. 运行 `make l2-capability-check l2-evidence` 证明 local shape。
 4. 在 downstream repository 接入 `testkitx` 并生成 contract reports。
-5. 按 target release level 要求添加 integration、chaos、benchmark 和 adoption evidence。
+5. 按 target release level 要求添加 integration、persistence、chaos、benchmark 和 adoption evidence。
 6. 运行 `make l2-release-readiness`，并将 evidence bundle 提交给 `xlibgate`。
 7. 记录 blockers，不要弱化 release criteria。
 
@@ -18,6 +18,6 @@
 
 ## Stop conditions
 
-当 selected packs 缺少可执行的 `testkitx` coverage、required reports 缺失，或 provider-specific behavior 无法用现有 pack semantics 表达时，停止 rollout。通过 `xlib-standard` backlog 升级 gap，而不是添加本地例外。
+当 selected packs 缺少可执行的 `testkitx` coverage、required reports 缺失、declared persistence/recovery evidence 缺失，或 provider-specific behavior 无法用现有 pack semantics 表达时，停止 rollout。通过 `xlib-standard` backlog 升级 gap，而不是添加本地例外。
 
 Release claims 的 evidence paths 应保持在 `.agent/evidence/l2` 下，除非 `xlib-standard` 修改 schema。

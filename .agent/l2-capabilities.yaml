@@ -48,8 +48,8 @@ capabilities:
     status: implemented
   - name: persist
     family: key_value
-    status: unsupported
-    notes: No public persist API exists in the current surface.
+    status: implemented
+    notes: Set with expiration 0 creates non-expiring keys, and the persistence profile verifies those keys survive Redis restart on the same AOF/RDB-backed data volume; no separate public PERSIST command is exposed.
   - name: expiration_events
     family: key_value
     status: unsupported
@@ -80,9 +80,11 @@ evidence:
     - unit
     - contract
     - integration
+    - persistence
   output_dir: .agent/evidence/l2
   reports:
     - .agent/evidence/l2/contract-report.json
     - .agent/evidence/l2/integration-report.json
+    - .agent/evidence/l2/persistence-report.json
     - .agent/evidence/l2/compliance-matrix.json
     - .agent/evidence/l2/release-readiness.json

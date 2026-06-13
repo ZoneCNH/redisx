@@ -17,6 +17,8 @@ manifest schema 是 `.agent/schemas/l2-capabilities.schema.json`；downstream te
 
 每个 selected pack 必须存在于 `.agent/registry/l2-contract-packs.yaml`。Evidence paths 应保持在 `.agent/evidence/l2` 下。Manifest 只描述 adapter 意图；live connection details、runtime credential loading 和 runner wiring 属于 adopting repository，不应提交到 `xlib-standard` artifacts。
 
+当 adapter 声明 `persist` capability 或 `persistence` required profile 时，manifest 必须指向独立 persistence evidence report，不能把 restart/recovery 结果混入普通 integration summary。
+
 ## Local checks
 
 在 template 中运行 `make l2-capability-check`，确认 manifest 存在。Downstream repositories 随后应先按 schema 校验 manifest，再调用 `testkitx` 或 `xlibgate`。

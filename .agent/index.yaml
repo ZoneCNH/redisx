@@ -204,6 +204,13 @@ files:
     owner: release
     validator: l2-check
     purpose: redisx L2 integration profile 证据。
+  - path: .agent/evidence/l2/persistence-report.json
+    layer: evidence
+    authority: validated_mirror
+    mutability: hand_written
+    owner: release
+    validator: l2-check
+    purpose: redisx L2 persistence profile 证据。
   - path: .agent/evidence/l2/compliance-matrix.json
     layer: evidence
     authority: validated_mirror

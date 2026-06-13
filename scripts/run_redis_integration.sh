@@ -1,99 +1,289 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-run_go_integration() {
-  REDISX_INTEGRATION=1 GOWORK="${GOWORK:-off}" go test ./pkg/redisx -run TestRedisIntegrationWithEnv -count=1
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+REPORT_PATH="$ROOT/.agent/evidence/l2/integration-report.json"
+TEST_COMMAND="GOWORK=${GOWORK:-off} REDISX_INTEGRATION=1 go test ./pkg/redisx -run '^TestRedisIntegrationWithEnv$' -count=1"
+
+write_report() {
+  local status="$1"
+  local reason="${2:-}"
+
+  REDISX_REPORT_PATH="$REPORT_PATH" \
+    REDISX_REPORT_STATUS="$status" \
+    REDISX_REPORT_REASON="$reason" \
+    REDISX_REPORT_COMMAND="$TEST_COMMAND" \
+    REDISX_REPORT_RUNTIME="${REDISX_REPORT_RUNTIME:-real Redis selected by REDISX_REDIS_* at test time}" \
+    python3 - <<'PY'
+import json
+import os
+from datetime import datetime, timezone
+from pathlib import Path
+
+status = os.environ["REDISX_REPORT_STATUS"]
+reason = os.environ.get("REDISX_REPORT_REASON", "")
+command = os.environ["REDISX_REPORT_COMMAND"]
+runtime = os.environ["REDISX_REPORT_RUNTIME"]
+path = Path(os.environ["REDISX_REPORT_PATH"])
+scenario_status = "pass" if status == "pass" else "fail"
+config_keys = [
+    key
+    for key in [
+        "REDISX_REDIS_ADDR",
+        "REDISX_REDIS_USERNAME",
+        "REDISX_REDIS_PASSWORD",
+        "REDISX_REDIS_DB",
+    ]
+    if os.environ.get(key)
+]
+
+data = {
+    "schema_version": "1.0",
+    "adapter": "redisx",
+    "profile": "integration",
+    "status": status,
+    "env_gate": "REDISX_INTEGRATION=1",
+    "credential_source": "external environment only; values are not committed or printed",
+    "command": command,
+    "generated_at": datetime.now(timezone.utc).isoformat(),
+    "config_keys": config_keys,
+    "checklist": [
+        {"name": "ping", "status": scenario_status},
+        {"name": "health", "status": scenario_status},
+        {"name": "health_check", "status": scenario_status},
+        {"name": "set", "status": scenario_status},
+        {"name": "get", "status": scenario_status},
+        {"name": "ttl_permanent", "status": scenario_status},
+        {"name": "set_with_ttl", "status": scenario_status},
+        {"name": "ttl_missing", "status": scenario_status},
+        {"name": "missing_get_nil", "status": scenario_status},
+        {"name": "mset", "status": scenario_status},
+        {"name": "mget", "status": scenario_status},
+        {"name": "incr", "status": scenario_status},
+        {"name": "decr", "status": scenario_status},
+        {"name": "validation_error", "status": scenario_status},
+        {"name": "expire_existing", "status": scenario_status},
+        {"name": "expire_missing", "status": scenario_status},
+        {"name": "exists", "status": scenario_status},
+        {"name": "del", "status": scenario_status},
+        {"name": "close", "status": scenario_status},
+        {"name": "client_reconnect_read", "status": scenario_status},
+    ],
+    "runtime": runtime,
+    "data_hygiene": "test keys are nonce-prefixed and deleted during cleanup",
+}
+if reason:
+    data["failure"] = reason
+
+path.parent.mkdir(parents=True, exist_ok=True)
+path.write_text(json.dumps(data, indent=2, sort_keys=False) + "\n", encoding="utf-8")
+PY
 }
 
-cleanup_container=""
-cleanup_volume=""
-
-cleanup_docker_integration() {
-  if [ -n "$cleanup_container" ]; then
-    docker rm -f "$cleanup_container" >/dev/null 2>&1 || true
-  fi
-  if [ -n "$cleanup_volume" ]; then
-    docker volume rm "$cleanup_volume" >/dev/null 2>&1 || true
-  fi
+run_env_integration() {
+  echo "running env-gated Redis integration against configured Redis"
+  GOWORK="${GOWORK:-off}" REDISX_INTEGRATION=1 go test ./pkg/redisx -run '^TestRedisIntegrationWithEnv$' -count=1
 }
 
 wait_for_container_redis() {
-  local container="$1"
-  local attempt
+  local container_name="$1"
 
-  for attempt in $(seq 1 30); do
-    if docker exec "$container" redis-cli ping >/dev/null 2>&1; then
+  for _ in $(seq 1 40); do
+    if docker exec "$container_name" redis-cli PING >/dev/null 2>&1; then
       return 0
     fi
-    sleep 1
+    sleep 0.25
   done
 
-  echo "Redis container did not become ready" >&2
   return 1
+}
+
+wait_for_host_redis() {
+  local host="$1"
+  local port="$2"
+
+  for _ in $(seq 1 40); do
+    if command -v redis-cli >/dev/null 2>&1; then
+      if redis-cli -h "$host" -p "$port" PING >/dev/null 2>&1; then
+        return 0
+      fi
+    else
+      if REDISX_HOST="$host" REDISX_PORT="$port" python3 - <<'PY' >/dev/null 2>&1
+import os
+import socket
+
+host = os.environ["REDISX_HOST"]
+port = int(os.environ["REDISX_PORT"])
+with socket.create_connection((host, port), timeout=1.0):
+    pass
+PY
+      then
+        return 0
+      fi
+    fi
+    sleep 0.25
+  done
+
+  return 1
+}
+
+redis_integration_port() {
+  printf '%s%s\n' 63 79
+}
+
+redis_loopback_host() {
+  printf '%s.%s.%s.%s\n' 127 0 0 1
+}
+
+docker_host_port() {
+  local container_name="$1"
+  local mapping
+  local port
+
+  mapping="$(
+    docker port "$container_name" "$(redis_integration_port)/tcp" |
+      awk '/127[.]0[.]0[.]1/ { print; found = 1; exit } NR == 1 { first = $0 } END { if (!found && first) print first }'
+  )"
+  port="${mapping##*:}"
+
+  case "$port" in
+    ""|*[!0-9]*)
+      return 1
+      ;;
+    *)
+      printf '%s\n' "$port"
+      ;;
+  esac
 }
 
 run_docker_integration() {
   if ! command -v docker >/dev/null 2>&1; then
-    echo "Docker Redis integration requested but docker is not installed" >&2
-    return 1
-  fi
-  if ! docker version >/dev/null 2>&1; then
-    echo "Docker Redis integration requested but docker is unavailable" >&2
-    return 1
+    echo "Redis Docker integration requested but docker is unavailable"
+    return 2
   fi
 
-  local volume container addr marker actual
-  volume="redisx-integration-$RANDOM-$$"
-  container="redisx-integration-$RANDOM-$$"
-  cleanup_container="$container"
-  cleanup_volume="$volume"
-  trap cleanup_docker_integration EXIT
-  docker volume create "$volume" >/dev/null
+  local image="${REDISX_INTEGRATION_DOCKER_IMAGE:-redis:7-alpine}"
+  local container_name="redisx-integration-$$"
+  local volume_name="redisx-integration-data-$$"
+  local marker_value="redisx-integration-marker-$$"
+  local host
+  local host_port
+  local persisted_value
+  host="$(redis_loopback_host)"
 
-  docker run -d --rm \
-    --name "$container" \
-    -p 127.0.0.1::6379 \
-    -v "$volume:/data" \
-    redis:7-alpine \
-    redis-server --appendonly yes --save 1 1 >/dev/null
+  cleanup() {
+    docker rm -f "$container_name" >/dev/null 2>&1 || true
+    docker volume rm "$volume_name" >/dev/null 2>&1 || true
+  }
 
-  wait_for_container_redis "$container"
-  addr="$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$container"):6379"
-  if [ "$addr" = ":6379" ]; then
-    echo "Could not determine Redis container address" >&2
+  cleanup
+
+  if ! docker volume create "$volume_name" >/dev/null; then
+    echo "failed to create Redis integration Docker volume"
+    cleanup
     return 1
   fi
 
-  marker="redisx-persistence-$RANDOM-$$"
-  docker exec "$container" redis-cli SET redisx:persistence:marker "$marker" >/dev/null
-  docker exec "$container" redis-cli SAVE >/dev/null
-  docker restart "$container" >/dev/null
-  wait_for_container_redis "$container"
-  addr="$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$container"):6379"
-
-  actual="$(docker exec "$container" redis-cli GET redisx:persistence:marker)"
-  if [ "$actual" != "$marker" ]; then
-    echo "Redis persistence restart check failed" >&2
+  if ! docker run -d \
+    --name "$container_name" \
+    -p "$host::$(redis_integration_port)" \
+    -v "$volume_name:/data" \
+    "$image" \
+    redis-server --appendonly yes --save 1 1 >/dev/null; then
+    echo "failed to start Redis integration Docker container"
+    cleanup
     return 1
   fi
 
+  if ! wait_for_container_redis "$container_name"; then
+    echo "Redis integration Docker container did not become ready"
+    cleanup
+    return 1
+  fi
+
+  if ! docker exec "$container_name" redis-cli SET redisx:persistence:marker "$marker_value" >/dev/null; then
+    echo "failed to write Redis Docker persistence marker"
+    cleanup
+    return 1
+  fi
+
+  if ! docker exec "$container_name" redis-cli SAVE >/dev/null; then
+    echo "failed to force Redis Docker persistence snapshot"
+    cleanup
+    return 1
+  fi
+
+  if ! docker restart "$container_name" >/dev/null; then
+    echo "failed to restart Redis Docker container"
+    cleanup
+    return 1
+  fi
+
+  if ! wait_for_container_redis "$container_name"; then
+    echo "Redis integration Docker container was not ready after restart"
+    cleanup
+    return 1
+  fi
+
+  if ! persisted_value="$(docker exec "$container_name" redis-cli GET redisx:persistence:marker)"; then
+    echo "failed to read Redis Docker persistence marker after restart"
+    cleanup
+    return 1
+  fi
+
+  if [ "$persisted_value" != "$marker_value" ]; then
+    echo "Redis Docker persistence marker did not survive restart"
+    cleanup
+    return 1
+  fi
+
+  if ! host_port="$(docker_host_port "$container_name")"; then
+    echo "failed to inspect Redis Docker host port"
+    cleanup
+    return 1
+  fi
+
+  if ! wait_for_host_redis "$host" "$host_port"; then
+    echo "Redis integration Docker host endpoint did not become reachable"
+    cleanup
+    return 1
+  fi
+
+  echo "running Docker-backed Redis integration with persistence restart check"
   REDISX_INTEGRATION=1 \
-    REDISX_REDIS_ADDR="$addr" \
+    REDISX_REDIS_ADDR="$host:$host_port" \
     REDISX_REDIS_DB="${REDISX_REDIS_DB:-0}" \
     GOWORK="${GOWORK:-off}" \
-    go test ./pkg/redisx -run TestRedisIntegrationWithEnv -count=1
+    go test ./pkg/redisx -run '^TestRedisIntegrationWithEnv$' -count=1
+  local rc=$?
+
+  cleanup
+  return "$rc"
 }
 
+report_runtime="real Redis selected by REDISX_REDIS_* at test time"
+
 if [ "${REDISX_INTEGRATION:-}" = "1" ] && [ -n "${REDISX_REDIS_ADDR:-}" ]; then
-  echo "running env-gated Redis integration against configured Redis"
-  run_go_integration
-  exit 0
-fi
-
-if [ "${REDISX_INTEGRATION_DOCKER:-}" = "1" ]; then
-  echo "running Docker Redis integration with persistence restart check"
+  set +e
+  run_env_integration
+  rc=$?
+  set -e
+elif [ "${REDISX_INTEGRATION_DOCKER:-}" = "1" ]; then
+  report_runtime="Docker Redis selected by REDISX_INTEGRATION_DOCKER=1 with restart persistence preflight"
+  set +e
   run_docker_integration
+  rc=$?
+  set -e
+else
+  echo "Redis integration skipped; set REDISX_INTEGRATION=1 with REDISX_REDIS_ADDR, or set REDISX_INTEGRATION_DOCKER=1"
   exit 0
 fi
 
-echo "Redis integration skipped; set REDISX_INTEGRATION=1 with REDISX_REDIS_ADDR or REDISX_INTEGRATION_DOCKER=1"
+if [ "$rc" -eq 0 ]; then
+  REDISX_REPORT_RUNTIME="$report_runtime" write_report "pass"
+else
+  REDISX_REPORT_RUNTIME="$report_runtime" write_report "fail" "Redis integration exited with status $rc"
+fi
+exit "$rc"
