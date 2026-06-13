@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 
@@ -34,6 +35,23 @@ var _ provider.Provider = (*Provider)(nil)
 const (
 	redisTTLNoExpire = -time.Nanosecond
 	redisTTLMissing  = -2 * time.Nanosecond
+)
+
+var (
+	releaseLockScript = redis.NewScript(`
+if redis.call("GET", KEYS[1]) == ARGV[1] then
+	return redis.call("DEL", KEYS[1])
+end
+return 0
+`)
+	fixedWindowRateLimitScript = redis.NewScript(`
+local current = redis.call("INCR", KEYS[1])
+if current == 1 then
+	redis.call("PEXPIRE", KEYS[1], ARGV[1])
+end
+local ttl = redis.call("PTTL", KEYS[1])
+return {current, ttl}
+`)
 )
 
 func New(cfg Config) (*Provider, error) {
@@ -128,6 +146,18 @@ func (p *Provider) Set(ctx context.Context, key string, value string, ttl time.D
 		return err
 	}
 	return mapError(client.Set(ctx, key, value, ttl).Err())
+}
+
+func (p *Provider) SetNX(ctx context.Context, key string, value string, ttl time.Duration) (bool, error) {
+	if err := contextError(ctx); err != nil {
+		return false, err
+	}
+	client, err := p.redisClient()
+	if err != nil {
+		return false, err
+	}
+	set, err := client.SetNX(ctx, key, value, ttl).Result()
+	return set, mapError(err)
 }
 
 func (p *Provider) Del(ctx context.Context, keys ...string) (int64, error) {
@@ -249,6 +279,306 @@ func (p *Provider) Decr(ctx context.Context, key string) (int64, error) {
 	return value, mapError(err)
 }
 
+func (p *Provider) HSet(ctx context.Context, key string, values map[string]string) (int64, error) {
+	if err := contextError(ctx); err != nil {
+		return 0, err
+	}
+	client, err := p.redisClient()
+	if err != nil {
+		return 0, err
+	}
+	count, err := client.HSet(ctx, key, stringMapToAny(values)...).Result()
+	return count, mapError(err)
+}
+
+func (p *Provider) HGet(ctx context.Context, key string, field string) (string, error) {
+	if err := contextError(ctx); err != nil {
+		return "", err
+	}
+	client, err := p.redisClient()
+	if err != nil {
+		return "", err
+	}
+	value, err := client.HGet(ctx, key, field).Result()
+	return value, mapError(err)
+}
+
+func (p *Provider) HGetAll(ctx context.Context, key string) (map[string]string, error) {
+	if err := contextError(ctx); err != nil {
+		return nil, err
+	}
+	client, err := p.redisClient()
+	if err != nil {
+		return nil, err
+	}
+	values, err := client.HGetAll(ctx, key).Result()
+	return values, mapError(err)
+}
+
+func (p *Provider) HDel(ctx context.Context, key string, fields ...string) (int64, error) {
+	if err := contextError(ctx); err != nil {
+		return 0, err
+	}
+	client, err := p.redisClient()
+	if err != nil {
+		return 0, err
+	}
+	count, err := client.HDel(ctx, key, fields...).Result()
+	return count, mapError(err)
+}
+
+func (p *Provider) LPush(ctx context.Context, key string, values ...string) (int64, error) {
+	if err := contextError(ctx); err != nil {
+		return 0, err
+	}
+	client, err := p.redisClient()
+	if err != nil {
+		return 0, err
+	}
+	count, err := client.LPush(ctx, key, stringArgs(values)...).Result()
+	return count, mapError(err)
+}
+
+func (p *Provider) RPush(ctx context.Context, key string, values ...string) (int64, error) {
+	if err := contextError(ctx); err != nil {
+		return 0, err
+	}
+	client, err := p.redisClient()
+	if err != nil {
+		return 0, err
+	}
+	count, err := client.RPush(ctx, key, stringArgs(values)...).Result()
+	return count, mapError(err)
+}
+
+func (p *Provider) LRange(ctx context.Context, key string, start int64, stop int64) ([]string, error) {
+	if err := contextError(ctx); err != nil {
+		return nil, err
+	}
+	client, err := p.redisClient()
+	if err != nil {
+		return nil, err
+	}
+	values, err := client.LRange(ctx, key, start, stop).Result()
+	return values, mapError(err)
+}
+
+func (p *Provider) LLen(ctx context.Context, key string) (int64, error) {
+	if err := contextError(ctx); err != nil {
+		return 0, err
+	}
+	client, err := p.redisClient()
+	if err != nil {
+		return 0, err
+	}
+	length, err := client.LLen(ctx, key).Result()
+	return length, mapError(err)
+}
+
+func (p *Provider) LPop(ctx context.Context, key string) (string, error) {
+	if err := contextError(ctx); err != nil {
+		return "", err
+	}
+	client, err := p.redisClient()
+	if err != nil {
+		return "", err
+	}
+	value, err := client.LPop(ctx, key).Result()
+	return value, mapError(err)
+}
+
+func (p *Provider) RPop(ctx context.Context, key string) (string, error) {
+	if err := contextError(ctx); err != nil {
+		return "", err
+	}
+	client, err := p.redisClient()
+	if err != nil {
+		return "", err
+	}
+	value, err := client.RPop(ctx, key).Result()
+	return value, mapError(err)
+}
+
+func (p *Provider) Pipeline(ctx context.Context, commands []provider.PipelineCommand) ([]provider.PipelineResult, error) {
+	if err := contextError(ctx); err != nil {
+		return nil, err
+	}
+	client, err := p.redisClient()
+	if err != nil {
+		return nil, err
+	}
+
+	pipe := client.Pipeline()
+	results := make([]provider.PipelineResult, len(commands))
+	queued := make([]redis.Cmder, len(commands))
+	for i, command := range commands {
+		commandType := provider.PipelineCommandKind(command)
+		results[i] = provider.PipelineResult{Type: commandType, Key: command.Key}
+		switch commandType {
+		case provider.PipelineSet:
+			queued[i] = pipe.Set(ctx, command.Key, command.Value, command.TTL)
+		case provider.PipelineMSet:
+			queued[i] = pipe.MSet(ctx, mapArgs(command.Values)...)
+			results[i].Bool = true
+		case provider.PipelineGet:
+			queued[i] = pipe.Get(ctx, command.Key)
+		case provider.PipelineHSet:
+			queued[i] = pipe.HSet(ctx, command.Key, stringMapToAny(command.Values)...)
+		case provider.PipelineHGet:
+			queued[i] = pipe.HGet(ctx, command.Key, command.Field)
+		case provider.PipelineRPush:
+			queued[i] = pipe.RPush(ctx, command.Key, stringArgs(provider.PipelineCommandListValues(command))...)
+		case provider.PipelineLRange:
+			queued[i] = pipe.LRange(ctx, command.Key, command.Start, command.Stop)
+		case provider.PipelineIncr:
+			queued[i] = pipe.Incr(ctx, command.Key)
+		default:
+			return nil, fmt.Errorf("unsupported pipeline command type %q", commandType)
+		}
+	}
+	if _, err := pipe.Exec(ctx); err != nil && !errors.Is(err, redis.Nil) {
+		return nil, mapError(err)
+	}
+	for i, command := range commands {
+		commandType := provider.PipelineCommandKind(command)
+		switch commandType {
+		case provider.PipelineSet:
+			if err := mapError(queued[i].Err()); err != nil {
+				return nil, err
+			}
+			results[i].Bool = true
+		case provider.PipelineMSet:
+			if err := mapError(queued[i].Err()); err != nil {
+				return nil, err
+			}
+			results[i].Bool = true
+		case provider.PipelineGet, provider.PipelineHGet:
+			stringCmd, ok := queued[i].(*redis.StringCmd)
+			if !ok {
+				return nil, fmt.Errorf("unexpected pipeline result type for %q", commandType)
+			}
+			value, err := stringCmd.Result()
+			if errors.Is(err, redis.Nil) {
+				continue
+			}
+			if err != nil {
+				return nil, mapError(err)
+			}
+			results[i].Found = true
+			results[i].Value = value
+			if commandType == provider.PipelineGet {
+				results[i].Values = []provider.Value{{Value: value, Found: true}}
+			}
+		case provider.PipelineHSet, provider.PipelineRPush, provider.PipelineIncr:
+			intCmd, ok := queued[i].(*redis.IntCmd)
+			if !ok {
+				return nil, fmt.Errorf("unexpected pipeline result type for %q", commandType)
+			}
+			value, err := intCmd.Result()
+			if err != nil {
+				return nil, mapError(err)
+			}
+			results[i].Int = value
+			if commandType == provider.PipelineHSet || commandType == provider.PipelineRPush {
+				results[i].Count = value
+			}
+		case provider.PipelineLRange:
+			stringSliceCmd, ok := queued[i].(*redis.StringSliceCmd)
+			if !ok {
+				return nil, fmt.Errorf("unexpected pipeline result type for %q", commandType)
+			}
+			values, err := stringSliceCmd.Result()
+			if err != nil {
+				return nil, mapError(err)
+			}
+			results[i].Strings = values
+		}
+	}
+	return results, nil
+}
+
+func (p *Provider) AcquireLock(ctx context.Context, key string, token string, ttl time.Duration) (bool, error) {
+	if err := contextError(ctx); err != nil {
+		return false, err
+	}
+	client, err := p.redisClient()
+	if err != nil {
+		return false, err
+	}
+	acquired, err := client.SetNX(ctx, key, token, ttl).Result()
+	return acquired, mapError(err)
+}
+
+func (p *Provider) ReleaseLock(ctx context.Context, key string, token string) (bool, error) {
+	if err := contextError(ctx); err != nil {
+		return false, err
+	}
+	client, err := p.redisClient()
+	if err != nil {
+		return false, err
+	}
+	raw, err := releaseLockScript.Run(ctx, client, []string{key}, token).Result()
+	if err != nil {
+		return false, mapError(err)
+	}
+	deleted, err := int64Result(raw)
+	if err != nil {
+		return false, err
+	}
+	return deleted == 1, nil
+}
+
+func (p *Provider) FixedWindowRateLimit(ctx context.Context, key string, limit int64, window time.Duration) (provider.RateLimitResult, error) {
+	result := provider.RateLimitResult{Limit: limit}
+	if err := contextError(ctx); err != nil {
+		return result, err
+	}
+	client, err := p.redisClient()
+	if err != nil {
+		return result, err
+	}
+	windowMS := window.Milliseconds()
+	if windowMS < 1 {
+		windowMS = 1
+	}
+	raw, err := fixedWindowRateLimitScript.Run(ctx, client, []string{key}, windowMS).Result()
+	if err != nil {
+		return result, mapError(err)
+	}
+	values, ok := raw.([]any)
+	if !ok || len(values) != 2 {
+		return result, fmt.Errorf("unexpected rate limit script result %T", raw)
+	}
+	count, err := int64Result(values[0])
+	if err != nil {
+		return result, err
+	}
+	ttlMS, err := int64Result(values[1])
+	if err != nil {
+		return result, err
+	}
+	if ttlMS < 0 {
+		ttlMS = 0
+	}
+	remaining := limit - count
+	if remaining < 0 {
+		remaining = 0
+	}
+	result.Allowed = count <= limit
+	result.Count = count
+	result.Remaining = remaining
+	result.ResetAfter = time.Duration(ttlMS) * time.Millisecond
+	return result, nil
+}
+
+func stringMapToAny(values map[string]string) []any {
+	args := make([]any, 0, len(values)*2)
+	for field, value := range values {
+		args = append(args, field, value)
+	}
+	return args
+}
+
 func (p *Provider) redisClient() (*redis.Client, error) {
 	if p == nil || p.client == nil {
 		return nil, provider.ErrClosed
@@ -274,6 +604,37 @@ func normalizeTTL(ttl time.Duration) time.Duration {
 	}
 }
 
+func stringArgs(values []string) []any {
+	args := make([]any, len(values))
+	for i, value := range values {
+		args[i] = value
+	}
+	return args
+}
+
+func mapArgs(values map[string]string) []any {
+	args := make([]any, 0, len(values)*2)
+	for key, value := range values {
+		args = append(args, key, value)
+	}
+	return args
+}
+
+func int64Result(value any) (int64, error) {
+	switch typed := value.(type) {
+	case int64:
+		return typed, nil
+	case int:
+		return int64(typed), nil
+	case string:
+		return strconv.ParseInt(typed, 10, 64)
+	case []byte:
+		return strconv.ParseInt(string(typed), 10, 64)
+	default:
+		return 0, fmt.Errorf("unexpected integer result type %T", value)
+	}
+}
+
 func mapError(err error) error {
 	if err == nil {
 		return nil
@@ -293,11 +654,15 @@ func mapError(err error) error {
 	}
 	message := strings.ToLower(err.Error())
 	switch {
+	case strings.Contains(message, "wrongtype"):
+		return fmt.Errorf("%w: %v", provider.ErrWrongType, err)
 	case strings.Contains(message, "noauth"),
 		strings.Contains(message, "wrongpass"),
 		strings.Contains(message, "invalid username-password pair"),
 		strings.Contains(message, "auth"):
 		return fmt.Errorf("%w: %v", provider.ErrAuth, err)
+	case strings.Contains(message, "wrongtype"):
+		return fmt.Errorf("%w: %v", provider.ErrWrongType, err)
 	case strings.Contains(message, "not an integer"),
 		strings.Contains(message, "out of range"):
 		return fmt.Errorf("%w: %v", provider.ErrInvalidInt, err)

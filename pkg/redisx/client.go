@@ -164,6 +164,29 @@ func (c *Client) Set(ctx context.Context, key string, value string, ttl time.Dur
 	return nil
 }
 
+func (c *Client) SetNX(ctx context.Context, key string, value string, ttl time.Duration) (bool, error) {
+	const op = "redisx.SetNX"
+	if err := validateKey(op, key); err != nil {
+		return false, err
+	}
+	if ttl < 0 {
+		return false, validationError(op, "ttl must not be negative", nil)
+	}
+	provider, metrics, err := c.providerForOperation(ctx, op)
+	if err != nil {
+		recordErrorMetric(metrics, "setnx", err)
+		return false, err
+	}
+	set, err := provider.SetNX(ctx, key, value, ttl)
+	if err != nil {
+		wrapped := providerError(op, err)
+		recordErrorMetric(metrics, "setnx", wrapped)
+		return false, wrapped
+	}
+	recordOperationMetric(metrics, "setnx")
+	return set, nil
+}
+
 func (c *Client) Del(ctx context.Context, keys ...string) (int64, error) {
 	return c.keyCountOperation(ctx, "redisx.Del", "del", keys, func(provider Provider) (int64, error) { return provider.Del(ctx, keys...) })
 }
@@ -266,6 +289,244 @@ func (c *Client) Decr(ctx context.Context, key string) (int64, error) {
 	return c.intOperation(ctx, op, "decr", key, func(provider Provider) (int64, error) { return provider.Decr(ctx, key) })
 }
 
+func (c *Client) HSet(ctx context.Context, key string, values map[string]string) (int64, error) {
+	const op = "redisx.HSet"
+	if err := validateKey(op, key); err != nil {
+		return 0, err
+	}
+	if err := validateHashValues(op, values); err != nil {
+		return 0, err
+	}
+	provider, metrics, err := c.providerForOperation(ctx, op)
+	if err != nil {
+		recordErrorMetric(metrics, "hset", err)
+		return 0, err
+	}
+	added, err := provider.HSet(ctx, key, values)
+	if err != nil {
+		wrapped := providerError(op, err)
+		recordErrorMetric(metrics, "hset", wrapped)
+		return 0, wrapped
+	}
+	recordOperationMetric(metrics, "hset")
+	return added, nil
+}
+
+func (c *Client) HGet(ctx context.Context, key string, field string) (string, error) {
+	const op = "redisx.HGet"
+	if err := validateKey(op, key); err != nil {
+		return "", err
+	}
+	if err := validateField(op, field); err != nil {
+		return "", err
+	}
+	provider, metrics, err := c.providerForOperation(ctx, op)
+	if err != nil {
+		recordErrorMetric(metrics, "hget", err)
+		return "", err
+	}
+	value, err := provider.HGet(ctx, key, field)
+	if err != nil {
+		wrapped := providerError(op, err)
+		recordErrorMetric(metrics, "hget", wrapped)
+		return "", wrapped
+	}
+	recordOperationMetric(metrics, "hget")
+	return value, nil
+}
+
+func (c *Client) HGetAll(ctx context.Context, key string) (map[string]string, error) {
+	const op = "redisx.HGetAll"
+	if err := validateKey(op, key); err != nil {
+		return nil, err
+	}
+	provider, metrics, err := c.providerForOperation(ctx, op)
+	if err != nil {
+		recordErrorMetric(metrics, "hgetall", err)
+		return nil, err
+	}
+	values, err := provider.HGetAll(ctx, key)
+	if err != nil {
+		wrapped := providerError(op, err)
+		recordErrorMetric(metrics, "hgetall", wrapped)
+		return nil, wrapped
+	}
+	recordOperationMetric(metrics, "hgetall")
+	return values, nil
+}
+
+func (c *Client) HDel(ctx context.Context, key string, fields ...string) (int64, error) {
+	const op = "redisx.HDel"
+	if err := validateKey(op, key); err != nil {
+		return 0, err
+	}
+	if err := validateFields(op, fields); err != nil {
+		return 0, err
+	}
+	provider, metrics, err := c.providerForOperation(ctx, op)
+	if err != nil {
+		recordErrorMetric(metrics, "hdel", err)
+		return 0, err
+	}
+	deleted, err := provider.HDel(ctx, key, fields...)
+	if err != nil {
+		wrapped := providerError(op, err)
+		recordErrorMetric(metrics, "hdel", wrapped)
+		return 0, wrapped
+	}
+	recordOperationMetric(metrics, "hdel")
+	return deleted, nil
+}
+
+func (c *Client) LPush(ctx context.Context, key string, values ...string) (int64, error) {
+	return c.listPushOperation(ctx, "redisx.LPush", "lpush", key, values, func(provider Provider) (int64, error) {
+		return provider.LPush(ctx, key, values...)
+	})
+}
+
+func (c *Client) RPush(ctx context.Context, key string, values ...string) (int64, error) {
+	return c.listPushOperation(ctx, "redisx.RPush", "rpush", key, values, func(provider Provider) (int64, error) {
+		return provider.RPush(ctx, key, values...)
+	})
+}
+
+func (c *Client) LRange(ctx context.Context, key string, start int64, stop int64) ([]string, error) {
+	const op = "redisx.LRange"
+	if err := validateKey(op, key); err != nil {
+		return nil, err
+	}
+	provider, metrics, err := c.providerForOperation(ctx, op)
+	if err != nil {
+		recordErrorMetric(metrics, "lrange", err)
+		return nil, err
+	}
+	values, err := provider.LRange(ctx, key, start, stop)
+	if err != nil {
+		wrapped := providerError(op, err)
+		recordErrorMetric(metrics, "lrange", wrapped)
+		return nil, wrapped
+	}
+	recordOperationMetric(metrics, "lrange")
+	return values, nil
+}
+
+func (c *Client) LLen(ctx context.Context, key string) (int64, error) {
+	return c.intOperation(ctx, "redisx.LLen", "llen", key, func(provider Provider) (int64, error) {
+		return provider.LLen(ctx, key)
+	})
+}
+
+func (c *Client) LPop(ctx context.Context, key string) (string, error) {
+	return c.listPopOperation(ctx, "redisx.LPop", "lpop", key, func(provider Provider) (string, error) {
+		return provider.LPop(ctx, key)
+	})
+}
+
+func (c *Client) RPop(ctx context.Context, key string) (string, error) {
+	return c.listPopOperation(ctx, "redisx.RPop", "rpop", key, func(provider Provider) (string, error) {
+		return provider.RPop(ctx, key)
+	})
+}
+
+func (c *Client) Pipeline(ctx context.Context, first any, rest ...PipelineCommand) ([]PipelineResult, error) {
+	const op = "redisx.Pipeline"
+	commands, err := normalizePipelineCommands(op, first, rest)
+	if err != nil {
+		return nil, err
+	}
+	if err := validatePipelineCommands(op, commands); err != nil {
+		return nil, err
+	}
+	provider, metrics, err := c.providerForOperation(ctx, op)
+	if err != nil {
+		recordErrorMetric(metrics, "pipeline", err)
+		return nil, err
+	}
+	results, err := provider.Pipeline(ctx, commands)
+	if err != nil {
+		wrapped := providerError(op, err)
+		recordErrorMetric(metrics, "pipeline", wrapped)
+		return nil, wrapped
+	}
+	recordOperationMetric(metrics, "pipeline")
+	return results, nil
+}
+
+func (c *Client) AcquireLock(ctx context.Context, key string, token string, ttl time.Duration) (bool, error) {
+	const op = "redisx.AcquireLock"
+	if err := validateKey(op, key); err != nil {
+		return false, err
+	}
+	if token == "" {
+		return false, validationError(op, "token is required", nil)
+	}
+	if ttl <= 0 {
+		return false, validationError(op, "ttl must be positive", nil)
+	}
+	provider, metrics, err := c.providerForOperation(ctx, op)
+	if err != nil {
+		recordErrorMetric(metrics, "acquire_lock", err)
+		return false, err
+	}
+	acquired, err := provider.AcquireLock(ctx, key, token, ttl)
+	if err != nil {
+		wrapped := providerError(op, err)
+		recordErrorMetric(metrics, "acquire_lock", wrapped)
+		return false, wrapped
+	}
+	recordOperationMetric(metrics, "acquire_lock")
+	return acquired, nil
+}
+
+func (c *Client) ReleaseLock(ctx context.Context, key string, token string) (bool, error) {
+	const op = "redisx.ReleaseLock"
+	if err := validateKey(op, key); err != nil {
+		return false, err
+	}
+	if token == "" {
+		return false, validationError(op, "token is required", nil)
+	}
+	provider, metrics, err := c.providerForOperation(ctx, op)
+	if err != nil {
+		recordErrorMetric(metrics, "release_lock", err)
+		return false, err
+	}
+	released, err := provider.ReleaseLock(ctx, key, token)
+	if err != nil {
+		wrapped := providerError(op, err)
+		recordErrorMetric(metrics, "release_lock", wrapped)
+		return false, wrapped
+	}
+	recordOperationMetric(metrics, "release_lock")
+	return released, nil
+}
+
+func (c *Client) FixedWindowRateLimit(ctx context.Context, key string, limit int64, window time.Duration) (RateLimitResult, error) {
+	const op = "redisx.FixedWindowRateLimit"
+	if err := validateKey(op, key); err != nil {
+		return RateLimitResult{}, err
+	}
+	if limit <= 0 {
+		return RateLimitResult{}, validationError(op, "limit must be positive", nil)
+	}
+	if window <= 0 {
+		return RateLimitResult{}, validationError(op, "window must be positive", nil)
+	}
+	provider, metrics, err := c.providerForOperation(ctx, op)
+	if err != nil {
+		recordErrorMetric(metrics, "fixed_window_rate_limit", err)
+		return RateLimitResult{}, err
+	}
+	result, err := provider.FixedWindowRateLimit(ctx, key, limit, window)
+	if err != nil {
+		wrapped := providerError(op, err)
+		recordErrorMetric(metrics, "fixed_window_rate_limit", wrapped)
+		return RateLimitResult{}, wrapped
+	}
+	recordOperationMetric(metrics, "fixed_window_rate_limit")
+	return result, nil
+}
+
 func (c *Client) keyCountOperation(ctx context.Context, op string, metricOp string, keys []string, fn func(Provider) (int64, error)) (int64, error) {
 	if err := validateKeys(op, keys); err != nil {
 		return 0, err
@@ -285,6 +546,25 @@ func (c *Client) keyCountOperation(ctx context.Context, op string, metricOp stri
 	return count, nil
 }
 
+func (c *Client) stringOperation(ctx context.Context, op string, metricOp string, key string, fn func(Provider) (string, error)) (string, error) {
+	if err := validateKey(op, key); err != nil {
+		return "", err
+	}
+	provider, metrics, err := c.providerForOperation(ctx, op)
+	if err != nil {
+		recordErrorMetric(metrics, metricOp, err)
+		return "", err
+	}
+	value, err := fn(provider)
+	if err != nil {
+		wrapped := providerError(op, err)
+		recordErrorMetric(metrics, metricOp, wrapped)
+		return "", wrapped
+	}
+	recordOperationMetric(metrics, metricOp)
+	return value, nil
+}
+
 func (c *Client) intOperation(ctx context.Context, op string, metricOp string, key string, fn func(Provider) (int64, error)) (int64, error) {
 	if err := validateKey(op, key); err != nil {
 		return 0, err
@@ -299,6 +579,47 @@ func (c *Client) intOperation(ctx context.Context, op string, metricOp string, k
 		wrapped := providerError(op, err)
 		recordErrorMetric(metrics, metricOp, wrapped)
 		return 0, wrapped
+	}
+	recordOperationMetric(metrics, metricOp)
+	return value, nil
+}
+
+func (c *Client) listPushOperation(ctx context.Context, op string, metricOp string, key string, values []string, fn func(Provider) (int64, error)) (int64, error) {
+	if err := validateKey(op, key); err != nil {
+		return 0, err
+	}
+	if err := validateValues(op, values); err != nil {
+		return 0, err
+	}
+	provider, metrics, err := c.providerForOperation(ctx, op)
+	if err != nil {
+		recordErrorMetric(metrics, metricOp, err)
+		return 0, err
+	}
+	length, err := fn(provider)
+	if err != nil {
+		wrapped := providerError(op, err)
+		recordErrorMetric(metrics, metricOp, wrapped)
+		return 0, wrapped
+	}
+	recordOperationMetric(metrics, metricOp)
+	return length, nil
+}
+
+func (c *Client) listPopOperation(ctx context.Context, op string, metricOp string, key string, fn func(Provider) (string, error)) (string, error) {
+	if err := validateKey(op, key); err != nil {
+		return "", err
+	}
+	provider, metrics, err := c.providerForOperation(ctx, op)
+	if err != nil {
+		recordErrorMetric(metrics, metricOp, err)
+		return "", err
+	}
+	value, err := fn(provider)
+	if err != nil {
+		wrapped := providerError(op, err)
+		recordErrorMetric(metrics, metricOp, wrapped)
+		return "", wrapped
 	}
 	recordOperationMetric(metrics, metricOp)
 	return value, nil
@@ -343,6 +664,121 @@ func validateKeys(op string, keys []string) error {
 	for _, key := range keys {
 		if err := validateKey(op, key); err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+func validateField(op string, field string) error {
+	if field == "" {
+		return validationError(op, "field is required", nil)
+	}
+	return nil
+}
+
+func validateFields(op string, fields []string) error {
+	if len(fields) == 0 {
+		return validationError(op, "at least one field is required", nil)
+	}
+	for _, field := range fields {
+		if err := validateField(op, field); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateHashValues(op string, values map[string]string) error {
+	if len(values) == 0 {
+		return validationError(op, "at least one field is required", nil)
+	}
+	for field := range values {
+		if err := validateField(op, field); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateValues(op string, values []string) error {
+	if len(values) == 0 {
+		return validationError(op, "at least one value is required", nil)
+	}
+	return nil
+}
+
+func normalizePipelineCommands(op string, first any, rest []PipelineCommand) ([]PipelineCommand, error) {
+	switch commands := first.(type) {
+	case []PipelineCommand:
+		if len(rest) > 0 {
+			return nil, validationError(op, "cannot mix pipeline command slice and variadic commands", nil)
+		}
+		return commands, nil
+	case PipelineCommand:
+		return append([]PipelineCommand{commands}, rest...), nil
+	default:
+		return nil, validationError(op, "commands must be pipeline commands", nil)
+	}
+}
+
+func validatePipelineCommands(op string, commands []PipelineCommand) error {
+	if len(commands) == 0 {
+		return validationError(op, "at least one command is required", nil)
+	}
+	for _, command := range commands {
+		commandType := internalprovider.PipelineCommandKind(command)
+		switch commandType {
+		case PipelineSet:
+			if err := validateKey(op, command.Key); err != nil {
+				return err
+			}
+			if command.TTL < 0 {
+				return validationError(op, "ttl must not be negative", nil)
+			}
+		case PipelineMSet:
+			if len(command.Values) == 0 {
+				return validationError(op, "at least one key is required", nil)
+			}
+			for key := range command.Values {
+				if err := validateKey(op, key); err != nil {
+					return err
+				}
+			}
+		case PipelineHSet:
+			if err := validateKey(op, command.Key); err != nil {
+				return err
+			}
+			if err := validateHashValues(op, command.Values); err != nil {
+				return err
+			}
+		case PipelineGet:
+			if err := validateKey(op, command.Key); err != nil {
+				return err
+			}
+		case PipelineRPush:
+			if err := validateKey(op, command.Key); err != nil {
+				return err
+			}
+			if err := validateValues(op, internalprovider.PipelineCommandListValues(command)); err != nil {
+				return err
+			}
+		case PipelineHGet:
+			if err := validateKey(op, command.Key); err != nil {
+				return err
+			}
+			if err := validateField(op, command.Field); err != nil {
+				return err
+			}
+		case PipelineLRange:
+			if err := validateKey(op, command.Key); err != nil {
+				return err
+			}
+		case PipelineIncr:
+			if err := validateKey(op, command.Key); err != nil {
+				return err
+			}
+		default:
+			return validationError(op, "unsupported pipeline command", nil)
 		}
 	}
 	return nil
@@ -396,6 +832,9 @@ func providerError(op string, cause error) *Error {
 	}
 	if errors.Is(cause, internalprovider.ErrInvalidInt) {
 		return newError(ErrorKindValidation, op, "value is not an integer", false, cause)
+	}
+	if errors.Is(cause, internalprovider.ErrWrongType) {
+		return newError(ErrorKindValidation, op, "redis key contains a different data type", false, cause)
 	}
 	if errors.Is(cause, ErrReadOnly) {
 		return newError(ErrorKindReadOnly, op, cause.Error(), true, cause)

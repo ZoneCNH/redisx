@@ -26,4 +26,4 @@ docker compose -f docker-compose.yml -f docker-compose.test.yml run --rm \
 REDISX_PERSISTENCE_INTEGRATION=1 GOWORK=off make test-persistence-integration
 ```
 
-当前自动 integration runner 覆盖 Ping/Health、KV、TTL、multi-key、counter、delete、错误映射，以及第二个客户端读取第一个客户端写入值的 reconnect proof。`test-persistence-integration` 额外覆盖永久 key 在 AOF/RDB-backed Redis restart 后仍可读取，且 TTL 仍为永久。
+当前自动 integration runner 覆盖 Ping/Health、KV、TTL、multi-key、counter、hash、list、pipeline、delete、错误映射、lock token compare-release、fixed-window rate-limit TTL window，以及第二个客户端读取第一个客户端写入值的 reconnect proof。`test-persistence-integration` 额外覆盖永久 string、hash、list、counter 和 pipeline writes 在 AOF/RDB-backed Redis restart 后仍可读取，且永久 TTL 仍为永久。Lock token、rate-limit window 和 pub/sub 不作为 durable persistence evidence。
