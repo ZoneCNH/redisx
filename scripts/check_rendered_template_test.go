@@ -42,7 +42,7 @@ func writeRenderedTemplateFixture(t *testing.T, moduleName, modulePath, packageN
 	t.Helper()
 
 	repoDir := t.TempDir()
-	writeRenderedFile(t, repoDir, "go.mod", "module "+modulePath+"\n\ngo 1.25\n")
+	writeRenderedFile(t, repoDir, "go.mod", "module "+modulePath+"\n\ngo 1.23\n")
 	writeRenderedFile(t, repoDir, filepath.Join("pkg", packageName, "doc.go"), "package "+packageName+"\n")
 
 	for _, requiredPath := range []string{

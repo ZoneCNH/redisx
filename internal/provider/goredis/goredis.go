@@ -648,48 +648,48 @@ func mapError(err error) error {
 	var netErr net.Error
 	if errors.As(err, &netErr) {
 		if netErr.Timeout() {
-			return fmt.Errorf("%w: %v", provider.ErrTimeout, err)
+			return fmt.Errorf("%w: %w", provider.ErrTimeout, err)
 		}
-		return fmt.Errorf("%w: %v", provider.ErrNetwork, err)
+		return fmt.Errorf("%w: %w", provider.ErrNetwork, err)
 	}
 	message := strings.ToLower(err.Error())
 	switch {
 	case strings.Contains(message, "wrongtype"):
-		return fmt.Errorf("%w: %v", provider.ErrWrongType, err)
+		return fmt.Errorf("%w: %w", provider.ErrWrongType, err)
 	case strings.Contains(message, "noauth"),
 		strings.Contains(message, "wrongpass"),
 		strings.Contains(message, "invalid username-password pair"),
 		strings.Contains(message, "auth"):
-		return fmt.Errorf("%w: %v", provider.ErrAuth, err)
+		return fmt.Errorf("%w: %w", provider.ErrAuth, err)
 	case strings.Contains(message, "wrongtype"):
-		return fmt.Errorf("%w: %v", provider.ErrWrongType, err)
+		return fmt.Errorf("%w: %w", provider.ErrWrongType, err)
 	case strings.Contains(message, "not an integer"),
 		strings.Contains(message, "out of range"):
-		return fmt.Errorf("%w: %v", provider.ErrInvalidInt, err)
+		return fmt.Errorf("%w: %w", provider.ErrInvalidInt, err)
 	case strings.Contains(message, "readonly"):
-		return fmt.Errorf("%w: %v", provider.ErrReadOnly, err)
+		return fmt.Errorf("%w: %w", provider.ErrReadOnly, err)
 	case strings.Contains(message, "misconf"),
 		strings.Contains(message, "stop-writes-on-bgsave-error"):
-		return fmt.Errorf("%w: %v", provider.ErrReadOnly, err)
+		return fmt.Errorf("%w: %w", provider.ErrReadOnly, err)
 	case strings.Contains(message, "loading"):
-		return fmt.Errorf("%w: %v", provider.ErrLoading, err)
+		return fmt.Errorf("%w: %w", provider.ErrLoading, err)
 	case strings.Contains(message, "tryagain"):
-		return fmt.Errorf("%w: %v", provider.ErrTryAgain, err)
+		return fmt.Errorf("%w: %w", provider.ErrTryAgain, err)
 	case strings.HasPrefix(message, "moved") || strings.Contains(message, " moved "):
-		return fmt.Errorf("%w: %v", provider.ErrClusterMoved, err)
+		return fmt.Errorf("%w: %w", provider.ErrClusterMoved, err)
 	case strings.HasPrefix(message, "ask") || strings.Contains(message, " ask "):
-		return fmt.Errorf("%w: %v", provider.ErrClusterAsk, err)
+		return fmt.Errorf("%w: %w", provider.ErrClusterAsk, err)
 	case strings.Contains(message, "timeout"),
 		strings.Contains(message, "i/o timeout"),
 		strings.Contains(message, "deadline exceeded"):
-		return fmt.Errorf("%w: %v", provider.ErrTimeout, err)
+		return fmt.Errorf("%w: %w", provider.ErrTimeout, err)
 	case strings.Contains(message, "dial tcp"),
 		strings.Contains(message, "connection refused"),
 		strings.Contains(message, "no route"),
 		strings.Contains(message, "connection reset"),
 		strings.Contains(message, "broken pipe"),
 		strings.Contains(message, "network"):
-		return fmt.Errorf("%w: %v", provider.ErrNetwork, err)
+		return fmt.Errorf("%w: %w", provider.ErrNetwork, err)
 	default:
 		return err
 	}

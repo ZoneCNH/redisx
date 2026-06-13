@@ -546,25 +546,6 @@ func (c *Client) keyCountOperation(ctx context.Context, op string, metricOp stri
 	return count, nil
 }
 
-func (c *Client) stringOperation(ctx context.Context, op string, metricOp string, key string, fn func(Provider) (string, error)) (string, error) {
-	if err := validateKey(op, key); err != nil {
-		return "", err
-	}
-	provider, metrics, err := c.providerForOperation(ctx, op)
-	if err != nil {
-		recordErrorMetric(metrics, metricOp, err)
-		return "", err
-	}
-	value, err := fn(provider)
-	if err != nil {
-		wrapped := providerError(op, err)
-		recordErrorMetric(metrics, metricOp, wrapped)
-		return "", wrapped
-	}
-	recordOperationMetric(metrics, metricOp)
-	return value, nil
-}
-
 func (c *Client) intOperation(ctx context.Context, op string, metricOp string, key string, fn func(Provider) (int64, error)) (int64, error) {
 	if err := validateKey(op, key); err != nil {
 		return 0, err
