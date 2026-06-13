@@ -190,6 +190,7 @@ replace_in_text_files() {
       -name '*.go' -o \
       -name '*.md' -o \
       -name '*.json' -o \
+      -name '*.py' -o \
       -name '*.sh' -o \
       -name '*.yml' -o \
       -name '*.yaml' -o \
@@ -197,6 +198,39 @@ replace_in_text_files() {
       -name 'go.mod' \
     \) -print0
   )
+}
+
+downstream_standard_target_files=(
+  "$out_dir/.agent/registries/downstream-adoption-status.yaml"
+  "$out_dir/.agent/registries/downstream-registry.yaml"
+  "$out_dir/docs/downstream-matrix.md"
+  "$out_dir/scripts/check_standard_impact.sh"
+)
+
+protect_downstream_standard_target_tokens() {
+  if [[ "$package_name" == "redisx" ]]; then
+    return
+  fi
+
+  local sentinel="__XLIB_STANDARD_TARGET_CANONICAL_ADAPTER__"
+  local file
+  for file in "${downstream_standard_target_files[@]}"; do
+    [[ -f "$file" ]] || continue
+    SENTINEL="$sentinel" perl -0pi -e 's/redisx/$ENV{SENTINEL}/g' "$file"
+  done
+}
+
+restore_downstream_standard_target_tokens() {
+  if [[ "$package_name" == "redisx" ]]; then
+    return
+  fi
+
+  local sentinel="__XLIB_STANDARD_TARGET_CANONICAL_ADAPTER__"
+  local file
+  for file in "${downstream_standard_target_files[@]}"; do
+    [[ -f "$file" ]] || continue
+    SENTINEL="$sentinel" perl -0pi -e 's/\Q$ENV{SENTINEL}\E/redisx/g' "$file"
+  done
 }
 
 rename_if_exists() {
@@ -225,6 +259,7 @@ rename_rendered_template_paths() {
   rename_if_exists "$out_dir/contracts/redisx.health.schema.json" "$out_dir/contracts/$package_name.health.schema.json"
   rename_if_exists "$out_dir/contracts/redisx.errors.yaml" "$out_dir/contracts/$package_name.errors.yaml"
   rename_if_exists "$out_dir/contracts/redisx.metrics.yaml" "$out_dir/contracts/$package_name.metrics.yaml"
+  rename_if_exists "$out_dir/scripts/verify_l2_redisx.py" "$out_dir/scripts/verify_l2_$package_name.py"
   rename_if_exists "$out_dir/.agent/evidence/GOAL-20260604-REDISX-L2-STANDARD-FACTORY" "$out_dir/.agent/evidence/GOAL-20260604-$target_upper-L2-STANDARD-FACTORY"
   rename_if_exists "$out_dir/.agent/retrospectives/RETRO-20260604-redisx-l2.md" "$out_dir/.agent/retrospectives/RETRO-20260604-$package_name-l2.md"
   rename_if_exists "$out_dir/.agent/patches/PATCH-PROMPT-20260604-redisx-l2.md" "$out_dir/.agent/patches/PATCH-PROMPT-20260604-$package_name-l2.md"
@@ -232,6 +267,7 @@ rename_rendered_template_paths() {
   rename_if_exists "$out_dir/.agent/patches/PATCH-RULE-20260604-redisx-l2.md" "$out_dir/.agent/patches/PATCH-RULE-20260604-$package_name-l2.md"
 }
 
+protect_downstream_standard_target_tokens
 replace_in_text_files 'redisx' "$module_name"
 replace_in_text_files 'github.com/ZoneCNH/redisx' "$module_path"
 replace_in_text_files 'redisx' "$package_name"
@@ -246,6 +282,7 @@ replace_in_text_files 'Redisx' "$package_title"
 replace_in_text_files 'REDISX' "$package_upper"
 replace_in_text_files 'redisx' "$package_name"
 rename_rendered_template_paths "$package_upper"
+restore_downstream_standard_target_tokens
 
 (
   cd "$out_dir"

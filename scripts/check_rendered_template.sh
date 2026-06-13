@@ -139,7 +139,7 @@ scan_fixed() {
 }
 
 scan_template_placeholders() {
-  local pattern='\{\{[^}]+\}\}|TODO_TEMPLATE'
+  local pattern='\{\{[[:space:]]*(\.[[:space:]]*)?[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*[[:space:]]*\}\}|TODO_TEMPLATE'
 
   if command -v rg >/dev/null 2>&1; then
     if rg -n --hidden \
