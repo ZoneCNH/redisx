@@ -42,11 +42,23 @@ config_keys = [
 data = {
     "schema_version": "1.0",
     "adapter": "redisx",
+    "target_level": "L2-T2",
     "profile": "integration",
     "status": status,
+    "score": 100 if status == "pass" else 0,
     "env_gate": "REDISX_INTEGRATION=1",
     "credential_source": "external environment only; values are not committed or printed",
     "command": command,
+    "commands": [
+        command,
+        "GOWORK=off REDISX_INTEGRATION_DOCKER=1 make test-integration",
+    ],
+    "evidence_paths": [
+        "pkg/redisx/redis_integration_test.go",
+        "scripts/run_redis_integration.sh",
+        "docker-compose.yml",
+        ".agent/evidence/l2/compliance-matrix.json",
+    ],
     "generated_at": datetime.now(timezone.utc).isoformat(),
     "config_keys": config_keys,
     "checklist": [

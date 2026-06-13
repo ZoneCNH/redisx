@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate an L2 adapter shape without requiring provider connections."""
+"""Validate rendered L2 shape and dev Redis endpoint evidence."""
 from __future__ import annotations
 
 import argparse
@@ -9,10 +9,16 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[1]
+GO_MOD = ROOT / "go.mod"
 MANIFEST = ROOT / ".agent" / "l2-capabilities.yaml"
 EVIDENCE_DIR = ROOT / ".agent" / "evidence" / "l2"
 READINESS = EVIDENCE_DIR / "release-readiness.json"
 COMPLIANCE = EVIDENCE_DIR / "compliance-matrix.json"
+CONTRACT_REPORT = EVIDENCE_DIR / "contract-report.json"
+INTEGRATION_REPORT = EVIDENCE_DIR / "integration-report.json"
+PERSISTENCE_REPORT = EVIDENCE_DIR / "persistence-report.json"
+COMPOSE = ROOT / "docker-compose.yml"
+DEVCONTAINER = ROOT / ".devcontainer" / "devcontainer.json"
 
 REQUIRED_STANDARD_FILES = [
     ".agent/gates/l2gate.yaml",
@@ -27,8 +33,18 @@ REQUIRED_STANDARD_FILES = [
 ]
 REQUIRED_PACKS = {"common", "kv", "ttl", "pool"}
 REQUIRED_PROFILES = {"unit", "contract", "integration", "persistence"}
+REQUIRED_REDIS_ENV = {
+    "REDISX_REDIS_ADDR": "redis:6379",
+    "REDISX_REDIS_URL": "redis://redis:6379/0",
+    "REDISX_REDIS_DB": "0",
+}
 ALLOWED_CAPABILITY_STATUS = {"declared", "implemented", "unsupported", "deprecated"}
 ALLOWED_EVIDENCE_STATUS = {"pass", "fail", "missing", "not_applicable"}
+FORBIDDEN_DEV_ENV = {
+    "REDISX_REDIS_PASSWORD",
+    "REDISX_REDIS_TOKEN",
+    "REDISX_REDIS_SECRET",
+}
 FORBIDDEN_MANIFEST_KEYS = {
     "provider_endpoint",
     "provider_credentials",
@@ -47,6 +63,13 @@ def load_json(path: Path) -> Any:
         return json.load(handle)
 
 
+def load_json_object(path: Path, label: str) -> dict[str, Any]:
+    require_file(path)
+    data = load_json(path)
+    require(isinstance(data, dict), f"{label} must be a JSON object")
+    return data
+
+
 def require(condition: bool, message: str) -> None:
     if not condition:
         raise AssertionError(message)
@@ -56,19 +79,20 @@ def require_file(path: Path) -> None:
     require(path.exists(), f"missing required file: {rel(path)}")
 
 
-def current_module_path() -> str:
-    go_mod = ROOT / "go.mod"
-    require_file(go_mod)
-    for line in go_mod.read_text(encoding="utf-8").splitlines():
-        parts = line.split()
-        if len(parts) >= 2 and parts[0] == "module":
-            return parts[1]
-    raise AssertionError("go.mod module declaration is required")
+def expected_module_path() -> str:
+    require_file(GO_MOD)
+    for line in GO_MOD.read_text(encoding="utf-8").splitlines():
+        if line.startswith("module "):
+            fields = line.split()
+            require(len(fields) == 2, "go.mod module directive must contain exactly one path")
+            return fields[1]
+    raise AssertionError("go.mod missing module directive")
 
 
 def expected_adapter_name() -> str:
-    name = current_module_path().rsplit("/", 1)[-1]
-    require(bool(name), "go.mod module basename is required")
+    module = expected_module_path()
+    name = module.rsplit("/", 1)[-1]
+    require(bool(name), "go.mod module path must include an adapter name")
     return name
 
 
@@ -212,9 +236,10 @@ def validate_manifest() -> dict[str, Any]:
     require(manifest.get("layer") == "L2", "manifest layer must be L2")
 
     adapter = manifest.get("adapter", {})
-    expected_adapter = expected_adapter_name()
-    require(adapter.get("name") == expected_adapter, "adapter.name must match go.mod module basename")
-    require(adapter.get("module") == current_module_path(), "adapter.module must match go.mod module")
+    expected_name = expected_adapter_name()
+    expected_module = expected_module_path()
+    require(adapter.get("name") == expected_name, f"adapter.name must be {expected_name}")
+    require(adapter.get("module") == expected_module, f"adapter.module must match {expected_module}")
     require(adapter.get("family") == "key_value", "adapter.family must be key_value")
 
     forbidden = [key for key in manifest["_keys"] if key.lower() in FORBIDDEN_MANIFEST_KEYS]
@@ -262,14 +287,15 @@ def evidence_status(entries: list[dict[str, Any]], profile: str) -> str | None:
     return None
 
 
-def validate_readiness(expected_adapter: str) -> dict[str, Any]:
-    require_file(READINESS)
-    data = load_json(READINESS)
+def validate_readiness() -> dict[str, Any]:
+    data = load_json_object(READINESS, "readiness")
     require(data.get("schema_version") == "1.0", "readiness schema_version must be 1.0")
-    require(data.get("adapter") == expected_adapter, "readiness adapter must match manifest adapter")
+    expected_name = expected_adapter_name()
+    require(data.get("adapter") == expected_name, f"readiness adapter must be {expected_name}")
     require(data.get("target_level") == "L2-T2", "readiness target_level must be L2-T2")
     require(isinstance(data.get("score"), int), "readiness score must be an integer")
-    require(0 <= data["score"] <= 100, "readiness score must be between 0 and 100")
+    require(data["score"] == 100, "readiness score must be exactly 100 for release")
+    require(data.get("release_ready") is True, "readiness release_ready must be true")
 
     profiles = set(data.get("profiles", []))
     require(REQUIRED_PROFILES <= profiles, f"readiness missing profiles: {sorted(REQUIRED_PROFILES - profiles)}")
@@ -284,22 +310,54 @@ def validate_readiness(expected_adapter: str) -> dict[str, Any]:
             require((ROOT / path).exists(), f"passing evidence path does not exist: {path}")
 
     statuses = {profile: evidence_status(entries, profile) for profile in REQUIRED_PROFILES}
-    for profile in sorted(REQUIRED_PROFILES):
-        require(statuses[profile] == "pass", f"{profile} evidence must currently be pass")
-    release_ready = all(statuses.get(profile) == "pass" for profile in REQUIRED_PROFILES) and data["score"] >= 90
+    for profile in REQUIRED_PROFILES:
+        require(statuses[profile] == "pass", f"{profile} evidence must be pass")
     return {
         "target_level": data["target_level"],
         "score": data["score"],
         "statuses": statuses,
-        "release_ready": release_ready,
+        "release_ready": data["release_ready"],
     }
 
 
-def validate_compliance(expected_adapter: str) -> dict[str, Any]:
-    require_file(COMPLIANCE)
-    data = load_json(COMPLIANCE)
+def evidence_paths(value: str) -> list[str]:
+    return [part.strip() for part in value.split(";") if part.strip()]
+
+
+def validate_repo_path(path: str, label: str) -> None:
+    require(not Path(path).is_absolute(), f"{label} must be repo-relative: {path}")
+    require((ROOT / path).exists(), f"{label} does not exist: {path}")
+
+
+def validate_profile_report(path: Path, profile: str) -> dict[str, Any]:
+    data = load_json_object(path, f"{profile} report")
+    expected_name = expected_adapter_name()
+    require(data.get("schema_version") == "1.0", f"{profile} report schema_version must be 1.0")
+    require(data.get("adapter") == expected_name, f"{profile} report adapter must be {expected_name}")
+    require(data.get("target_level") == "L2-T2", f"{profile} report target_level must be L2-T2")
+    require(data.get("profile") == profile, f"{profile} report profile must be {profile}")
+    require(data.get("status") == "pass", f"{profile} report status must be pass")
+    require(data.get("score") == 100, f"{profile} report score must be 100")
+    commands = data.get("commands", [])
+    require(isinstance(commands, list) and commands, f"{profile} report commands must be non-empty")
+    paths = data.get("evidence_paths", [])
+    require(isinstance(paths, list) and paths, f"{profile} report evidence_paths must be non-empty")
+    for item in paths:
+        require(isinstance(item, str) and item, f"{profile} evidence path must be a non-empty string")
+        validate_repo_path(item, f"{profile} evidence path")
+    return {
+        "status": data["status"],
+        "score": data["score"],
+        "commands": len(commands),
+        "evidence_paths": len(paths),
+    }
+
+
+def validate_compliance() -> dict[str, Any]:
+    data = load_json_object(COMPLIANCE, "compliance")
     require(data.get("schema_version") == "1.0", "compliance schema_version must be 1.0")
-    require(data.get("adapter") == expected_adapter, "compliance adapter must match manifest adapter")
+    expected_name = expected_adapter_name()
+    require(data.get("adapter") == expected_name, f"compliance adapter must be {expected_name}")
     rows = data.get("rows", [])
     require(isinstance(rows, list) and rows, "compliance rows must be a non-empty list")
 
@@ -309,7 +367,10 @@ def validate_compliance(expected_adapter: str) -> dict[str, Any]:
         for field in ["requirement", "contract_pack", "profile", "evidence", "status"]:
             require(row.get(field), f"compliance row missing {field}: {row}")
         require(row["status"] in ALLOWED_EVIDENCE_STATUS, f"invalid compliance row status: {row}")
+        require(row["status"] == "pass", f"compliance row must be pass for release: {row}")
         require(row["contract_pack"] in REQUIRED_PACKS, f"unexpected compliance contract pack: {row}")
+        for item in evidence_paths(row["evidence"]):
+            validate_repo_path(item, f"compliance evidence path for {row['requirement']}")
         seen_packs.add(row["contract_pack"])
         by_status[row["status"]] = by_status.get(row["status"], 0) + 1
 
@@ -317,12 +378,45 @@ def validate_compliance(expected_adapter: str) -> dict[str, Any]:
     return {"rows": len(rows), "packs": sorted(seen_packs), "status_counts": by_status}
 
 
+def validate_dev_endpoint_config() -> dict[str, Any]:
+    require_file(COMPOSE)
+    require_file(DEVCONTAINER)
+    compose = COMPOSE.read_text(encoding="utf-8")
+    devcontainer = load_json_object(DEVCONTAINER, "devcontainer")
+    remote_env = devcontainer.get("remoteEnv", {})
+    require(isinstance(remote_env, dict), "devcontainer remoteEnv must be an object")
+
+    require("image: redis:7.2-alpine" in compose, "docker-compose must define Redis 7.2 service")
+    for name, value in REQUIRED_REDIS_ENV.items():
+        require(name in compose, f"docker-compose missing {name}")
+        require(value in compose, f"docker-compose missing default value {value}")
+        require(remote_env.get(name) == value, f"devcontainer remoteEnv {name} must be {value}")
+
+    lower_compose = compose.lower()
+    lower_devcontainer = json.dumps(devcontainer, sort_keys=True).lower()
+    forbidden = [
+        name
+        for name in FORBIDDEN_DEV_ENV
+        if name.lower() in lower_compose or name.lower() in lower_devcontainer
+    ]
+    require(not forbidden, f"dev endpoint exposes forbidden secret env vars: {forbidden}")
+    return {
+        "compose": rel(COMPOSE),
+        "devcontainer": rel(DEVCONTAINER),
+        "redis_env": sorted(REQUIRED_REDIS_ENV),
+        "secrets": "not_exposed",
+    }
+
+
 def validate_evidence() -> dict[str, Any]:
     require(EVIDENCE_DIR.exists(), "missing L2 evidence directory")
-    expected_adapter = expected_adapter_name()
     return {
-        "readiness": validate_readiness(expected_adapter),
-        "compliance": validate_compliance(expected_adapter),
+        "readiness": validate_readiness(),
+        "compliance": validate_compliance(),
+        "contract_report": validate_profile_report(CONTRACT_REPORT, "contract"),
+        "integration_report": validate_profile_report(INTEGRATION_REPORT, "integration"),
+        "persistence_report": validate_profile_report(PERSISTENCE_REPORT, "persistence"),
+        "dev_endpoint": validate_dev_endpoint_config(),
     }
 
 
@@ -346,7 +440,7 @@ def main() -> int:
     if run_all or args.evidence_only:
         result["evidence"] = validate_evidence()
     if args.readiness_only:
-        result["readiness"] = validate_readiness(expected_adapter_name())
+        result["readiness"] = validate_readiness()
 
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0

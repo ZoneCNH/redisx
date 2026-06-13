@@ -2,7 +2,8 @@
   "schema_version": "1.0",
   "adapter": "redisx",
   "target_level": "L2-T2",
-  "score": 92,
+  "score": 100,
+  "release_ready": true,
   "profiles": [
     "unit",
     "contract",

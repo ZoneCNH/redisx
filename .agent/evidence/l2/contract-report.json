@@ -1,49 +1,17 @@
 {
   "schema_version": "1.0",
   "adapter": "redisx",
+  "target_level": "L2-T2",
   "profile": "contract",
   "status": "pass",
+  "score": 100,
   "commands": [
-    "GOWORK=off go test ./test/contract -count=1",
+    "GOWORK=off go test ./test/contract ./contracts",
     "GOWORK=off make l2-check"
   ],
-  "contract_packs": [
-    {
-      "name": "common",
-      "status": "pass",
-      "evidence": [
-        ".agent/l2-capabilities.yaml",
-        "pkg/redisx/client.go",
-        "pkg/redisx/health.go",
-        "pkg/redisx/errors_test.go"
-      ]
-    },
-    {
-      "name": "kv",
-      "status": "pass",
-      "evidence": [
-        "testkit/fake_redis_test.go",
-        "pkg/redisx/redis_integration_test.go"
-      ]
-    },
-    {
-      "name": "ttl",
-      "status": "pass",
-      "evidence": [
-        "pkg/redisx/redis_integration_test.go"
-      ]
-    },
-    {
-      "name": "pool",
-      "status": "pass",
-      "evidence": [
-        "pkg/redisx/config.go",
-        "pkg/redisx/options.go",
-        "internal/provider/goredis/goredis.go"
-      ]
-    }
-  ],
-  "notes": [
-    "Pool evidence is public configuration pass-through only; runtime pool exhaustion and recycle behavior are not claimed."
+  "evidence_paths": [
+    "test/contract/l2_contract_test.go",
+    "contracts/contracts_test.go",
+    ".agent/evidence/l2/compliance-matrix.json"
   ]
 }

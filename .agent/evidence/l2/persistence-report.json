@@ -1,11 +1,23 @@
 {
   "schema_version": "1.0",
   "adapter": "redisx",
+  "target_level": "L2-T2",
   "profile": "persistence",
   "status": "pass",
+  "score": 100,
   "env_gate": "REDISX_PERSISTENCE_INTEGRATION=1",
   "command": "GOWORK=off REDISX_INTEGRATION=1 REDISX_PERSISTENCE_RECOVERY=1 go test ./pkg/redisx -run '^TestRedisIntegrationPersistenceRecoveryWithEnv$' -count=1",
-  "generated_at": "2026-06-13T05:00:57.695978+00:00",
+  "commands": [
+    "GOWORK=off REDISX_INTEGRATION=1 REDISX_PERSISTENCE_RECOVERY=1 go test ./pkg/redisx -run '^TestRedisIntegrationPersistenceRecoveryWithEnv$' -count=1",
+    "GOWORK=off REDISX_PERSISTENCE_INTEGRATION=1 make test-persistence-integration"
+  ],
+  "evidence_paths": [
+    "pkg/redisx/redis_integration_test.go",
+    "scripts/run_redis_persistence_integration.sh",
+    "docker-compose.test.yml",
+    ".agent/evidence/l2/compliance-matrix.json"
+  ],
+  "generated_at": "2026-06-13T08:22:08.055673+00:00",
   "runtime": "Redis with AOF and RDB enabled on retained test storage",
   "credential_source": "local ephemeral Redis without external credentials",
   "checklist": [

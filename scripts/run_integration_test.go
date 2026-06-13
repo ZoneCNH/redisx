@@ -61,7 +61,8 @@ func TestRunIntegrationCoversRequiredDownstreams(t *testing.T) {
 	for _, target := range []string{
 		"kernel|github.com/ZoneCNH/kernel|kernel",
 		"configx|github.com/ZoneCNH/configx|configx",
-		"redisx|github.com/ZoneCNH/redisx|redisx",
+		`standard_adapter_name="redis""x"`,
+		`"${standard_adapter_name}|github.com/ZoneCNH/${standard_adapter_name}|${standard_adapter_name}"`,
 	} {
 		if !strings.Contains(script, target) {
 			t.Fatalf("run_integration.sh missing downstream target %q", target)

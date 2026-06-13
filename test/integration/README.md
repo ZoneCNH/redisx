@@ -2,12 +2,14 @@
 
 `redisx` 的 L2 integration profile 通过 env-gated 真实 Redis 测试执行：
 
+`docker-compose.yml` 与 `.devcontainer/devcontainer.json` 已提供非敏感默认端点 `REDISX_REDIS_ADDR`、`REDISX_REDIS_URL`、`REDISX_REDIS_DB`。用户名、密码、token 或 secret 只能来自本地环境或受控 secret store，不写入代码、文档、证据文件或测试输出。
+
 ```bash
-# Export REDISX_REDIS_ADDR and optional auth/db variables from local env or secret store first.
+# Docker/devcontainer defaults already provide endpoint values.
 REDISX_INTEGRATION=1 GOWORK=off make test-integration
 ```
 
-可选环境变量：`REDISX_REDIS_USERNAME`、`REDISX_REDIS_PASSWORD`、`REDISX_REDIS_DB`。连接值只能来自本地环境或受控 secret store，不写入代码、文档或证据文件，也不在测试输出中打印。
+可选环境变量：`REDISX_REDIS_USERNAME`、`REDISX_REDIS_PASSWORD`、`REDISX_REDIS_DB`。认证值只能来自本地环境或受控 secret store，不写入代码、文档或证据文件，也不在测试输出中打印。
 
 本地 Docker 验证路径：
 
