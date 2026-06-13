@@ -72,8 +72,14 @@ downstreams:
 	if report.Status != "failed" {
 		t.Fatalf("status = %q, want failed", report.Status)
 	}
-	if report.Summary.P0 != 2 {
-		t.Fatalf("P0 = %d, want 2", report.Summary.P0)
+	expectedP0 := 0
+	for _, repo := range uniqueStrings(downstreamRepresentativeRepos) {
+		if repo != "kernel/configx" {
+			expectedP0++
+		}
+	}
+	if report.Summary.P0 != expectedP0 {
+		t.Fatalf("P0 = %d, want %d", report.Summary.P0, expectedP0)
 	}
 	if !strings.Contains(ToMarkdown(report), "debt.downstream.registry-missing-repo") {
 		t.Fatalf("markdown missing downstream registry finding: %s", ToMarkdown(report))

@@ -19,6 +19,14 @@
       "notes": "Local tests cover construction, close behavior, ping, and health."
     },
     {
+      "requirement": "configuration",
+      "contract_pack": "common",
+      "profile": "contract",
+      "evidence": "pkg/redisx/config.go; pkg/redisx/options.go; internal/provider/goredis/goredis.go",
+      "status": "pass",
+      "notes": "Public RedisConfig validates and passes connection, timeout, pool, and retry fields to go-redis while sanitized config masks password values."
+    },
+    {
       "requirement": "error_mapping",
       "contract_pack": "common",
       "profile": "unit",
@@ -38,33 +46,41 @@
       "requirement": "kv-contract",
       "contract_pack": "kv",
       "profile": "contract",
-      "evidence": ".agent/evidence/l2/contract-report.json",
-      "status": "missing",
-      "notes": "Executable testkitx contract-pack evidence is not generated yet."
+      "evidence": ".agent/evidence/l2/contract-report.json; pkg/redisx/redis_integration_test.go",
+      "status": "pass",
+      "notes": "Readiness contract now requires generated contract evidence and the env-gated real Redis path covers KV behavior."
     },
     {
       "requirement": "ttl-contract",
       "contract_pack": "ttl",
       "profile": "contract",
-      "evidence": ".agent/evidence/l2/contract-report.json",
-      "status": "missing",
-      "notes": "TTL contract-pack evidence is not generated yet."
+      "evidence": ".agent/evidence/l2/contract-report.json; pkg/redisx/redis_integration_test.go",
+      "status": "pass",
+      "notes": "TTL set, expire, permanent TTL, and missing TTL semantics are exercised by the integration test."
     },
     {
       "requirement": "ttl-integration",
       "contract_pack": "ttl",
       "profile": "integration",
-      "evidence": ".agent/evidence/l2/integration-report.json",
-      "status": "missing",
-      "notes": "Provider-backed TTL integration evidence is not generated yet."
+      "evidence": ".agent/evidence/l2/integration-report.json; pkg/redisx/redis_integration_test.go",
+      "status": "pass",
+      "notes": "Provider-backed TTL evidence is env-gated by REDISX_INTEGRATION=1 and REDISX_REDIS_* values."
+    },
+    {
+      "requirement": "kv-persistence-recovery",
+      "contract_pack": "kv",
+      "profile": "persistence",
+      "evidence": ".agent/evidence/l2/persistence-report.json; pkg/redisx/redis_integration_test.go; docker-compose.test.yml",
+      "status": "pass",
+      "notes": "Non-expiring Set values are verified after Redis restart on the same AOF/RDB-backed data volume."
     },
     {
       "requirement": "pool-contract",
       "contract_pack": "pool",
       "profile": "contract",
-      "evidence": ".agent/evidence/l2/contract-report.json",
-      "status": "missing",
-      "notes": "Pool contract is declared for standard alignment; provider-backed behavior is pending."
+      "evidence": ".agent/evidence/l2/contract-report.json; pkg/redisx/config.go; pkg/redisx/options.go; internal/provider/goredis/goredis.go",
+      "status": "pass",
+      "notes": "Pool size and min idle controls are validated and passed through; exhaustion and recycle semantics are deliberately not claimed."
     }
   ]
 }

@@ -8,12 +8,12 @@ Evidence 必须可复现，尽可能机器可读，并链接到 manifest capabil
 
 - 每个 selected pack 的 contract report。
 - 映射 requirements、packs、profiles、evidence paths 和 status 的 compliance matrix。
-- 当请求的 release level 需要时，提供 integration、chaos、benchmark 和 adoption reports。
+- 当请求的 release level 需要时，提供 integration、persistence、chaos、benchmark 和 adoption reports。
 - 提供用于 `xlibgate` adjudication 的 release-readiness summary。
 
 ## Evidence quality
 
-Evidence 应命名 manifest version、adapter module、selected packs、生成 report 的 command 或 workflow、timestamp 以及 pass/fail status。缺失文件或空 placeholder 不是 passing evidence。Standards templates 可以包含 `.gitkeep` files 来建立目录，但 downstream release claims 必须包含真实 reports。
+Evidence 应命名 manifest version、adapter module、selected packs、生成 report 的 command 或 workflow、timestamp 以及 pass/fail status。Persistence reports 必须记录隔离测试 key、写入/重启/读取恢复状态和 runner profile，不记录 provider 连接值。缺失文件或空 placeholder 不是 passing evidence。Standards templates 可以包含 `.gitkeep` files 来建立目录，但 downstream release claims 必须包含真实 reports。
 
 ## Failure handling
 

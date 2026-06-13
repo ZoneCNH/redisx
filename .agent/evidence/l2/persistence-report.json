@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0",
+  "adapter": "redisx",
+  "profile": "persistence",
+  "status": "pass",
+  "env_gate": "REDISX_PERSISTENCE_INTEGRATION=1",
+  "command": "GOWORK=off REDISX_INTEGRATION=1 REDISX_PERSISTENCE_RECOVERY=1 go test ./pkg/redisx -run '^TestRedisIntegrationPersistenceRecoveryWithEnv$' -count=1",
+  "generated_at": "2026-06-12T20:50:14.108904+00:00",
+  "runtime": "Redis with AOF and RDB enabled on retained test storage",
+  "credential_source": "local ephemeral Redis without external credentials",
+  "checklist": [
+    {
+      "name": "set_without_ttl",
+      "status": "pass"
+    },
+    {
+      "name": "ttl_permanent_before_restart",
+      "status": "pass"
+    },
+    {
+      "name": "redis_save",
+      "status": "pass"
+    },
+    {
+      "name": "server_restart_same_storage",
+      "status": "pass"
+    },
+    {
+      "name": "get_after_restart",
+      "status": "pass"
+    },
+    {
+      "name": "ttl_permanent_after_restart",
+      "status": "pass"
+    },
+    {
+      "name": "cleanup",
+      "status": "pass"
+    },
+    {
+      "name": "data_hygiene",
+      "status": "pass"
+    }
+  ],
+  "data_hygiene": "test keys are nonce-prefixed and deleted after recovery validation"
+}

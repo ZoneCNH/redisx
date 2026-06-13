@@ -73,6 +73,41 @@ func TestRunIntegrationCoversRequiredDownstreams(t *testing.T) {
 	}
 }
 
+func TestRunIntegrationRunsRedisIntegrationProfile(t *testing.T) {
+	integrationContents, err := os.ReadFile("run_integration.sh")
+	if err != nil {
+		t.Fatalf("read run_integration.sh: %v", err)
+	}
+	if !strings.Contains(string(integrationContents), "GOWORK=off make test-integration") {
+		t.Fatal("run_integration.sh does not run the Redis integration profile")
+	}
+
+	makefileContents, err := os.ReadFile("../Makefile")
+	if err != nil {
+		t.Fatalf("read Makefile: %v", err)
+	}
+	if !strings.Contains(string(makefileContents), "test-integration:\n\t./scripts/run_redis_integration.sh") {
+		t.Fatal("Makefile test-integration target does not invoke the Redis integration runner")
+	}
+
+	redisIntegrationContents, err := os.ReadFile("run_redis_integration.sh")
+	if err != nil {
+		t.Fatalf("read run_redis_integration.sh: %v", err)
+	}
+	runner := string(redisIntegrationContents)
+	for _, token := range []string{
+		"REDISX_INTEGRATION=1",
+		"REDISX_REDIS_ADDR",
+		"REDISX_INTEGRATION_DOCKER",
+		"docker restart",
+		"redisx:persistence:marker",
+	} {
+		if !strings.Contains(runner, token) {
+			t.Fatalf("Redis integration runner missing %q", token)
+		}
+	}
+}
+
 func TestRenderedTemplateCheckSkipsMigratedInboxArchive(t *testing.T) {
 	contents, err := os.ReadFile("check_rendered_template.sh")
 	if err != nil {

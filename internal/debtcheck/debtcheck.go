@@ -405,7 +405,7 @@ func scanDownstreamDebt(root string) []Finding {
 	}
 
 	registry := files[".agent/registries/downstream-registry.yaml"]
-	for _, repo := range downstreamRepresentativeRepos {
+	for _, repo := range uniqueStrings(downstreamRepresentativeRepos) {
 		requireDownstreamToken(&findings, registry, ".agent/registries/downstream-registry.yaml", "repo: "+repo, "debt.downstream.registry-missing-repo", "downstream registry is missing required representative repo")
 	}
 
@@ -719,6 +719,19 @@ func skipPath(root, path string) bool {
 		strings.HasPrefix(relPath, ".agent/inbox/") ||
 		strings.HasPrefix(relPath, ".agent/archive/inbox/") ||
 		strings.HasPrefix(relPath, "internal/debtcheck/")
+}
+
+func uniqueStrings(values []string) []string {
+	seen := make(map[string]bool, len(values))
+	unique := make([]string, 0, len(values))
+	for _, value := range values {
+		if seen[value] {
+			continue
+		}
+		seen[value] = true
+		unique = append(unique, value)
+	}
+	return unique
 }
 
 func skipFile(path string) bool {

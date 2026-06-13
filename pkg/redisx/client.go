@@ -40,9 +40,15 @@ func New(ctx context.Context, cfg Config, opts ...Option) (*Client, error) {
 		recordErrorMetric(options.metrics, "new", err)
 		return nil, err
 	}
+	resolvedProvider, err := options.providerForConfig(cfg)
+	if err != nil {
+		wrapped := newError(ErrorKindInvalidConfig, op, err.Error(), false, err)
+		recordErrorMetric(options.metrics, "new", wrapped)
+		return nil, wrapped
+	}
 
 	options.metrics.IncCounter(MetricClientCreatedTotal, map[string]string{"name": cfg.Name})
-	return &Client{cfg: cfg, metrics: options.metrics, provider: options.provider, initialized: true}, nil
+	return &Client{cfg: cfg, metrics: options.metrics, provider: resolvedProvider, initialized: true}, nil
 }
 
 func (c *Client) Close(ctx context.Context) error {
@@ -352,6 +358,30 @@ func providerError(op string, cause error) *Error {
 	if errors.Is(cause, context.DeadlineExceeded) || errors.Is(cause, context.Canceled) {
 		return contextError(op, cause)
 	}
+	if errors.Is(cause, internalprovider.ErrTimeout) {
+		return newError(ErrorKindTimeout, op, cause.Error(), true, cause)
+	}
+	if errors.Is(cause, internalprovider.ErrNetwork) {
+		return newError(ErrorKindNetwork, op, cause.Error(), true, cause)
+	}
+	if errors.Is(cause, internalprovider.ErrAuth) {
+		return newError(ErrorKindAuth, op, cause.Error(), false, cause)
+	}
+	if errors.Is(cause, internalprovider.ErrReadOnly) {
+		return newError(ErrorKindReadOnly, op, cause.Error(), true, cause)
+	}
+	if errors.Is(cause, internalprovider.ErrLoading) {
+		return newError(ErrorKindLoading, op, cause.Error(), true, cause)
+	}
+	if errors.Is(cause, internalprovider.ErrTryAgain) {
+		return newError(ErrorKindTryAgain, op, cause.Error(), true, cause)
+	}
+	if errors.Is(cause, internalprovider.ErrClusterMoved) {
+		return newError(ErrorKindClusterMoved, op, cause.Error(), true, cause)
+	}
+	if errors.Is(cause, internalprovider.ErrClusterAsk) {
+		return newError(ErrorKindClusterAsk, op, cause.Error(), true, cause)
+	}
 	if errors.Is(cause, ErrTimeout) {
 		return newError(ErrorKindTimeout, op, cause.Error(), true, cause)
 	}
@@ -363,6 +393,9 @@ func providerError(op string, cause error) *Error {
 	}
 	if errors.Is(cause, ErrAuth) {
 		return newError(ErrorKindAuth, op, cause.Error(), false, cause)
+	}
+	if errors.Is(cause, internalprovider.ErrInvalidInt) {
+		return newError(ErrorKindValidation, op, "value is not an integer", false, cause)
 	}
 	if errors.Is(cause, ErrReadOnly) {
 		return newError(ErrorKindReadOnly, op, cause.Error(), true, cause)

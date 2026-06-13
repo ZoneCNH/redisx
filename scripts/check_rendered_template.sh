@@ -164,11 +164,9 @@ scan_template_placeholders() {
 }
 
 scan_template_placeholders
-scan_fixed "github.com/ZoneCNH/redisx" "module path"
-scan_fixed "github.com/ZoneCNH/redisx" "module path"
 
-if [[ "$module_name" != "redisx" ]]; then
-  scan_fixed "redisx" "module name"
+if [[ "$module_path" != "github.com/ZoneCNH/redisx" ]]; then
+  scan_fixed "github.com/ZoneCNH/redisx" "module path"
 fi
 
 if [[ "$module_name" != "redisx" ]]; then

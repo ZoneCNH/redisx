@@ -8,11 +8,6 @@ import (
 	"time"
 )
 
-var (
-	ErrClosed = errors.New("provider is closed")
-	ErrNil    = errors.New("redis nil")
-)
-
 type Memory struct {
 	mu     sync.Mutex
 	closed bool

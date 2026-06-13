@@ -1,0 +1,100 @@
+{
+  "schema_version": "1.0",
+  "adapter": "redisx",
+  "profile": "integration",
+  "status": "pass",
+  "env_gate": "REDISX_INTEGRATION=1",
+  "credential_source": "external environment only; values are not committed or printed",
+  "command": "GOWORK=off REDISX_INTEGRATION=1 go test ./pkg/redisx -run '^TestRedisIntegrationWithEnv$' -count=1",
+  "generated_at": "2026-06-12T20:57:23.968823+00:00",
+  "config_keys": [
+    "REDISX_REDIS_ADDR",
+    "REDISX_REDIS_USERNAME",
+    "REDISX_REDIS_PASSWORD",
+    "REDISX_REDIS_DB"
+  ],
+  "checklist": [
+    {
+      "name": "ping",
+      "status": "pass"
+    },
+    {
+      "name": "health",
+      "status": "pass"
+    },
+    {
+      "name": "health_check",
+      "status": "pass"
+    },
+    {
+      "name": "set",
+      "status": "pass"
+    },
+    {
+      "name": "get",
+      "status": "pass"
+    },
+    {
+      "name": "ttl_permanent",
+      "status": "pass"
+    },
+    {
+      "name": "set_with_ttl",
+      "status": "pass"
+    },
+    {
+      "name": "ttl_missing",
+      "status": "pass"
+    },
+    {
+      "name": "missing_get_nil",
+      "status": "pass"
+    },
+    {
+      "name": "mset",
+      "status": "pass"
+    },
+    {
+      "name": "mget",
+      "status": "pass"
+    },
+    {
+      "name": "incr",
+      "status": "pass"
+    },
+    {
+      "name": "decr",
+      "status": "pass"
+    },
+    {
+      "name": "validation_error",
+      "status": "pass"
+    },
+    {
+      "name": "expire_existing",
+      "status": "pass"
+    },
+    {
+      "name": "expire_missing",
+      "status": "pass"
+    },
+    {
+      "name": "exists",
+      "status": "pass"
+    },
+    {
+      "name": "del",
+      "status": "pass"
+    },
+    {
+      "name": "close",
+      "status": "pass"
+    },
+    {
+      "name": "client_reconnect_read",
+      "status": "pass"
+    }
+  ],
+  "runtime": "real Redis selected by REDISX_REDIS_* at test time",
+  "data_hygiene": "test keys are nonce-prefixed and deleted during cleanup"
+}

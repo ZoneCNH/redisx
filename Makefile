@@ -60,6 +60,7 @@ lint:
 .PHONY: integration
 integration:
 	$(GOALCLI) integration
+	GOWORK=$${GOWORK:-off} $(MAKE) test-integration
 
 .PHONY: docker-toolchain-check
 docker-toolchain-check:
@@ -240,11 +241,15 @@ test-unit: test
 
 .PHONY: test-contract
 test-contract:
-	go test ./test/contract
+	GOWORK=$${GOWORK:-off} go test ./test/contract -count=1
 
 .PHONY: test-integration
 test-integration:
-	@echo "L2 integration runner pending; see $(L2_EVIDENCE_DIR)/release-readiness.json"
+	./scripts/run_redis_integration.sh
+
+.PHONY: test-persistence-integration
+test-persistence-integration:
+	./scripts/run_redis_persistence_integration.sh
 
 .PHONY: test-chaos
 test-chaos:

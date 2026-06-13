@@ -3,6 +3,7 @@ package redisx
 import (
 	"context"
 	"testing"
+	"time"
 )
 
 func TestOptionsValidateUsesConfigContract(t *testing.T) {
@@ -29,5 +30,21 @@ func TestNewWithOptionsUsesDefaultInMemoryProvider(t *testing.T) {
 	}
 	if value != "value" {
 		t.Fatalf("value = %q, want value", value)
+	}
+}
+
+func TestNewWithOptionsUsesRedisProviderWhenConfigured(t *testing.T) {
+	client, err := NewWithOptions(context.Background(), Options{Config: Config{
+		Name: "redisx-options-redis",
+		Redis: RedisConfig{
+			Addr:        "127.0.0.1:0",
+			DialTimeout: time.Second,
+		},
+	}})
+	if err != nil {
+		t.Fatalf("new with options redis config: %v", err)
+	}
+	if err := client.Close(context.Background()); err != nil {
+		t.Fatalf("close redis-configured client: %v", err)
 	}
 }

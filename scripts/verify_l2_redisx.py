@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate redisx L2 shape without requiring provider connections."""
+"""Validate an L2 adapter shape without requiring provider connections."""
 from __future__ import annotations
 
 import argparse
@@ -26,7 +26,7 @@ REQUIRED_STANDARD_FILES = [
     ".agent/schemas/l2-compliance-matrix.schema.json",
 ]
 REQUIRED_PACKS = {"common", "kv", "ttl", "pool"}
-REQUIRED_PROFILES = {"unit", "contract", "integration"}
+REQUIRED_PROFILES = {"unit", "contract", "integration", "persistence"}
 ALLOWED_CAPABILITY_STATUS = {"declared", "implemented", "unsupported", "deprecated"}
 ALLOWED_EVIDENCE_STATUS = {"pass", "fail", "missing", "not_applicable"}
 FORBIDDEN_MANIFEST_KEYS = {
@@ -54,6 +54,22 @@ def require(condition: bool, message: str) -> None:
 
 def require_file(path: Path) -> None:
     require(path.exists(), f"missing required file: {rel(path)}")
+
+
+def current_module_path() -> str:
+    go_mod = ROOT / "go.mod"
+    require_file(go_mod)
+    for line in go_mod.read_text(encoding="utf-8").splitlines():
+        parts = line.split()
+        if len(parts) >= 2 and parts[0] == "module":
+            return parts[1]
+    raise AssertionError("go.mod module declaration is required")
+
+
+def expected_adapter_name() -> str:
+    name = current_module_path().rsplit("/", 1)[-1]
+    require(bool(name), "go.mod module basename is required")
+    return name
 
 
 def strip_scalar(value: str) -> str:
@@ -196,8 +212,9 @@ def validate_manifest() -> dict[str, Any]:
     require(manifest.get("layer") == "L2", "manifest layer must be L2")
 
     adapter = manifest.get("adapter", {})
-    require(adapter.get("name") == "redisx", "adapter.name must be redisx")
-    require(adapter.get("module") == "github.com/ZoneCNH/redisx", "adapter.module must match redisx module")
+    expected_adapter = expected_adapter_name()
+    require(adapter.get("name") == expected_adapter, "adapter.name must match go.mod module basename")
+    require(adapter.get("module") == current_module_path(), "adapter.module must match go.mod module")
     require(adapter.get("family") == "key_value", "adapter.family must be key_value")
 
     forbidden = [key for key in manifest["_keys"] if key.lower() in FORBIDDEN_MANIFEST_KEYS]
@@ -223,6 +240,7 @@ def validate_manifest() -> dict[str, Any]:
     for report in [
         ".agent/evidence/l2/contract-report.json",
         ".agent/evidence/l2/integration-report.json",
+        ".agent/evidence/l2/persistence-report.json",
         ".agent/evidence/l2/compliance-matrix.json",
         ".agent/evidence/l2/release-readiness.json",
     ]:
@@ -244,11 +262,11 @@ def evidence_status(entries: list[dict[str, Any]], profile: str) -> str | None:
     return None
 
 
-def validate_readiness() -> dict[str, Any]:
+def validate_readiness(expected_adapter: str) -> dict[str, Any]:
     require_file(READINESS)
     data = load_json(READINESS)
     require(data.get("schema_version") == "1.0", "readiness schema_version must be 1.0")
-    require(data.get("adapter") == "redisx", "readiness adapter must be redisx")
+    require(data.get("adapter") == expected_adapter, "readiness adapter must match manifest adapter")
     require(data.get("target_level") == "L2-T2", "readiness target_level must be L2-T2")
     require(isinstance(data.get("score"), int), "readiness score must be an integer")
     require(0 <= data["score"] <= 100, "readiness score must be between 0 and 100")
@@ -266,8 +284,9 @@ def validate_readiness() -> dict[str, Any]:
             require((ROOT / path).exists(), f"passing evidence path does not exist: {path}")
 
     statuses = {profile: evidence_status(entries, profile) for profile in REQUIRED_PROFILES}
-    require(statuses["unit"] == "pass", "unit evidence must currently be pass")
-    release_ready = all(statuses.get(profile) == "pass" for profile in REQUIRED_PROFILES) and data["score"] >= 75
+    for profile in sorted(REQUIRED_PROFILES):
+        require(statuses[profile] == "pass", f"{profile} evidence must currently be pass")
+    release_ready = all(statuses.get(profile) == "pass" for profile in REQUIRED_PROFILES) and data["score"] >= 90
     return {
         "target_level": data["target_level"],
         "score": data["score"],
@@ -276,11 +295,11 @@ def validate_readiness() -> dict[str, Any]:
     }
 
 
-def validate_compliance() -> dict[str, Any]:
+def validate_compliance(expected_adapter: str) -> dict[str, Any]:
     require_file(COMPLIANCE)
     data = load_json(COMPLIANCE)
     require(data.get("schema_version") == "1.0", "compliance schema_version must be 1.0")
-    require(data.get("adapter") == "redisx", "compliance adapter must be redisx")
+    require(data.get("adapter") == expected_adapter, "compliance adapter must match manifest adapter")
     rows = data.get("rows", [])
     require(isinstance(rows, list) and rows, "compliance rows must be a non-empty list")
 
@@ -300,9 +319,10 @@ def validate_compliance() -> dict[str, Any]:
 
 def validate_evidence() -> dict[str, Any]:
     require(EVIDENCE_DIR.exists(), "missing L2 evidence directory")
+    expected_adapter = expected_adapter_name()
     return {
-        "readiness": validate_readiness(),
-        "compliance": validate_compliance(),
+        "readiness": validate_readiness(expected_adapter),
+        "compliance": validate_compliance(expected_adapter),
     }
 
 
@@ -326,7 +346,7 @@ def main() -> int:
     if run_all or args.evidence_only:
         result["evidence"] = validate_evidence()
     if args.readiness_only:
-        result["readiness"] = validate_readiness()
+        result["readiness"] = validate_readiness(expected_adapter_name())
 
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0

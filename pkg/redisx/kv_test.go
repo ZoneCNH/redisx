@@ -34,6 +34,13 @@ func TestClientKeyValueOperations(t *testing.T) {
 	if err := client.MSet(context.Background(), map[string]string{"beta": "2", "gamma": "3"}); err != nil {
 		t.Fatalf("mset: %v", err)
 	}
+	values, err = client.MGet(context.Background(), "beta", "missing", "gamma")
+	if err != nil {
+		t.Fatalf("mget after mset: %v", err)
+	}
+	if len(values) != 3 || !values[0].Found || values[0].Value != "2" || values[1].Found || !values[2].Found || values[2].Value != "3" {
+		t.Fatalf("unexpected mget after mset values: %#v", values)
+	}
 	count, err := client.Exists(context.Background(), "alpha", "beta", "missing")
 	if err != nil {
 		t.Fatalf("exists: %v", err)
@@ -41,7 +48,21 @@ func TestClientKeyValueOperations(t *testing.T) {
 	if count != 2 {
 		t.Fatalf("exists count = %d, want 2", count)
 	}
-	deleted, err := client.Del(context.Background(), "alpha", "missing")
+	deleted, err := client.Del(context.Background(), "beta", "gamma", "missing")
+	if err != nil {
+		t.Fatalf("del beta gamma missing: %v", err)
+	}
+	if deleted != 2 {
+		t.Fatalf("deleted beta gamma missing = %d, want 2", deleted)
+	}
+	count, err = client.Exists(context.Background(), "alpha", "beta", "gamma", "missing")
+	if err != nil {
+		t.Fatalf("exists after del: %v", err)
+	}
+	if count != 1 {
+		t.Fatalf("exists after del count = %d, want 1", count)
+	}
+	deleted, err = client.Del(context.Background(), "alpha", "missing")
 	if err != nil {
 		t.Fatalf("del: %v", err)
 	}
@@ -50,6 +71,21 @@ func TestClientKeyValueOperations(t *testing.T) {
 	}
 	if _, err := client.Get(context.Background(), "alpha"); !IsKind(err, ErrorKindNil) {
 		t.Fatalf("missing get kind = %v, want nil", err)
+	}
+}
+
+func TestClientPingRecordsOperationMetric(t *testing.T) {
+	metrics := &recordingMetrics{}
+	client, err := New(context.Background(), Config{Name: "redisx"}, WithMetrics(metrics))
+	if err != nil {
+		t.Fatalf("new client: %v", err)
+	}
+
+	if err := client.Ping(context.Background()); err != nil {
+		t.Fatalf("ping: %v", err)
+	}
+	if !metrics.counterWithLabel(MetricRedisOperationsTotal, "op", "ping") {
+		t.Fatalf("expected ping operation metric, got %#v", metrics.counters)
 	}
 }
 
@@ -81,6 +117,46 @@ func TestClientExpirationAndCounters(t *testing.T) {
 		t.Fatalf("expected redis operation metric, got %#v", metrics.counters)
 	}
 
+	if err := client.Set(context.Background(), "non-numeric", "not-an-integer", 0); err != nil {
+		t.Fatalf("set non-numeric: %v", err)
+	}
+	if _, err := client.Incr(context.Background(), "non-numeric"); !IsKind(err, ErrorKindValidation) {
+		t.Fatalf("incr non-numeric kind = %v, want validation", err)
+	}
+	if _, err := client.Decr(context.Background(), "non-numeric"); !IsKind(err, ErrorKindValidation) {
+		t.Fatalf("decr non-numeric kind = %v, want validation", err)
+	}
+
+	if err := client.Set(context.Background(), "permanent", "value", 0); err != nil {
+		t.Fatalf("set permanent: %v", err)
+	}
+	ttl, err := client.TTL(context.Background(), "permanent")
+	if err != nil {
+		t.Fatalf("ttl permanent: %v", err)
+	}
+	if ttl != -time.Second {
+		t.Fatalf("ttl permanent = %v, want -1s", ttl)
+	}
+
+	if err := client.Set(context.Background(), "direct-ttl", "value", time.Minute); err != nil {
+		t.Fatalf("set direct ttl: %v", err)
+	}
+	ttl, err = client.TTL(context.Background(), "direct-ttl")
+	if err != nil {
+		t.Fatalf("ttl direct ttl: %v", err)
+	}
+	if ttl <= 0 {
+		t.Fatalf("ttl direct ttl = %v, want positive", ttl)
+	}
+
+	ttl, err = client.TTL(context.Background(), "missing")
+	if err != nil {
+		t.Fatalf("ttl missing: %v", err)
+	}
+	if ttl != -2*time.Second {
+		t.Fatalf("ttl missing = %v, want -2s", ttl)
+	}
+
 	if err := client.Set(context.Background(), "ttl", "value", 0); err != nil {
 		t.Fatalf("set ttl: %v", err)
 	}
@@ -91,12 +167,20 @@ func TestClientExpirationAndCounters(t *testing.T) {
 	if !ok {
 		t.Fatal("expected expire to update existing key")
 	}
-	ttl, err := client.TTL(context.Background(), "ttl")
+	ttl, err = client.TTL(context.Background(), "ttl")
 	if err != nil {
 		t.Fatalf("ttl: %v", err)
 	}
 	if ttl <= 0 {
 		t.Fatalf("ttl = %v, want positive", ttl)
+	}
+
+	updated, err := client.Expire(context.Background(), "missing", time.Minute)
+	if err != nil {
+		t.Fatalf("expire missing: %v", err)
+	}
+	if updated {
+		t.Fatal("expire missing updated = true, want false")
 	}
 }
 
@@ -109,10 +193,28 @@ func TestClientOperationsRejectClosedClient(t *testing.T) {
 		t.Fatalf("close client: %v", err)
 	}
 
-	if err := client.Ping(context.Background()); !IsKind(err, ErrorKindClosed) {
-		t.Fatalf("ping after close kind = %v, want closed", err)
+	tests := []struct {
+		name string
+		run  func() error
+	}{
+		{name: "ping", run: func() error { return client.Ping(context.Background()) }},
+		{name: "get", run: func() error { _, err := client.Get(context.Background(), "key"); return err }},
+		{name: "set", run: func() error { return client.Set(context.Background(), "key", "value", 0) }},
+		{name: "mget", run: func() error { _, err := client.MGet(context.Background(), "key", "other"); return err }},
+		{name: "mset", run: func() error { return client.MSet(context.Background(), map[string]string{"key": "value"}) }},
+		{name: "exists", run: func() error { _, err := client.Exists(context.Background(), "key", "other"); return err }},
+		{name: "del", run: func() error { _, err := client.Del(context.Background(), "key", "other"); return err }},
+		{name: "expire", run: func() error { _, err := client.Expire(context.Background(), "key", time.Minute); return err }},
+		{name: "ttl", run: func() error { _, err := client.TTL(context.Background(), "key"); return err }},
+		{name: "incr", run: func() error { _, err := client.Incr(context.Background(), "key"); return err }},
+		{name: "decr", run: func() error { _, err := client.Decr(context.Background(), "key"); return err }},
 	}
-	if _, err := client.Get(context.Background(), "key"); !IsKind(err, ErrorKindClosed) {
-		t.Fatalf("get after close kind = %v, want closed", err)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.run(); !IsKind(err, ErrorKindClosed) {
+				t.Fatalf("%s after close kind = %v, want closed", tt.name, err)
+			}
+		})
 	}
 }

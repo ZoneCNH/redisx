@@ -48,6 +48,8 @@ Release manifest 相关测试必须在临时 fixture 仓库内构造所需 `.omc
 
 `make integration` 会渲染 `kernel`、`configx` 和 `redisx` 三个临时下游库，检查旧模板标识是否清空，并在下游库内运行 Docker toolchain、test、contracts、boundary、standard impact、debt 和 release Evidence 校验。这保证模板替换逻辑、contract gate、boundary gate、债务证据和 Evidence 工具不会只在模板仓库自身成立。旧 `foundationx` 只作为迁移兼容扫描项，不再作为默认下游。
 
+Redis L2 live profiles 是 integration gate 的 provider-specific evidence，不属于 release manifest 的 secret source。runner 可以读取外部注入的 `REDISX_REDIS_*` 环境变量，但 `.agent/evidence/l2/*.json` 只能记录 profile 状态、命令覆盖、fixture key 前缀和占位符变量名，不记录真实 host、password、TLS material 或 secret file 内容。
+
 ## Score 与 Workflow Evidence
 
 供应链 Evidence 必须包含可机器校验的 `score` 与 workflow artifact 元数据。`score` 来自 `go run ./cmd/goalcli score --min 9.8`，用于汇总 manifest schema、release gate、security scan、scorecard 文档、release/retrospective 模板等发布质量维度。`workflow_run_id`、`artifact_name`、`artifact_url` 用于追踪 CI 上传的 `release/manifest/latest.json` 与 `release/manifest/latest.json.sha256`，防止只有本地文件而没有外部 artifact 留痕。

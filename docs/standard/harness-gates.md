@@ -17,7 +17,7 @@ Full Goal Runtime v3.1 以 `cmd/goalcli` 作为 Go gate runtime。Makefile targe
 | Security | `GOWORK=off make security` | 默认 secret scan；`XLIB_ENABLE_VULNCHECK=1` 且一周窗口到期，或 `XLIB_FORCE_VULNCHECK=1` 时先运行 `govulncheck` |
 | Contracts | `GOWORK=off make contracts` | schema、metrics 和 manifest contract |
 | Docs Check | `GOWORK=off make docs-check` | 文档、链接、当前命名、下游同步策略、v3.1 runtime 和 release protocol |
-| Integration | `GOWORK=off make integration` | generator 和 downstream smoke |
+| Integration | `GOWORK=off make integration` | generator、downstream smoke 和 env-gated Redis L2 integration |
 | Dependency Check | `GOWORK=off make dependency-check` | 校验 `renovate.json`、`.github/dependabot.yml` 和 Go dependency inventory |
 | Standard Impact Check | `GOWORK=off make standard-impact-check` | 生成 `release/standard-impact/latest.md` 并判定 `downstream_sync_required`、`downstream_release_decision`（`required` / `not_required`）和 `repository_rules_release_decision`（`audit_required` / `not_required`） |
 | Downstream Sync Plan | `GOWORK=off make downstream-sync-plan` | 读取 `release/standard-impact/latest.md` 并生成 `release/downstream-sync/latest.md`，列出 `kernel`、L1、L2 和 `x.go` 的同步计划、blocked/not_required 结论与禁止采纳升级规则 |
@@ -60,6 +60,8 @@ Full Goal Runtime v3.1 以 `cmd/goalcli` 作为 Go gate runtime。Makefile targe
 - `GOWORK=off make fuzz-smoke`
 - `GOWORK=off make ci-extended`
 - `GOWORK=off make release-check-extended`
+
+Redis L2 adapter 的 harness 还包含 profile-specific gate：`GOWORK=off make test-integration` 生成 live integration evidence，`REDISX_PERSISTENCE_INTEGRATION=1 GOWORK=off make test-persistence-integration` 生成 restart recovery evidence，`GOWORK=off make l2-check` 校验 `.agent/l2-capabilities.yaml`、compliance matrix 和 release-readiness。真实 provider 连接只允许通过外部 `REDISX_REDIS_*` 环境变量进入运行时，不能进入源码、文档或 Evidence 值域。
 
 ## Generator Gate
 
