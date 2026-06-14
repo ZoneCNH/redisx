@@ -1,12 +1,12 @@
 # redisx
 
-`redisx` 是基础库标准与交付运行时仓库，承担五类职责：**Standard Source**、**Go Reference Template**、**Generator**、**Harness** 和 **Evidence Runtime**。它把基础库的公共 API、配置、错误、健康检查、metrics、测试、release Evidence、Goal Runtime 和下游生成规则放在同一套可验证工件中维护。
+`redisx` 是 FoundationX 的 **L2 Redis adapter 基础库**，为上层服务提供 KV/TTL/Hash/List/Pipeline/Cache-aside/Lock/RateLimit/Pool/Persistence 等 Redis 能力封装。redisx 遵循 xlib-standard 的治理、Harness 和 Evidence 协议，但不是标准源、不是 generator、不是模板仓库。
 
-旧名 `redisx` 和示例名 `foundationx` 只允许出现在迁移文档语境中；新的默认下游集成目标是 `kernel`，生成库包括 `configx`、`observex`、`testkitx`、`postgresx`、`redisx`、`kafkax`、`natsx`、`taosx`、`ossx` 和 `clickhousex`。
+旧名 `redisx` 和示例名 `foundationx` 只允许出现在迁移文档语境中。
 
 标准源仓库 URL 为 [`redisx`](https://github.com/ZoneCNH/redisx)。本仓库不再把标准源与模板实现拆成两个角色：标准文本、模板、generator、Harness gate 和 Evidence runtime 必须一起通过 release gate 验证。
 
-## 五类职责
+## 职责
 
 - **Standard Source**：维护基础库 P0 标准、仓库角色、分层、模块边界、DoD、安全、release 和 Evidence 协议。
 - **Go Reference Template**：提供可编译参考包 `pkg/redisx`、内部辅助、examples、contracts 和 testkit，用于证明标准可落地。
