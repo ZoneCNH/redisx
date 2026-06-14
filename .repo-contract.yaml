@@ -1,0 +1,16 @@
+schema_version: repo-contract/v1
+repo:
+  name: redisx
+  owner: ZoneCNH
+  url: https://github.com/ZoneCNH/redisx
+  module: github.com/ZoneCNH/redisx
+identity:
+  layer: L1
+  public_package: github.com/ZoneCNH/redisx/pkg/redisx
+  standard_source: github.com/ZoneCNH/xlib-standard
+  is_standard_source: false
+  is_generator: false
+versions:
+  table_version: v1.0.1
+  latest_git_tag: v1.0.1
+  all_aligned: true
