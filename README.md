@@ -1,18 +1,31 @@
 # redisx
 
-`redisx` 是基础库标准与交付运行时仓库，承担五类职责：**Standard Source**、**Go Reference Template**、**Generator**、**Harness** 和 **Evidence Runtime**。它把基础库的公共 API、配置、错误、健康检查、metrics、测试、release Evidence、Goal Runtime 和下游生成规则放在同一套可验证工件中维护。
+`redisx` 是 FoundationX 的 L2 Redis adapter 基础库，为上层服务提供 KV/TTL/Hash/List/Pipeline/Cache-aside/Lock/RateLimit/Pool/Persistence 等 Redis 能力封装。redisx 遵循 xlib-standard 的治理、Harness 和 Evidence 协议，但不是标准源、不是 generator、不是模板仓库。
 
-旧名 `redisx` 和示例名 `foundationx` 只允许出现在迁移文档语境中；新的默认下游集成目标是 `kernel`，生成库包括 `configx`、`observex`、`testkitx`、`postgresx`、`redisx`、`kafkax`、`natsx`、`taosx`、`ossx` 和 `clickhousex`。
+## 能力边界
 
-标准源仓库 URL 为 [`redisx`](https://github.com/ZoneCNH/redisx)。本仓库不再把标准源与模板实现拆成两个角色：标准文本、模板、generator、Harness gate 和 Evidence runtime 必须一起通过 release gate 验证。
+### v1 承诺
 
-## 五类职责
+- 单节点 Redis（single-node）
+- KV 读写（string get/set、MSet）
+- TTL 管理
+- Hash 操作
+- List 操作
+- Pipeline 批量写入
+- Cache-aside 模式（`Cache[T]`、`NewCacheClient[T]`、`JSONCodec` / `Codec[T]`）
+- 分布式锁（`Lock`、`AcquireLock` / `ReleaseLock`，基于 token 的 compare-release）
+- 固定窗口限流（`FixedWindowRateLimiter`）
+- 连接池（Pool）
+- 健康检查（Health）
+- 持久化重启恢复（非 TTL 的 string、MSet、hash、list、counter 和 pipeline 写入由 AOF/RDB 保证 restart recovery）
 
-- **Standard Source**：维护基础库 P0 标准、仓库角色、分层、模块边界、DoD、安全、release 和 Evidence 协议。
-- **Go Reference Template**：提供可编译参考包 `pkg/redisx`、内部辅助、examples、contracts 和 testkit，用于证明标准可落地。
-- **Generator**：通过 [docs/generation.md](docs/generation.md) 与 `scripts/render_template.sh` 渲染具体基础库 module path、package name、README、docs 和 contracts。
-- **Harness**：通过 Makefile、scripts、CI 和 [.agent/harness/harness.yaml](.agent/harness/harness.yaml) 固化 required、extended、docs、boundary、integration、score 和 final gate。
-- **Evidence Runtime**：通过 [docs/standard/evidence-protocol.md](docs/standard/evidence-protocol.md)、[docs/release.md](docs/release.md)、[.agent](.agent/) 和 `release/manifest/latest.json` 记录可追溯完成状态。
+### v1 不承诺
+
+- Redis Cluster
+- Redis Sentinel
+- Redis Streams
+- Redis Search / RediSearch
+- 多区域一致性（multi-region consistency）
 
 ## 非目标
 
@@ -22,9 +35,15 @@
 - 不创建隐藏全局客户端、不可关闭后台进程或真实基础设施 runtime。
 - 不把旧 `redisx` / `foundationx` 叙事继续作为主身份。
 
+## v1.0.0 Redis 写入支持
+
+`pkg/redisx` 的 v1.0.0 release surface 覆盖字符串 KV、multi-key、counter、Hash、List、Pipeline 和 TTL 相关写入。公共辅助包括 `KeyBuilder`、`JSONCodec` / `Codec[T]`、cache-aside `Cache[T]` 与 `NewCacheClient[T]`、自动 token 的 `NewLock` / `Lock`、显式 token 的 `AcquireLock` / `ReleaseLock`，以及 fixed-window `FixedWindowRateLimiter`。
+
+持久化边界保持在 Redis 后端：非 TTL 的 string、MSet、hash、list、counter 和 pipeline 写入由被测 Redis 的 AOF/RDB 保证 restart recovery；lock token、rate-limit window 与 pub/sub 是 TTL-scoped / transient state，不作为 durable evidence。
+
 ## 标准结构
 
-- `pkg/redisx`：公共包 API 的可编译参考实现；渲染后会移动到 `pkg/<package-name>`。
+- `pkg/redisx`：公共包 API。
 - `internal/`：脱敏、校验和运行时说明等内部辅助代码。
 - `testkit/`：可复用测试夹具和断言。
 - `examples/`：最小使用示例。
@@ -36,27 +55,16 @@
 
 ## 文档入口
 
-- [基础库标准索引](docs/standard/README.md)：P0 标准入口，覆盖仓库角色、分层、DoD、Harness、Evidence、release、安全和 generator 契约。
-- [基础库总标准](docs/standard/redisx.md)：同步 [`redisx`](https://github.com/ZoneCNH/redisx) 的公共 API、配置、错误、健康检查、metrics、测试、安全和发布规则。
-- [仓库角色](docs/standard/repository-roles.md)：区分 `redisx`、`kernel`、生成基础库和 `x.go`。
-- [模块边界](docs/standard/module-boundary.md)：定义标准、模板、generator、Harness、Evidence 与下游库边界。
-- [下游矩阵](docs/downstream-matrix.md)：列出 `kernel` 与所有目标库的 module path、package、layer、允许依赖和禁止依赖。
-- [下游同步策略](docs/downstream-sync-policy.md)：定义 `redisx` 变更如何同步到 `kernel`、L1/L2 基础库，以及 `x.go` 的消费方边界。
-- [x.go 集成边界](docs/xgo-integration-boundary.md)：说明 `x.go` 只能作为调用方组合层，基础库不得反向依赖。
-- [迁移指南](docs/migration/redisx-to-redisx.md)：记录旧名到新身份的迁移规则。
-- [Harness gate](docs/standard/harness-gates.md)：required、extended、generator、docs、score 和 final gate 命令。
-- [Evidence 协议](docs/standard/evidence-protocol.md)：`DONE with evidence:` 和 release manifest 要求。
-- [测试策略](docs/testing.md)：单元、示例 smoke、release quality 和 release manifest fixture 隔离要求。
-- [当前状态](STATUS.md)：Redis L2-T2 能力、integration、persistence、Evidence 和 release-readiness 对齐快照。
 - [Redis L2 执行方案](docs/l2/04_redisx_execution_plan.md)：Redis adapter 的 L2-T2 profile、真实 Redis integration、persistence recovery 和 release-readiness 证据口径。
 - [Redis integration 测试](test/integration/README.md)：环境变量门禁、Docker-backed Redis、真实 Redis 占位符命令和覆盖清单。
 - [L2 Evidence 目录](.agent/evidence/l2/README.md)：`unit`、`contract`、`integration`、`persistence` profiles 的 evidence 文件与通过标准。
+- [当前状态](STATUS.md)：Redis L2-T2 能力、integration、persistence、Evidence 和 release-readiness 对齐快照。
+- [基础库总标准](docs/standard/redisx.md)：redisx 的公共 API、配置、错误、健康检查、metrics、测试、安全和发布规则。
+- [测试策略](docs/testing.md)：单元、示例 smoke、release quality 和 release manifest fixture 隔离要求。
 - [安全与密钥策略](docs/standard/security-and-secret-policy.md)：secret scan、每周窗口 `govulncheck` 和 Agent runtime 目录排除边界。
-- [供应链与 Evidence](docs/supply-chain.md)：workflow Action SHA pinning、每周窗口 `govulncheck` 固定版本、release manifest 和 CI artifact 对齐。
-- [Release Scorecard](docs/scorecard.md)：`goalcli score --min 9.8` 的评分维度、阈值和语义边界。
-- [发布](docs/release.md)：`release-check`、manifest 字段和 Evidence 规则。
+- [迁移指南](docs/migration/redisx-to-redisx.md)：记录旧名到新身份的迁移规则。
 - [独立审计 2026-06-02](docs/independent-audit-20260602.md)：独立审计发现、修复状态和剩余验证缺口。
-- [项目分析快照 2026-06-02](docs/project-analysis-20260602.md)：`v0.3.7` 发布/分析快照；当前治理主基线仍以 [目标文档](docs/goal/goal.md) v2.9.3 Complete 和 [.agent/traceability/traceability-matrix.md](.agent/traceability/traceability-matrix.md) 为准。
+- [项目分析快照 2026-06-02](docs/project-analysis-20260602.md)：`v0.3.7` 发布/分析快照。
 - [结构性问题清单 2026-06-02](docs/structural-issues-20260602.md)：记录架构、治理和交付风险的结构化问题清单。
 - [项目结构分析报告 2026-06-05](docs/project-structural-analysis-20260605.md)：记录当前评分、结构性问题、已修复的安全门禁频率和后续治理建议。
 - [.agent 真相状态文件](.agent/evidence/truth-state.yaml)：汇总当前治理、命令实现、release gate、Evidence 可用性和下游采纳状态口径。
@@ -100,16 +108,6 @@ make evidence
 
 Release gate 还必须执行 `GOWORK=off go run ./cmd/goalcli score --min 9.8`。GitHub Actions workflow 引用的第三方 Action 必须固定为 40 位 commit SHA 并保留来源 tag 注释；CI、Release Check、Auto Patch 和 Docker Contract workflow 默认设置 `XLIB_ENABLE_VULNCHECK=0`，Security workflow 每周一 03:17 UTC 定时强制执行漏洞扫描；启用或定时扫描时必须使用固定基线 `golang.org/x/vuln/cmd/govulncheck@v1.1.4`，不得用 `@latest` 作为发布门禁配置。
 
-生成 `kernel` 示例：
-
-```bash
-scripts/render_template.sh \
-  --module-name kernel \
-  --module-path github.com/ZoneCNH/kernel \
-  --package-name kernel \
-  --out ../kernel
-```
-
 发布式验证必须使用 `GOWORK=off`，避免父级或本地 `go.work` 改写 module 解析并掩盖模板独立性问题：
 
 ```bash
@@ -124,12 +122,6 @@ XLIB_CONTEXT=release_verify GOWORK=off make release-check
 Redis L2 evidence 固定在 `.agent/evidence/l2/`：`integration-report.json` 记录 live Redis command coverage，`persistence-report.json` 记录 restart recovery，`release-readiness.json` 汇总 `unit`、`contract`、`integration`、`persistence` 必需 profile。v1.0.0 公共写入面覆盖 strings、hashes、lists、counters 和 pipeline writes；cache-aside JSON codec helpers 建立在 string values 上。Lock token 和 fixed-window rate-limit key 是 TTL-scoped 协调状态，pub/sub 不纳入 durable persistence 承诺。公开 Evidence 只记录 profile 状态、覆盖项和占位符变量名。
 
 Full Goal Runtime v3.1 位于 [.agent](.agent/)，其中 [goal-runtime](.agent/runtime/goal-runtime.md)、[object-model](.agent/runtime/object-model.md)、[state-machine](.agent/runtime/state-machine.md)、[traceability-matrix](.agent/traceability/traceability-matrix.md)、[harness](.agent/harness/harness.yaml)、[evidence-protocol](.agent/evidence/evidence-protocol.md)、[release-template](.agent/release/release-template.md)、[retrospective-template](.agent/docs/retrospective-template.md)、[risk-register](.agent/traceability/risk-register.md)、[decision-log](.agent/traceability/decision-log.md)、[rollback-protocol](.agent/runtime/rollback-protocol.md) 和 patch 文档用于把标准、执行、评审、发布和复盘连接到同一套 Evidence 协议。
-
-## v1.0.0 Redis 写入支持
-
-`pkg/redisx` 的 v1.0.0 release surface 覆盖字符串 KV、multi-key、counter、Hash、List、Pipeline 和 TTL 相关写入。公共辅助包括 `KeyBuilder`、`JSONCodec` / `Codec[T]`、cache-aside `Cache[T]` 与 `NewCacheClient[T]`、自动 token 的 `NewLock` / `Lock`、显式 token 的 `AcquireLock` / `ReleaseLock`，以及 fixed-window `FixedWindowRateLimiter`。
-
-持久化边界保持在 Redis 后端：非 TTL 的 string、MSet、hash、list、counter 和 pipeline 写入由被测 Redis 的 AOF/RDB 保证 restart recovery；lock token、rate-limit window 与 pub/sub 是 TTL-scoped / transient state，不作为 durable evidence。
 
 ## Smoke 覆盖
 
