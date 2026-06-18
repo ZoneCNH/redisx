@@ -194,6 +194,7 @@ replace_in_text_files() {
       -name '*.sh' -o \
       -name '*.yml' -o \
       -name '*.yaml' -o \
+      -name '.env.example' -o \
       -name 'Makefile' -o \
       -name 'go.mod' \
     \) -print0

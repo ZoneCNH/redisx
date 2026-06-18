@@ -4,6 +4,19 @@
 
 - 暂无。
 
+## v1.0.2 - 2026-06-18
+
+### 治理
+
+- 将 Goal Gates workflow 改为 fail-closed：CI 环境安装固定版本 `golangci-lint`，lint 与 evidence-check 不再因工具缺失或目标失败被跳过。
+- 为 CI、Goal Gates、Integration、Docker Contract、L2 Gates、Security 和 Worktree Guard workflow 增加最小 `contents: read` 权限。
+- 固定 L2 Gates 使用的 `actions/checkout` 与 `actions/setup-go` 为 40 位 commit SHA，并保留来源 tag 注释，满足发布门禁的 action pinning 要求。
+- 将 Security workflow 的漏洞扫描策略改为确定性：PR/default gate 默认不访问漏洞库，定时任务和手动触发强制运行固定版本 `govulncheck`。
+
+### 兼容性
+
+- 本版本不改变 `pkg/redisx` 公共 API 行为，仅更新发布治理、CI/CD 门禁和版本元数据。
+
 ## v1.0.0 - 2026-06-13
 
 ### 治理

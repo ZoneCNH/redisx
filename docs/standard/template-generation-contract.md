@@ -82,7 +82,7 @@ generator 不得复制：
 - 无 template token 未替换残留。
 - 无 generic placeholder、TODO-style template marker 或 `redisx_` metrics prefix 残留。
 - 无 `redisx` module import 残留，除非在文档中作为来源说明出现。
-- `GOWORK=off go mod tidy` 后 `go.mod` 和 `go.sum` 保持 clean。
+- `GOWORK=off go mod tidy` 和 `GOWORK=off go mod download all` 后 `go.mod` 和 `go.sum` 保持 clean。
 
 ## Scanner
 
@@ -105,6 +105,7 @@ generator 不得复制：
 
 ```bash
 GOWORK=off go mod tidy
+GOWORK=off go mod download all
 GOWORK=off make docker-toolchain-check
 GOWORK=off go test ./...
 GOWORK=off make contracts

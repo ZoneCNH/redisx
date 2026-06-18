@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	projectReleaseVersion    = "v1.0.0"
+	projectReleaseVersion    = "v1.0.2"
 	governanceRuntimeVersion = "v2.9.3"
 )
 
@@ -1462,7 +1462,7 @@ func validContext(value string) bool {
 	return false
 }
 
-var validExecutionContexts = []string{"local_write", "local_readonly", "ci_pull_request", "ci_main_verify", "release_verify"}
+var validExecutionContexts = []string{"local_write", "local_readonly", "ci_pull_request", "ci_main_verify", "release_verify", "docker_toolchain"}
 
 var commandRegistryCommands = []string{
 	"version",

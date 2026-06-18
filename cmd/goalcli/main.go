@@ -421,7 +421,7 @@ commands:
   integration
   implementation-debt [debt args]
   issue-registry
-  main-guard [--context local_write|local_readonly|ci_pull_request|ci_main_verify|release_verify]
+  main-guard [--context local_write|local_readonly|ci_pull_request|ci_main_verify|release_verify|docker_toolchain]
   makefile-baseline
   manifest
   minimal-kernel
@@ -431,7 +431,7 @@ commands:
   pack-gate
   pack-standard
   policy-schema
-  pr-check [--context local_write|local_readonly|ci_pull_request|ci_main_verify|release_verify] [--dry-run] [--json]
+  pr-check [--context local_write|local_readonly|ci_pull_request|ci_main_verify|release_verify|docker_toolchain] [--dry-run] [--json]
   pr-template
   release-evidence-check
   release-evidence-checksum-check
@@ -463,6 +463,6 @@ commands:
   upgrade-runtime [--dry-run]
   upgrade-standard [--dry-run]
   version [--json]
-  worktree-check [--context local_write|local_readonly|ci_pull_request|ci_main_verify|release_verify]
-  worktree-guard [--context local_write|local_readonly|ci_pull_request|ci_main_verify|release_verify]
+  worktree-check [--context local_write|local_readonly|ci_pull_request|ci_main_verify|release_verify|docker_toolchain]
+  worktree-guard [--context local_write|local_readonly|ci_pull_request|ci_main_verify|release_verify|docker_toolchain]
 `

@@ -1,6 +1,6 @@
 # redisx 状态
 
-更新日期：2026-06-13
+更新日期：2026-06-18
 
 ## 当前结论
 
@@ -10,9 +10,9 @@
 - 能力范围：KV、TTL、Hash、List、Pipeline、Cache-aside helpers、TTL-scoped lock/rate limit、Pool、Persistence / restart recovery
 - Contract packs：`common`、`kv`、`pool`、`ttl`；v1 public helper surface includes hash/list/pipeline/cache/lock/rate-limit primitives
 - 必需 profiles：`unit`、`contract`、`integration`、`persistence`
-- Release readiness：`release_ready=true`，score `92`
-- 当前分支：`release/redisx-v1.0.0-20260613`
-- Agent team：`redisx-v1-0-0-release-3d0f1828`，3/3 tasks completed，0 pending，0 in_progress，0 failed
+- Release readiness：`release_ready=true`，L2 readiness score `92`；release score gate 为 `10/10`
+- 当前分支：`ci/sre-cicd-pools-20260618`
+- Agent team：本轮 Codex native subagents 分为 CI/CD、docs、tests 三条 lane，3/3 tasks completed，0 pending，0 in_progress，0 failed
 
 ## 功能清单
 
@@ -38,7 +38,7 @@
 
 ## 持久化对齐
 
-`redisx` 不实现本地持久化层；所有写入和删除命令统一走 Redis 数据面，持久化能力由被测 Redis 后端的 AOF/RDB 配置提供。当前 v1.0.0 release gate 要求 persistence profile 通过 restart recovery，并证明永久 string、hash、list、counter 和 pipeline 写入在同一存储上重启后仍保持一致。TTL-scoped lock token 和 fixed-window rate-limit key 是临时协调状态，不作为 durable persistence 证据；pub/sub 语义不在当前公共持久化承诺中。
+`redisx` 不实现本地持久化层；所有写入和删除命令统一走 Redis 数据面，持久化能力由被测 Redis 后端的 AOF/RDB 配置提供。当前 v1.0.2 release gate 要求 persistence profile 通过 restart recovery，并证明永久 string、hash、list、counter 和 pipeline 写入在同一存储上重启后仍保持一致。TTL-scoped lock token 和 fixed-window rate-limit key 是临时协调状态，不作为 durable persistence 证据；pub/sub 语义不在当前公共持久化承诺中。
 
 | 命令类别 | 持久化边界 | 当前状态 |
 | --- | --- | --- |
@@ -62,12 +62,20 @@ REDISX_INTEGRATION_DOCKER=1 GOWORK=off make test-integration
 REDISX_PERSISTENCE_INTEGRATION=1 GOWORK=off make test-persistence-integration
 GOWORK=off make l2-check
 GOWORK=off make docs-check
+GOWORK=off make lint
+GOWORK=off make race
+GOWORK=off make security
+GOWORK=off make contracts
+GOWORK=off make score-check
+XLIB_CONTEXT=release_verify GOWORK=off make release-check
 GOWORK=off go test ./...
+GOWORK=off go test ./... -race -count=1
+GOWORK=off go test ./... -coverprofile=coverage.out
 GOWORK=off go vet ./...
 git diff --check
 ```
 
-本轮 release team 验证说明：开发环境未暴露兼容的 `REDISX_REDIS_*` 连接变量，因此 integration / persistence evidence 使用 Docker-backed Redis 执行；公开文档和 evidence 不记录真实 Redis 地址、密码、TLS material 或本地 secret 路径。
+本轮 release team 验证说明：开发环境未暴露兼容的 `REDISX_REDIS_*` 连接变量，因此 integration / persistence evidence 使用 Docker-backed Redis 执行；公开文档和 evidence 不记录真实 Redis 地址、密码、TLS material 或本地 secret 路径。CI/CD 配置已收紧为 fail-closed：Goal Gates 的 lint 与 evidence-check 不再跳过，L2 workflow 固定第三方 action SHA，Security workflow 仅在定时或手动触发时强制运行漏洞扫描。
 
 ## Evidence
 
@@ -98,4 +106,4 @@ Redis L2 evidence 固定在 `.agent/evidence/l2/`：
 
 ## 未完成事项
 
-当前没有 L2-T2 release blocker。本轮收口动作以提交、push 和合并 main 为最后交付步骤。
+当前没有 L2-T2 运行时验收 blocker。发布 tag 仍受 `release-preflight` 约束：必须在干净且与 `origin/main` 对齐的 `main` 分支上执行，当前 feature branch 只能完成验证、提交和 PR 准备。

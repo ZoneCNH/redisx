@@ -4,7 +4,7 @@
   "type": "object",
   "required": ["context", "root", "gowork"],
   "properties": {
-    "context": {"type": "string", "enum": ["local_write", "local_readonly", "ci_pull_request", "ci_main_verify", "release_verify"]},
+    "context": {"type": "string", "enum": ["local_write", "local_readonly", "ci_pull_request", "ci_main_verify", "docker_toolchain", "release_verify"]},
     "root": {"type": "string"},
     "gowork": {"type": "string"}
   }

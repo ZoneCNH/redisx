@@ -42,7 +42,7 @@ XLIB_CONTEXT=release_verify GOWORK=off make release-final-check
 打 tag 前推荐使用 release preflight：
 
 ```bash
-XLIB_CONTEXT=release_verify GOWORK=off make release-preflight VERSION=v1.0.0
+XLIB_CONTEXT=release_verify GOWORK=off make release-preflight VERSION=v1.0.2
 ```
 
 `release-preflight` 会先检查版本号、当前分支、工作区洁净状态、`main` 与 `origin/main` 是否一致、目标 tag 是否已存在、`CHANGELOG.md` 是否包含目标版本，以及 `golangci-lint` 是否已安装。只有设置 `XLIB_ENABLE_VULNCHECK=1` 且一周漏洞扫描窗口到期、状态文件缺失或 `XLIB_FORCE_VULNCHECK=1` 时，才额外要求 `govulncheck`。随后以 `GOWORK=off` 和 `XLIB_CONTEXT=release_verify` 运行 `release-final-check`。tag 应在该入口通过后再创建和推送。
@@ -144,7 +144,7 @@ Extended Evidence 推荐额外记录：
 `make integration` 会通过 `cmd/goalcli integration` 调用 `scripts/render_template.sh`，生成临时 `kernel`、`configx` 和 `redisx` 三个下游库，并对每个生成目录执行：
 
 - 模块路径、包目录和旧模板标识扫描。
-- `GOWORK=off go mod tidy` 并检查 `go.mod` / `go.sum` clean。
+- `GOWORK=off go mod tidy` 和 `GOWORK=off go mod download all` 后检查 `go.mod` / `go.sum` clean。
 - `GOWORK=off make docker-toolchain-check`。
 - `GOWORK=off go test ./...`
 - `GOWORK=off make contracts`

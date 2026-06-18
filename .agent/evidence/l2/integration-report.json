@@ -18,7 +18,7 @@
     "docker-compose.yml",
     ".agent/evidence/l2/compliance-matrix.json"
   ],
-  "generated_at": "2026-06-13T08:21:53.736157+00:00",
+  "generated_at": "2026-06-18T13:57:51.479058+00:00",
   "config_keys": [],
   "checklist": [
     {

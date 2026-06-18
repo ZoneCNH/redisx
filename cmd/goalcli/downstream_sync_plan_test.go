@@ -44,6 +44,7 @@ func TestRunDownstreamSyncPlanWritesRequiredPlan(t *testing.T) {
 		"adoption_claim: `not_claimed`",
 		"| `kernel` | `L0` | `P0` | `primary_sync_required` | `blocked_pending_downstream_workspace` |",
 		"scripts/render_template.sh --module-name kernel --module-path github.com/ZoneCNH/kernel --package-name kernel",
+		"GOWORK=off go mod download all",
 		"GOWORK=off go test ./...",
 		"RELEASE_EVIDENCE_REQUIRE_PASSED=1 GOWORK=off make release-evidence-check",
 		"`x.go`: `consumer_only_review_required` / `review_pending_no_standard_write`.",

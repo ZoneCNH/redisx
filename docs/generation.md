@@ -44,7 +44,7 @@ GOWORK=off make release-check
 每个临时库都会运行以下验证：
 
 - `scripts/check_rendered_template.sh`：确认 `go.mod` module path、`pkg/<package>` 目录、旧模板目录、旧 module path、占位符和 `redisx` 标识。
-- `GOWORK=off go mod tidy` 后检查 `go.mod` / `go.sum` 没有未提交差异。
+- `GOWORK=off go mod tidy` 和 `GOWORK=off go mod download all` 后检查 `go.mod` / `go.sum` 没有未提交差异。
 - `GOWORK=off make docker-toolchain-check`
 - `GOWORK=off go test ./...`
 - `GOWORK=off make contracts`

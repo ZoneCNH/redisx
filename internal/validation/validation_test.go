@@ -162,6 +162,11 @@ contexts:
     mutates_files: false
     release_evidence: false
     requires_gowork: off
+  docker_toolchain:
+    write_scope: read_only
+    mutates_files: false
+    release_evidence: false
+    requires_gowork: off
   release_verify:
     write_scope: release_read_only
     mutates_files: false
@@ -171,7 +176,7 @@ contexts:
 }
 
 func executionContextsFixture() []string {
-	return []string{"local_write", "local_readonly", "ci_pull_request", "ci_main_verify", "release_verify"}
+	return []string{"local_write", "local_readonly", "ci_pull_request", "ci_main_verify", "docker_toolchain", "release_verify"}
 }
 
 func validationGapsContain(gaps []string, want string) bool {

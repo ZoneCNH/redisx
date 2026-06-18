@@ -38,6 +38,7 @@
 
 ```bash
 GOWORK=off go mod tidy
+GOWORK=off go mod download all
 GOWORK=off make docker-toolchain-check
 GOWORK=off go test ./...
 GOWORK=off make contracts
