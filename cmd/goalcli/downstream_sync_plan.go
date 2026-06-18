@@ -373,6 +373,7 @@ func downstreamSyncCommands(target downstreamSyncPlanTarget, workspaceRoot strin
 	return []string{
 		fmt.Sprintf("scripts/render_template.sh --module-name %s --module-path %s --package-name %s --out %s", shellQuote(target.Name), shellQuote(target.ModulePath), shellQuote(target.PackageName), quotedOut),
 		fmt.Sprintf("cd %s && GOWORK=off go mod tidy", quotedOut),
+		fmt.Sprintf("cd %s && GOWORK=off go mod download all", quotedOut),
 		fmt.Sprintf("cd %s && GOWORK=off go test ./...", quotedOut),
 		fmt.Sprintf("cd %s && GOWORK=off make contracts", quotedOut),
 		fmt.Sprintf("cd %s && GOWORK=off make boundary", quotedOut),

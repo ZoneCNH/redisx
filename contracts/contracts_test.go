@@ -268,7 +268,7 @@ func TestGoalRuntimeSchemasAreValidJSON(t *testing.T) {
 func TestExecutionContextContractMatchesGovernanceContexts(t *testing.T) {
 	schema := readSchema(t, "execution-context.schema.json")
 
-	expected := sortedStrings("local_write", "local_readonly", "ci_pull_request", "ci_main_verify", "release_verify")
+	expected := sortedStrings("local_write", "local_readonly", "ci_pull_request", "ci_main_verify", "docker_toolchain", "release_verify")
 	actual := sortedStrings(schema.Properties["context"].Enum...)
 	if !reflect.DeepEqual(actual, expected) {
 		t.Fatalf("execution context enum drift:\nactual:   %#v\nexpected: %#v", actual, expected)

@@ -198,6 +198,25 @@ func TestRenderTemplateIncludesDockerContract(t *testing.T) {
 		t.Fatalf("rendered L2 verifier still contains redisx residue")
 	}
 
+	envExample, err := os.ReadFile(filepath.Join(outDir, ".env.example"))
+	if err != nil {
+		t.Fatalf("read rendered env example: %v", err)
+	}
+	for _, required := range []string{
+		"KERNEL_NAME=kernel",
+		"KERNEL_REDIS_ADDR=127.0.0.1:6379",
+		"KERNEL_REDIS_PASSWORD=",
+	} {
+		if !strings.Contains(string(envExample), required) {
+			t.Fatalf("rendered env example missing rewritten variable %s", required)
+		}
+	}
+	if strings.Contains(string(envExample), "RED"+"ISX") ||
+		strings.Contains(string(envExample), "red"+"isx") ||
+		strings.Contains(string(envExample), "FOUNDATIONX_") {
+		t.Fatalf("rendered env example still contains stale template identifiers")
+	}
+
 	adoptionStatus, err := os.ReadFile(filepath.Join(outDir, ".agent", "registries", "downstream-adoption-status.yaml"))
 	if err != nil {
 		t.Fatalf("read rendered downstream adoption status: %v", err)

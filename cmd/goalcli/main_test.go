@@ -1334,7 +1334,7 @@ func TestRunGovernanceCommands(t *testing.T) {
 		}
 		if report.Command != "version" ||
 			report.Status != "passed" ||
-			!slicesContain(report.Details, "redisx release v1.0.0") ||
+			!slicesContain(report.Details, "redisx release v1.0.2") ||
 			!slicesContain(report.Details, "goalcli governance runtime v2.9.3") {
 			t.Fatalf("report = %#v; want version gate report", report)
 		}
@@ -2720,7 +2720,7 @@ func TestInternalGovernanceCommandsRejectUnknownArgs(t *testing.T) {
 func TestGuardContextsIncludePullRequest(t *testing.T) {
 	chdir(t, filepath.Join("..", ".."))
 
-	for _, context := range []string{"local_write", "local_readonly", "ci_pull_request", "ci_main_verify", "release_verify"} {
+	for _, context := range []string{"local_write", "local_readonly", "ci_pull_request", "ci_main_verify", "release_verify", "docker_toolchain"} {
 		if !validContext(context) {
 			t.Fatalf("validContext(%q) = false; want true", context)
 		}
@@ -3405,22 +3405,32 @@ contexts:
     write_scope: worktree
     mutates_files: true
     release_evidence: false
+    requires_gowork: off
   local_readonly:
     write_scope: read_only
     mutates_files: false
     release_evidence: false
+    requires_gowork: off
   ci_pull_request:
     write_scope: read_only
     mutates_files: false
     release_evidence: false
+    requires_gowork: off
   ci_main_verify:
     write_scope: read_only
     mutates_files: false
     release_evidence: false
+    requires_gowork: off
+  docker_toolchain:
+    write_scope: read_only
+    mutates_files: false
+    release_evidence: false
+    requires_gowork: off
   release_verify:
     write_scope: release_read_only
     mutates_files: false
     release_evidence: true
+    requires_gowork: off
 `
 }
 

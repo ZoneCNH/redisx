@@ -8,6 +8,9 @@ on:
   schedule:
     - cron: "17 3 * * 1"
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -16,7 +19,7 @@ jobs:
   security:
     runs-on: ubuntu-latest
     env:
-      XLIB_ENABLE_VULNCHECK: ${{ github.event_name == 'schedule' && '1' || vars.XLIB_ENABLE_VULNCHECK }}
+      XLIB_ENABLE_VULNCHECK: ${{ github.event_name == 'schedule' && '1' || github.event_name == 'workflow_dispatch' && '1' || '0' }}
       XLIB_VULNCHECK_INTERVAL_HOURS: "168"
 
     steps:
@@ -34,7 +37,7 @@ jobs:
 
       - name: Security
         env:
-          XLIB_ENABLE_VULNCHECK: ${{ github.event_name == 'schedule' && '1' || vars.XLIB_ENABLE_VULNCHECK }}
-          XLIB_FORCE_VULNCHECK: ${{ github.event_name == 'schedule' && '1' || '' }}
+          XLIB_ENABLE_VULNCHECK: ${{ github.event_name == 'schedule' && '1' || github.event_name == 'workflow_dispatch' && '1' || '0' }}
+          XLIB_FORCE_VULNCHECK: ${{ github.event_name == 'schedule' && '1' || github.event_name == 'workflow_dispatch' && '1' || '' }}
           XLIB_VULNCHECK_INTERVAL_HOURS: "168"
         run: GOWORK=off make security

@@ -17,14 +17,14 @@
 - `version`
 - `doctor`
 - `minimal-kernel`
-- `main-guard --context local_write|local_readonly|ci_pull_request|ci_main_verify|release_verify`
-- `worktree-guard --context local_write|local_readonly|ci_pull_request|ci_main_verify|release_verify`
-- `worktree-check --context local_write|local_readonly|ci_pull_request|ci_main_verify|release_verify`
+- `main-guard --context local_write|local_readonly|ci_pull_request|ci_main_verify|release_verify|docker_toolchain`
+- `worktree-guard --context local_write|local_readonly|ci_pull_request|ci_main_verify|release_verify|docker_toolchain`
+- `worktree-check --context local_write|local_readonly|ci_pull_request|ci_main_verify|release_verify|docker_toolchain`
 - `context-check`
 - `spec-check`
 - `design-check`
 - `task-check`
-- `pr-check --context local_write|local_readonly|ci_pull_request|ci_main_verify|release_verify`
+- `pr-check --context local_write|local_readonly|ci_pull_request|ci_main_verify|release_verify|docker_toolchain`
 - `evidence-check`
 - `done-assertion`
 - `cli-contract`
@@ -195,7 +195,7 @@ goalcli MVA commands 是由 `.agent/harness/harness.yaml` 背书的本地 `cmd/g
 
 - `--dry-run` 只能执行本地 contract、manifest 或 patch planning 检查。
 - `--verify` 或 `--strict` 不能把 `planned`/`gap` 当作成功证据。
-- `--context` 仅允许 `local_write`、`local_readonly`、`ci_pull_request`、`ci_main_verify` 和 `release_verify`。
+- `--context` 仅允许 `local_write`、`local_readonly`、`ci_pull_request`、`ci_main_verify`、`docker_toolchain` 和 `release_verify`。
 - `--repo` 指向的 downstream 仓库不存在时，命令必须返回 `gap`，且不得自动创建目录。
 - 新增命令时必须同步 `run` dispatch、`plannedCommandFiles`、Makefile gate、CLI contract 和测试表。
 

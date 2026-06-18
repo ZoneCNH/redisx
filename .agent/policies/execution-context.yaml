@@ -20,6 +20,11 @@ contexts:
     mutates_files: false
     release_evidence: false
     requires_gowork: off
+  docker_toolchain:
+    write_scope: read_only
+    mutates_files: false
+    release_evidence: false
+    requires_gowork: off
   release_verify:
     write_scope: release_read_only
     mutates_files: false
