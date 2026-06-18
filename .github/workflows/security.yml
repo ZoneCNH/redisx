@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   security:
-    runs-on: [self-hosted, Linux, X64, sre/storage-light]
+    runs-on: ubuntu-latest
     env:
       XLIB_ENABLE_VULNCHECK: ${{ github.event_name == 'schedule' && '1' || github.event_name == 'workflow_dispatch' && '1' || '0' }}
       XLIB_VULNCHECK_INTERVAL_HOURS: "168"

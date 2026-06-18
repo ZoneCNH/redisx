@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   release-check:
-    runs-on: [self-hosted, Linux, X64, sre/deploy]
+    runs-on: ubuntu-latest
     env:
       XLIB_ENABLE_VULNCHECK: "0"
 

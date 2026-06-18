@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   ci:
-    runs-on: [self-hosted, Linux, X64, sre/storage-light]
+    runs-on: ubuntu-latest
     env:
       XLIB_ENABLE_VULNCHECK: "0"
 
@@ -83,7 +83,7 @@ jobs:
           if-no-files-found: warn
 
   docker-contract:
-    runs-on: [self-hosted, Linux, X64, sre/storage-light]
+    runs-on: ubuntu-latest
     env:
       DOCKER_BUILDKIT: "1"
       COMPOSE_DOCKER_CLI_BUILD: "1"

@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   docker-contract:
-    runs-on: [self-hosted, Linux, X64, sre/storage-light]
+    runs-on: ubuntu-latest
     env:
       DOCKER_BUILDKIT: "1"
       COMPOSE_DOCKER_CLI_BUILD: "1"
