@@ -1,6 +1,6 @@
 {
   "module": "github.com/ZoneCNH/redisx",
-  "version": "v1.0.2",
+  "version": "v1.0.3",
   "commit": "{{COMMIT}}",
   "tree_sha": "{{TREE_SHA}}",
   "source_digest": "{{SOURCE_DIGEST}}",

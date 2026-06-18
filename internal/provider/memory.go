@@ -141,10 +141,6 @@ func (m *Memory) TTL(ctx context.Context, key string) (time.Duration, error) {
 			return nil
 		}
 		ttl = item.expiresAt.Sub(now)
-		if ttl < 0 {
-			delete(m.items, key)
-			ttl = -2 * time.Second
-		}
 		return nil
 	})
 	return ttl, err
@@ -532,9 +528,6 @@ func (m *Memory) FixedWindowRateLimit(ctx context.Context, key string, limit int
 			remaining = 0
 		}
 		resetAfter := item.expiresAt.Sub(now)
-		if resetAfter < 0 {
-			resetAfter = 0
-		}
 		result.Allowed = count <= limit
 		result.Remaining = remaining
 		result.ResetAfter = resetAfter

@@ -4,6 +4,22 @@
 
 - 暂无。
 
+## v1.0.3 - 2026-06-19
+
+### 治理
+
+- 将 `coverage` / `coverage-check` 纳入 Makefile、Harness、release profile、CI 和发布证据门禁，并把 Redis runtime/API 包覆盖率阈值提升到 100%。
+- 修正 Worktree Guard push 事件处理与 Auto Patch workflow 的 golangci-lint action 版本，恢复 CI/CD 可执行性。
+- 同步项目发布版本、release manifest 默认版本、goalcli 治理版本和 release preflight 示例到 `v1.0.3`。
+
+### 测试
+
+- 补齐 Redis provider、memory provider、公共 API helper、goalcli、debtcheck、goalruntime 和 validation 的边界测试，覆盖错误映射、pipeline 结果、nil context、lock token 和 rate limiter 分支。
+
+### 兼容性
+
+- 本版本不改变公共 API 形状；实现仅增加可测试注入点并删除不可达防御分支。
+
 ## v1.0.2 - 2026-06-18
 
 ### 治理

@@ -81,6 +81,8 @@ type Lock struct {
 	token  string
 }
 
+var readLockTokenRandom = rand.Read
+
 func (c *Client) NewLock(ctx context.Context, key string, ttl time.Duration) (*Lock, bool, error) {
 	const op = "redisx.NewLock"
 	if ttl <= 0 {
@@ -114,10 +116,18 @@ func (l *Lock) Token() string {
 
 func newLockToken() (string, error) {
 	var bytes [16]byte
-	if _, err := rand.Read(bytes[:]); err != nil {
+	if _, err := readLockTokenRandom(bytes[:]); err != nil {
 		return "", err
 	}
 	return hex.EncodeToString(bytes[:]), nil
+}
+
+func fixedWindowResetAfter(window time.Duration, now time.Time, bucket int64) time.Duration {
+	resetAfter := window - now.Sub(time.Unix(0, bucket*int64(window)))
+	if resetAfter < 0 {
+		return 0
+	}
+	return resetAfter
 }
 
 type FixedWindowRateLimiter struct {
@@ -166,9 +176,6 @@ func (r FixedWindowRateLimiter) Allow(ctx context.Context, subject string) (Rate
 	if remaining < 0 {
 		remaining = 0
 	}
-	resetAfter := r.Window - now.Sub(time.Unix(0, bucket*int64(r.Window)))
-	if resetAfter < 0 {
-		resetAfter = 0
-	}
+	resetAfter := fixedWindowResetAfter(r.Window, now, bucket)
 	return RateLimitResult{Allowed: count <= r.Limit, Limit: r.Limit, Remaining: remaining, ResetAfter: resetAfter, Count: count}, nil
 }

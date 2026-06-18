@@ -6,6 +6,8 @@ targets:
   - lint
   - test
   - race
+  - coverage
+  - coverage-check
   - boundary
   - architecture
   - domain

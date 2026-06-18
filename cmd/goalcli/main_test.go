@@ -1334,7 +1334,7 @@ func TestRunGovernanceCommands(t *testing.T) {
 		}
 		if report.Command != "version" ||
 			report.Status != "passed" ||
-			!slicesContain(report.Details, "redisx release v1.0.2") ||
+			!slicesContain(report.Details, "redisx release v1.0.3") ||
 			!slicesContain(report.Details, "goalcli governance runtime v2.9.3") {
 			t.Fatalf("report = %#v; want version gate report", report)
 		}
@@ -2072,7 +2072,7 @@ func TestContextProfileCheckRejectsUnknownProfileGate(t *testing.T) {
 func TestContextProfileCheckRejectsCyclicProfileDAG(t *testing.T) {
 	makefile := contextProfileMakefileFixture(map[string]string{
 		"context-full":    "require-gowork-off governance-check p1-governance-check p2-runtime-check context-release",
-		"context-release": "require-gowork-off context-full integration dependency-check standard-impact-check score-check",
+		"context-release": "require-gowork-off context-full integration dependency-check standard-impact-check coverage-check score-check",
 	}, "$(MAKE) context-release")
 	var gaps []string
 
@@ -3475,7 +3475,7 @@ func contextProfileMakefileFixture(overrides map[string]string, releaseFinalBody
 		"context-lite":     "require-gowork-off governance-check",
 		"context-standard": "require-gowork-off governance-check p1-governance-check docs-check",
 		"context-full":     "require-gowork-off governance-check p1-governance-check p2-runtime-check",
-		"context-release":  "require-gowork-off context-full integration dependency-check standard-impact-check score-check",
+		"context-release":  "require-gowork-off context-full integration dependency-check standard-impact-check coverage-check score-check",
 	}
 	for target, deps := range overrides {
 		dependencies[target] = deps
