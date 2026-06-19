@@ -174,7 +174,7 @@ final_gates:
   - id: release_final_check
     command: "XLIB_CONTEXT=release_verify GOWORK=off make release-final-check"
   - id: release_preflight
-    command: "XLIB_CONTEXT=release_verify GOWORK=off make release-preflight VERSION=v1.0.4"
+    command: "XLIB_CONTEXT=release_verify GOWORK=off make release-preflight VERSION=v1.1.0"
   - id: score
     command: "goalcli score --min 9.8"
   - id: kernel_downstream
