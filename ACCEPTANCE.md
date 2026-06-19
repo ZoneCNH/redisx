@@ -8,11 +8,13 @@ v1.1.1 发布候选必须在 `GOWORK=off` 下完成以下验证，并保留 reda
 GOWORK=off go test ./...
 GOWORK=off make coverage-check
 GOWORK=off make test-contract
-GOWORK=off REDISX_INTEGRATION=1 REDISX_REDIS_ADDR=127.0.0.1:6379 REDISX_REDIS_DB=0 make test-integration
+DEV_ENV_FILE=/home/ZoneCNH/sre/secrets/env/dev.md GOWORK=off make test-dev-env-integration
+GOWORK=off REDISX_INTEGRATION_DOCKER=1 make test-integration
 GOWORK=off REDISX_PERSISTENCE_INTEGRATION=1 make test-persistence-integration
 GOWORK=off make docs-check
-XLIB_CONTEXT=release_verify GOWORK=off make release-check
-XLIB_CONTEXT=release_verify GOWORK=off make release-preflight VERSION=v1.1.1
+XLIB_CONTEXT=release_verify GOWORK=off REDISX_INTEGRATION_DOCKER=1 make release-check
+XLIB_CONTEXT=release_verify GOWORK=off REDISX_INTEGRATION_DOCKER=1 make release-final-check
+XLIB_CONTEXT=release_verify GOWORK=off REDISX_INTEGRATION_DOCKER=1 make release-preflight VERSION=v1.1.1
 ```
 
 ## CI 验收
@@ -24,6 +26,7 @@ XLIB_CONTEXT=release_verify GOWORK=off make release-preflight VERSION=v1.1.1
 ## 密钥与外部 dev env 约束
 
 - `/home/ZoneCNH/sre/secrets/env/dev.md` 只能作为外部、未跟踪的运行时输入；不得复制、提交或在日志中打印其值。
+- `test-dev-env-integration` 只能记录变量名、profile、命令和状态；若 dev.md 不含支持的 Redis endpoint assignment，状态记录为 `not_applicable`，不得为了通过验收输出文件内容。
 - 允许在 evidence 中记录已配置的变量名（例如 `REDISX_REDIS_ADDR`、`REDISX_REDIS_DB`），但必须 redacted value。
 - 如果该文件不包含 Redis 连接变量，集成验证必须改用本机 Redis service 或 CI Redis service，而不是输出文件内容。
 

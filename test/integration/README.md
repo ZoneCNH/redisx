@@ -14,11 +14,12 @@ REDISX_INTEGRATION=1 GOWORK=off make test-integration
 
 ## 受控 dev secret 验证
 
-`/home/ZoneCNH/sre/secrets/env/dev.md` 只能作为本地受控凭据来源使用。验证时关闭 shell tracing，只把需要的 `REDISX_REDIS_*` 值注入当前进程；不要 `cat`、echo、tee、提交或粘贴该文件内容，也不要把 secret value 写入 Evidence。若该文件不是 shell-env 格式，使用本地批准的 secret loader 导出变量后再运行下列 gate。
+`/home/ZoneCNH/sre/secrets/env/dev.md` 只能作为本地受控凭据来源使用。验证时关闭 shell tracing，只把需要的 `REDISX_REDIS_*` 值注入当前进程；不要 `cat`、echo、tee、提交或粘贴该文件内容，也不要把 secret value 写入 Evidence。`make test-dev-env-integration` 只解析 allowlisted Redis 变量名并写出 redacted-only 报告；若文件可读但不包含支持的 Redis endpoint assignment，报告状态为 `not_applicable`，live Redis 证据仍由 CI Redis service 或 Docker runner 提供。
 
 ```bash
 set +x
-REDISX_INTEGRATION=1 GOWORK=off make test-integration
+DEV_ENV_FILE=/home/ZoneCNH/sre/secrets/env/dev.md GOWORK=off make test-dev-env-integration
+REDISX_INTEGRATION_DOCKER=1 GOWORK=off make test-integration
 REDISX_PERSISTENCE_INTEGRATION=1 GOWORK=off make test-persistence-integration
 ```
 

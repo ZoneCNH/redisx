@@ -39,6 +39,27 @@ config_keys = [
     if os.environ.get(key)
 ]
 
+
+def write_stable_json_report(path, data):
+    try:
+        existing = json.loads(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError, OSError):
+        existing = None
+
+    generated_at = datetime.now(timezone.utc).isoformat()
+    if isinstance(existing, dict):
+        existing_body = dict(existing)
+        existing_body.pop("generated_at", None)
+        data_body = dict(data)
+        data_body.pop("generated_at", None)
+        if existing_body == data_body and existing.get("generated_at"):
+            generated_at = existing["generated_at"]
+
+    data["generated_at"] = generated_at
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, sort_keys=False) + "\n", encoding="utf-8")
+
+
 data = {
     "schema_version": "1.0",
     "adapter": "redisx",
@@ -59,7 +80,6 @@ data = {
         "docker-compose.yml",
         ".agent/evidence/l2/compliance-matrix.json",
     ],
-    "generated_at": datetime.now(timezone.utc).isoformat(),
     "config_keys": config_keys,
     "checklist": [
         {"name": "ping", "status": scenario_status},
@@ -108,8 +128,7 @@ data = {
 if reason:
     data["failure"] = reason
 
-path.parent.mkdir(parents=True, exist_ok=True)
-path.write_text(json.dumps(data, indent=2, sort_keys=False) + "\n", encoding="utf-8")
+write_stable_json_report(path, data)
 PY
 }
 
@@ -308,6 +327,12 @@ elif [ "${REDISX_INTEGRATION_DOCKER:-}" = "1" ]; then
   rc=$?
   set -e
 else
+  if [ "${REDISX_INTEGRATION_REQUIRED:-}" = "1" ] || [ "${CI:-}" = "true" ] || [ "${GITHUB_ACTIONS:-}" = "true" ]; then
+    REDISX_REPORT_RUNTIME="$report_runtime" write_report "fail" "Redis integration required but no live Redis configuration was provided"
+    echo "Redis integration required but no live Redis configuration was provided"
+    exit 1
+  fi
+
   echo "Redis integration skipped; set REDISX_INTEGRATION=1 with REDISX_REDIS_ADDR, or set REDISX_INTEGRATION_DOCKER=1"
   exit 0
 fi

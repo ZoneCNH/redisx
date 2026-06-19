@@ -9,6 +9,7 @@ L2_EVIDENCE_DIR ?= .agent/evidence/l2
 COVERPROFILE ?= coverage.out
 COVERAGE_MIN ?= 100.0
 COVERAGE_PACKAGES ?= ./pkg/redisx ./internal/provider ./internal/provider/goredis ./internal/sanitize ./testkit ./examples/basic ./examples/config ./examples/health
+DEV_ENV_FILE ?= /home/ZoneCNH/sre/secrets/env/dev.md
 
 .PHONY: require-gowork-off
 require-gowork-off:
@@ -268,6 +269,10 @@ test-contract:
 .PHONY: test-integration
 test-integration:
 	./scripts/run_redis_integration.sh
+
+.PHONY: test-dev-env-integration
+test-dev-env-integration:
+	DEV_ENV_FILE="$(DEV_ENV_FILE)" ./scripts/run_dev_redis_integration.sh
 
 .PHONY: test-persistence-integration
 test-persistence-integration:

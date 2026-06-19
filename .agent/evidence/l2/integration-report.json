@@ -18,7 +18,6 @@
     "docker-compose.yml",
     ".agent/evidence/l2/compliance-matrix.json"
   ],
-  "generated_at": "2026-06-19T08:24:12.825292+00:00",
   "config_keys": [],
   "checklist": [
     {
@@ -179,5 +178,6 @@
     }
   ],
   "runtime": "Docker Redis selected by REDISX_INTEGRATION_DOCKER=1 with restart persistence preflight",
-  "data_hygiene": "test keys are nonce-prefixed and deleted during cleanup"
+  "data_hygiene": "test keys are nonce-prefixed and deleted during cleanup",
+  "generated_at": "2026-06-19T08:48:38.712376+00:00"
 }

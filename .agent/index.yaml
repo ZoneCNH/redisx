@@ -204,6 +204,13 @@ files:
     owner: release
     validator: l2-check
     purpose: redisx L2 integration profile 证据。
+  - path: .agent/evidence/l2/dev-env-config-report.json
+    layer: evidence
+    authority: validated_mirror
+    mutability: hand_written
+    owner: release
+    validator: l2-check
+    purpose: redisx L2 dev env Redis 配置探测证据；只记录键名和状态，不记录配置值。
   - path: .agent/evidence/l2/persistence-report.json
     layer: evidence
     authority: validated_mirror

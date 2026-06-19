@@ -17,7 +17,6 @@
     "docker-compose.test.yml",
     ".agent/evidence/l2/compliance-matrix.json"
   ],
-  "generated_at": "2026-06-19T08:23:57.639606+00:00",
   "runtime": "Redis with AOF and RDB enabled on retained test storage",
   "credential_source": "local ephemeral Redis without external credentials",
   "checklist": [
@@ -90,5 +89,6 @@
       "status": "pass"
     }
   ],
-  "data_hygiene": "test keys are nonce-prefixed and deleted after recovery validation"
+  "data_hygiene": "test keys are nonce-prefixed and deleted after recovery validation",
+  "generated_at": "2026-06-19T08:48:58.804439+00:00"
 }
