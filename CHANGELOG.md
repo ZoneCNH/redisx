@@ -4,6 +4,17 @@
 
 - 暂无。
 
+## v1.1.0 - 2026-06-19
+
+### 治理
+
+- 同步项目发布版本、release manifest 默认版本、goalcli 治理版本、API 文档、Harness final gate 和 release preflight 示例到 `v1.1.0`。
+- 以次版本发布口径重新固定 Redis L2 公共写入面与 release Evidence，保持 GitHub Release、manifest 和公开文档版本一致。
+
+### 兼容性
+
+- 本版本不改变 `pkg/redisx` 公共 API 形状；仅更新发布版本元数据和文档口径。
+
 ## v1.0.4 - 2026-06-19
 
 ### 治理

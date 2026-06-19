@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	projectReleaseVersion    = "v1.0.4"
+	projectReleaseVersion    = "v1.1.0"
 	governanceRuntimeVersion = "v2.9.3"
 )
 
