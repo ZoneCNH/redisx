@@ -18,13 +18,8 @@
     "docker-compose.yml",
     ".agent/evidence/l2/compliance-matrix.json"
   ],
-  "generated_at": "2026-06-19T02:25:26.132908+00:00",
-  "config_keys": [
-    "REDISX_REDIS_ADDR",
-    "REDISX_REDIS_USERNAME",
-    "REDISX_REDIS_PASSWORD",
-    "REDISX_REDIS_DB"
-  ],
+  "generated_at": "2026-06-19T08:24:12.825292+00:00",
+  "config_keys": [],
   "checklist": [
     {
       "name": "ping",
@@ -183,6 +178,6 @@
       "status": "pass"
     }
   ],
-  "runtime": "real Redis selected by REDISX_REDIS_* at test time",
+  "runtime": "Docker Redis selected by REDISX_INTEGRATION_DOCKER=1 with restart persistence preflight",
   "data_hygiene": "test keys are nonce-prefixed and deleted during cleanup"
 }
