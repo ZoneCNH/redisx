@@ -18,7 +18,11 @@
     "docker-compose.yml",
     ".agent/evidence/l2/compliance-matrix.json"
   ],
-  "config_keys": [],
+  "generated_at": "2026-06-19T10:00:44.058965+00:00",
+  "config_keys": [
+    "REDISX_REDIS_ADDR",
+    "REDISX_REDIS_DB"
+  ],
   "checklist": [
     {
       "name": "ping",
