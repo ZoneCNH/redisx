@@ -6,14 +6,9 @@
 
 ## v1.1.1 - 2026-06-19
 
-### 治理
-
-- 同步项目发布版本、release manifest 默认版本、goalcli 治理版本、API 文档、Harness final gate 和 release preflight 示例到 `v1.1.1`。
-- 新增根级 `FEATURES.md` 与 `ACCEPTANCE.md`，固化 Redis L2 production readiness、覆盖率、runtime integration、persistence integration、release preflight 和 secret hygiene 验收矩阵。
-
-### 兼容性
-
-- 本版本不改变 `pkg/redisx` 公共 API 形状；仅更新发布版本元数据和文档口径。
+- 将 release/version anchors 同步到 `v1.1.1`，覆盖 `redisx.Version`、goalcli governance version、release manifest template、README、API 与 release 文档。
+- 为 GitHub Integration workflow 固定 Redis service，并在 CI 中显式运行 live Redis integration 与 persistence restart recovery profile。
+- 补齐根目录 `FEATURES.md` 与 `ACCEPTANCE.md`，记录 v1.1.1 功能范围、GOWORK=off 验证命令和外部 dev env 文件的 redacted-only 处理约束。
 
 ## v1.1.0 - 2026-06-19
 

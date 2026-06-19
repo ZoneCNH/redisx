@@ -1,20 +1,25 @@
-# FEATURES.md
+# Redisx v1.1.1 功能清单
 
-Current release anchor: `v1.1.1`.
+`redisx` v1.1.1 的发布面聚焦 Redis L2-T2 生产就绪：显式配置、可验证写入语义、运行时健康信号、以及不泄露密钥的 CI/集成证据。
 
-`redisx` is the L2 Redis adapter reference library. This matrix records the public feature surface and the gate that proves each area before production release.
+## Runtime 能力
 
-| Area | Supported feature surface | Required evidence |
-| --- | --- | --- |
-| Connection/runtime | Redis client construction, `Ping`, `Health`, close semantics, and error mapping. | `GOWORK=off make test`; `REDISX_INTEGRATION=1 GOWORK=off make test-integration` |
-| KV and TTL | String `Set` / `Get` / `Delete`, expiring values, multi-key reads and writes. | Unit tests plus live Redis integration report under `.agent/evidence/l2/` |
-| Counters | Increment/decrement helpers and integer conversion error paths. | `GOWORK=off make coverage-check`; integration counter coverage |
-| Hash/List | Hash field reads/writes/deletes and list push/pop/range operations. | `REDISX_INTEGRATION=1 GOWORK=off make test-integration` |
-| Pipeline writes | Batched write execution with result/error propagation. | Unit pipeline tests and integration pipeline coverage |
-| Cache-aside | `JSONCodec`, generic `Codec[T]`, `Cache[T]`, and `NewCacheClient[T]` helpers on string values. | `GOWORK=off make test`; API docs in `docs/api.md` |
-| Coordination | Lock token compare-release and fixed-window rate limit keys. These are TTL-scoped coordination states, not durable persistence promises. | Integration lock/rate-limit coverage; docs exclude them from durable recovery |
-| Durable persistence | Permanent string, hash, list, counter, and pipeline writes survive Redis restart under the persistence profile. Pub/sub is out of scope. | `REDISX_PERSISTENCE_INTEGRATION=1 GOWORK=off make test-persistence-integration` |
-| Release/version evidence | `pkg/redisx.Version`, goalcli governance, release manifest template, docs, Harness, and release gate examples all track `v1.1.1`. | `GOWORK=off go test ./cmd/goalcli -run TestVersionConstantsTrackChangelogRelease -count=1` |
-| Secret handling | Runtime credentials come only from local environment or controlled secret stores. Secret values are not committed, printed, logged, or embedded in evidence. | Review `test/integration/README.md`; run integration with env injection only |
+- 显式 Redis 配置：地址、用户名、密码、DB、TLS、超时和连接池参数均由调用方或外部环境提供；库不内置生产凭证。
+- KV / TTL：字符串读写、过期时间、存在性判断与删除语义覆盖基础缓存和状态存储场景。
+- Multi-key / pipeline：批量读写与 pipeline writes 支持低往返延迟的多键操作。
+- Counter / hash / list：计数器、Hash 字段、List push/pop/range 操作覆盖常见 Redis 数据结构。
+- Cache-aside：`JSONCodec`、`Codec[T]`、`Cache[T]` 与 `NewCacheClient[T]` 支持 typed JSON cache-aside。
+- Coordination：自动 token lock、显式 token `AcquireLock` / `ReleaseLock`、fixed-window rate limiter 都使用 TTL-scoped key。
+- Health / observability：health check、metrics hooks 和 typed error/sanitize 边界用于 runtime diagnostics。
 
-See [ACCEPTANCE.md](ACCEPTANCE.md) for the production-readiness acceptance matrix and [STATUS.md](STATUS.md) for the current snapshot.
+## 发布边界
+
+- Durable persistence evidence 覆盖 string、hash、list、counter 和 pipeline writes 的 restart recovery。
+- Pub/sub 不属于 v1.1.1 durable write surface。
+- 集成证据只允许记录 profile、命令、覆盖项和环境变量名；不得记录 Redis 密码、API key 或 `/home/ZoneCNH/sre/secrets/env/dev.md` 的值。
+
+## CI / Release gates
+
+- `GOWORK=off make coverage-check` 必须保持 configured package set 的 100% coverage gate。
+- GitHub Integration workflow 使用 Redis service 运行 live integration profile，并运行 persistence restart recovery profile。
+- Release readiness 由 unit、contract、integration、persistence、docs、release preflight 共同证明；接受标准见 `ACCEPTANCE.md`。
