@@ -3,8 +3,8 @@
   "adapter": "redisx",
   "target_level": "L2-T2",
   "profile": "persistence",
-  "status": "not_applicable",
-  "score": 0,
+  "status": "pass",
+  "score": 100,
   "env_gate": "REDISX_PERSISTENCE_INTEGRATION=1",
   "command": "GOWORK=off REDISX_INTEGRATION=1 REDISX_PERSISTENCE_RECOVERY=1 go test ./pkg/redisx -run '^TestRedisIntegrationPersistenceRecoveryWithEnv$' -count=1",
   "commands": [
@@ -17,79 +17,78 @@
     "docker-compose.test.yml",
     ".agent/evidence/l2/compliance-matrix.json"
   ],
-  "generated_at": "2026-06-19T08:54:43.560084+00:00",
+  "generated_at": "2026-06-19T08:55:16.087185+00:00",
   "runtime": "Redis with AOF and RDB enabled on retained test storage",
   "credential_source": "local ephemeral Redis without external credentials",
   "checklist": [
     {
       "name": "set_without_ttl",
-      "status": "not_applicable"
+      "status": "pass"
     },
     {
       "name": "mset_without_ttl",
-      "status": "not_applicable"
+      "status": "pass"
     },
     {
       "name": "hash_without_ttl",
-      "status": "not_applicable"
+      "status": "pass"
     },
     {
       "name": "list_without_ttl",
-      "status": "not_applicable"
+      "status": "pass"
     },
     {
       "name": "counter_without_ttl",
-      "status": "not_applicable"
+      "status": "pass"
     },
     {
       "name": "pipeline_without_ttl",
-      "status": "not_applicable"
+      "status": "pass"
     },
     {
       "name": "ttl_permanent_before_restart",
-      "status": "not_applicable"
+      "status": "pass"
     },
     {
       "name": "redis_save",
-      "status": "not_applicable"
+      "status": "pass"
     },
     {
       "name": "server_restart_same_storage",
-      "status": "not_applicable"
+      "status": "pass"
     },
     {
       "name": "get_after_restart",
-      "status": "not_applicable"
+      "status": "pass"
     },
     {
       "name": "hash_after_restart",
-      "status": "not_applicable"
+      "status": "pass"
     },
     {
       "name": "list_after_restart",
-      "status": "not_applicable"
+      "status": "pass"
     },
     {
       "name": "counter_after_restart",
-      "status": "not_applicable"
+      "status": "pass"
     },
     {
       "name": "pipeline_writes_after_restart",
-      "status": "not_applicable"
+      "status": "pass"
     },
     {
       "name": "ttl_permanent_after_restart",
-      "status": "not_applicable"
+      "status": "pass"
     },
     {
       "name": "cleanup",
-      "status": "not_applicable"
+      "status": "pass"
     },
     {
       "name": "data_hygiene",
-      "status": "not_applicable"
+      "status": "pass"
     }
   ],
-  "data_hygiene": "test keys are nonce-prefixed and deleted after recovery validation",
-  "detail": "REDISX_PERSISTENCE_INTEGRATION=1 not set"
+  "data_hygiene": "test keys are nonce-prefixed and deleted after recovery validation"
 }
