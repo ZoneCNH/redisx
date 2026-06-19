@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	projectReleaseVersion    = "v1.0.2"
+	projectReleaseVersion    = "v1.0.3"
 	governanceRuntimeVersion = "v2.9.3"
 )
 
@@ -416,7 +416,7 @@ func runMakefileBaseline(args []string, stdout io.Writer, stderr io.Writer) int 
 }
 
 func requiredMakefileTargets() []string {
-	requiredTargets := append([]string{"fmt", "vet", "lint", "test", "race", "boundary", "security", "contracts", "schema-check", "docs-check", "rules-verify", "downstream-sync-plan", "evidence", "score-check", "main-guard", "worktree-guard", "worktree-check", "context-check", "spec-check", "design-check", "task-check", "pr-check", "evidence-check", "cli-contract", "issue-registry", "command-registry", "makefile-baseline", "audit-goal", "dashboard-generate", "governance-check", "p1-governance-check", "execution-context", "p2-runtime-check", "release-check", "release-final-check"}, contextRuntimeTargets()...)
+	requiredTargets := append([]string{"fmt", "vet", "lint", "test", "race", "coverage", "coverage-check", "boundary", "security", "contracts", "schema-check", "docs-check", "rules-verify", "downstream-sync-plan", "evidence", "score-check", "main-guard", "worktree-guard", "worktree-check", "context-check", "spec-check", "design-check", "task-check", "pr-check", "evidence-check", "cli-contract", "issue-registry", "command-registry", "makefile-baseline", "audit-goal", "dashboard-generate", "governance-check", "p1-governance-check", "execution-context", "p2-runtime-check", "release-check", "release-final-check"}, contextRuntimeTargets()...)
 	requiredTargets = append(requiredTargets, dockerMakefileTargets()...)
 	return append(requiredTargets, goalcliMakefileTargets()...)
 }
@@ -454,7 +454,7 @@ var contextProfileGates = map[string][]string{
 	"lite":     {"governance-check"},
 	"standard": {"governance-check", "p1-governance-check", "docs-check"},
 	"full":     {"governance-check", "p1-governance-check", "p2-runtime-check"},
-	"release":  {"context-full", "integration", "dependency-check", "standard-impact-check", "score-check", "debt-evidence", "evidence", "release-evidence-hash", "release-evidence-check", "release-evidence-checksum-check"},
+	"release":  {"context-full", "integration", "dependency-check", "standard-impact-check", "coverage-check", "score-check", "debt-evidence", "evidence", "release-evidence-hash", "release-evidence-check", "release-evidence-checksum-check"},
 }
 
 func runContextProfile(args []string, stdout io.Writer, stderr io.Writer) int {
@@ -535,7 +535,7 @@ func runContextProfileCheck(command string, args []string, stdout io.Writer, std
 		appendMakefileTargetDependencyGaps(makefileText, "context-lite", []string{"require-gowork-off", "governance-check"}, []string{"context-profile-check", "main-guard", "worktree-guard", "release-check", "release-final-check"}, &gaps)
 		appendMakefileTargetDependencyGaps(makefileText, "context-standard", []string{"require-gowork-off", "governance-check", "p1-governance-check", "docs-check"}, []string{"context-lite", "context-profile-check", "release-check", "release-final-check"}, &gaps)
 		appendMakefileTargetDependencyGaps(makefileText, "context-full", []string{"require-gowork-off", "governance-check", "p1-governance-check", "p2-runtime-check"}, []string{"context-standard", "docs-check", "context-profile-check", "release-check", "release-final-check"}, &gaps)
-		appendMakefileTargetDependencyGaps(makefileText, "context-release", []string{"require-gowork-off", "context-full", "integration", "dependency-check", "standard-impact-check", "score-check", "debt-evidence"}, []string{"context-standard", "release-check", "release-final-check"}, &gaps)
+		appendMakefileTargetDependencyGaps(makefileText, "context-release", []string{"require-gowork-off", "context-full", "integration", "dependency-check", "standard-impact-check", "coverage-check", "score-check", "debt-evidence"}, []string{"context-standard", "release-check", "release-final-check"}, &gaps)
 		appendMakefileTargetForbiddenReferenceGaps(makefileText, "context-release", []string{"release-check", "release-final-check"}, &gaps)
 		appendContextProfileDAGGaps(makefileText, &gaps)
 		appendReleaseFinalDelegationGaps(makefileText, &gaps)
@@ -734,6 +734,7 @@ func appendContextProfileDAGGaps(content string, gaps *[]string) {
 		"integration":                     true,
 		"dependency-check":                true,
 		"standard-impact-check":           true,
+		"coverage-check":                  true,
 		"score-check":                     true,
 		"debt-evidence":                   true,
 		"evidence":                        true,

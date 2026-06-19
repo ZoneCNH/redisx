@@ -6,6 +6,9 @@ DOCKER_IMAGE ?= $(notdir $(CURDIR))-toolchain:local
 DOCKER_GATE ?= ./scripts/docker/docker_gate.sh
 L2_MANIFEST ?= .agent/l2-capabilities.yaml
 L2_EVIDENCE_DIR ?= .agent/evidence/l2
+COVERPROFILE ?= coverage.out
+COVERAGE_MIN ?= 100.0
+COVERAGE_PACKAGES ?= ./pkg/redisx ./internal/provider ./internal/provider/goredis ./internal/sanitize ./testkit ./examples/basic ./examples/config ./examples/health
 
 .PHONY: require-gowork-off
 require-gowork-off:
@@ -47,6 +50,25 @@ test:
 .PHONY: race
 race:
 	go test -race ./...
+
+.PHONY: coverage
+coverage:
+	go test $(COVERAGE_PACKAGES) -covermode=atomic -coverprofile="$(COVERPROFILE)"
+
+.PHONY: coverage-check
+coverage-check: coverage
+	@total=$$(go tool cover -func="$(COVERPROFILE)" | awk '/^total:/ { gsub(/%/, "", $$3); print $$3 }'); \
+	if [ -z "$$total" ]; then \
+		echo "coverage total not found in $(COVERPROFILE)"; \
+		exit 1; \
+	fi; \
+	awk -v total="$$total" -v min="$(COVERAGE_MIN)" 'BEGIN { \
+		if (total + 0 < min + 0) { \
+			printf "coverage %.1f%% below required %.1f%%\n", total, min; \
+			exit 1; \
+		} \
+		printf "coverage %.1f%% meets required %.1f%%\n", total, min; \
+	}'
 
 .PHONY: lint
 lint:
@@ -449,7 +471,7 @@ context-standard: require-gowork-off governance-check p1-governance-check docs-c
 context-full: require-gowork-off governance-check p1-governance-check p2-runtime-check
 
 .PHONY: context-release
-context-release: require-gowork-off context-full integration dependency-check standard-impact-check score-check debt-evidence
+context-release: require-gowork-off context-full integration dependency-check standard-impact-check coverage-check score-check debt-evidence
 	CHECK_STATUS=passed $(MAKE) evidence
 	$(MAKE) release-evidence-hash
 	$(MAKE) release-evidence-check
@@ -465,7 +487,7 @@ context-standard-check: context-standard
 context-full-check: context-full
 
 .PHONY: ci
-ci: doctor-hooks-local fmt vet lint test race boundary architecture domain secret-check security security-debt contracts governance-check debt score rules-verify
+ci: doctor-hooks-local fmt vet lint test race coverage-check boundary architecture domain secret-check security security-debt contracts governance-check debt score rules-verify
 
 .PHONY: ci-extended
 ci-extended: ci property golden fuzz-smoke docs-drift

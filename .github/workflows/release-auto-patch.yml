@@ -33,7 +33,7 @@ jobs:
       - name: Install golangci-lint
         uses: golangci/golangci-lint-action@82606bf257cbaff209d206a39f5134f0cfbfd2ee # v9.2.1
         with:
-          version: v2.6.2
+          version: v2.1.6
           install-mode: binary
           skip-cache: true
 

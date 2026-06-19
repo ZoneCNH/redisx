@@ -22,6 +22,7 @@ jobs:
           fetch-depth: 0
 
       - name: 检查 PR 来源分支
+        if: ${{ github.event_name == 'pull_request' }}
         run: |
           HEAD_REF="${{ github.head_ref }}"
           if [ "$HEAD_REF" = "main" ] || [ "$HEAD_REF" = "master" ]; then
@@ -30,3 +31,7 @@ jobs:
             exit 1
           fi
           echo "worktree-guard: 来源分支 $HEAD_REF，通过。"
+
+      - name: 确认 main 推送上下文
+        if: ${{ github.event_name == 'push' }}
+        run: echo "worktree-guard: main push 由 workflow branch filter 约束。"

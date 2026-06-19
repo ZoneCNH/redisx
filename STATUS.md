@@ -1,6 +1,6 @@
 # redisx 状态
 
-更新日期：2026-06-18
+更新日期：2026-06-19
 
 ## 当前结论
 
@@ -11,8 +11,8 @@
 - Contract packs：`common`、`kv`、`pool`、`ttl`；v1 public helper surface includes hash/list/pipeline/cache/lock/rate-limit primitives
 - 必需 profiles：`unit`、`contract`、`integration`、`persistence`
 - Release readiness：`release_ready=true`，L2 readiness score `92`；release score gate 为 `10/10`
-- 当前分支：`ci/sre-cicd-pools-20260618`
-- Agent team：本轮 Codex native subagents 分为 CI/CD、docs、tests 三条 lane，3/3 tasks completed，0 pending，0 in_progress，0 failed
+- 当前分支：`redisx`
+- Agent team：本轮 OMX team 分为 repo exploration、test coverage、provider/runtime implementation 三条 lane，5/5 tasks completed，0 pending，0 in_progress，0 failed
 
 ## 功能清单
 
@@ -38,7 +38,7 @@
 
 ## 持久化对齐
 
-`redisx` 不实现本地持久化层；所有写入和删除命令统一走 Redis 数据面，持久化能力由被测 Redis 后端的 AOF/RDB 配置提供。当前 v1.0.2 release gate 要求 persistence profile 通过 restart recovery，并证明永久 string、hash、list、counter 和 pipeline 写入在同一存储上重启后仍保持一致。TTL-scoped lock token 和 fixed-window rate-limit key 是临时协调状态，不作为 durable persistence 证据；pub/sub 语义不在当前公共持久化承诺中。
+`redisx` 不实现本地持久化层；所有写入和删除命令统一走 Redis 数据面，持久化能力由被测 Redis 后端的 AOF/RDB 配置提供。当前 v1.0.3 release gate 要求 persistence profile 通过 restart recovery，并证明永久 string、hash、list、counter 和 pipeline 写入在同一存储上重启后仍保持一致。TTL-scoped lock token 和 fixed-window rate-limit key 是临时协调状态，不作为 durable persistence 证据；pub/sub 语义不在当前公共持久化承诺中。
 
 | 命令类别 | 持久化边界 | 当前状态 |
 | --- | --- | --- |
@@ -62,6 +62,7 @@ REDISX_INTEGRATION_DOCKER=1 GOWORK=off make test-integration
 REDISX_PERSISTENCE_INTEGRATION=1 GOWORK=off make test-persistence-integration
 GOWORK=off make l2-check
 GOWORK=off make docs-check
+GOWORK=off make coverage-check
 GOWORK=off make lint
 GOWORK=off make race
 GOWORK=off make security
@@ -70,12 +71,12 @@ GOWORK=off make score-check
 XLIB_CONTEXT=release_verify GOWORK=off make release-check
 GOWORK=off go test ./...
 GOWORK=off go test ./... -race -count=1
-GOWORK=off go test ./... -coverprofile=coverage.out
+GOWORK=off make coverage-check
 GOWORK=off go vet ./...
 git diff --check
 ```
 
-本轮 release team 验证说明：开发环境未暴露兼容的 `REDISX_REDIS_*` 连接变量，因此 integration / persistence evidence 使用 Docker-backed Redis 执行；公开文档和 evidence 不记录真实 Redis 地址、密码、TLS material 或本地 secret 路径。CI/CD 配置已收紧为 fail-closed：Goal Gates 的 lint 与 evidence-check 不再跳过，L2 workflow 固定第三方 action SHA，Security workflow 仅在定时或手动触发时强制运行漏洞扫描。
+本轮 release team 验证说明：开发环境未暴露兼容的 `REDISX_REDIS_*` 连接变量，因此未声明新的 live Redis integration / persistence evidence；公开文档和 evidence 不记录真实 Redis 地址、密码、TLS material 或本地 secret 路径。CI/CD 配置已收紧为 fail-closed：`coverage-check` 已纳入 `ci`、`context-release`、Harness 和 release required gates，Worktree Guard push 事件不再误跑 PR source branch 检查，Auto Patch workflow 使用可用的 golangci-lint action 版本。`GOWORK=off make coverage-check` 对 Redis runtime/API 发布面执行 100% 覆盖率门禁，`GOWORK=off make fmt vet lint test race coverage-check` 已通过。
 
 ## Evidence
 

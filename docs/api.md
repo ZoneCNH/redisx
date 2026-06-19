@@ -33,7 +33,7 @@
 
 生成的基础库不得依赖 `x.go`。
 
-### Redis v1.0.2 primitives
+### Redis v1.0.3 primitives
 
 `pkg/redisx` 的 Redis adapter 公共面包含：
 
@@ -45,7 +45,7 @@
 - Coordination helpers：`AcquireLock` / `ReleaseLock` 使用显式 token compare-release；`NewLock` / `Lock` 生成并保留 token；`FixedWindowRateLimit` 返回 allowed、remaining、count 和 reset window。二者都是 TTL-scoped 临时状态，不作为 durable persistence 证据。
 - Cache-aside helpers：`NewCacheClient[T]`、`JSONCodec[T]`、`Get`、`Set`、`GetOrLoad` 和 `KeyBuilder` 基于 Redis string values 提供 typed codec helper。
 
-Durable Redis persistence evidence 覆盖永久 string、hash、list、counter 和 pipeline writes 的 restart recovery。Pub/sub 不属于当前 v1.0.2 durable write surface。
+Durable Redis persistence evidence 覆盖永久 string、hash、list、counter 和 pipeline writes 的 restart recovery。Pub/sub 不属于当前 v1.0.3 durable write surface。
 
 ## 生成对齐
 

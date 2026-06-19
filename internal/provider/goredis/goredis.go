@@ -52,6 +52,9 @@ end
 local ttl = redis.call("PTTL", KEYS[1])
 return {current, ttl}
 `)
+	closeRedisClient = func(client *redis.Client) error {
+		return client.Close()
+	}
 )
 
 func New(cfg Config) (*Provider, error) {
@@ -118,7 +121,7 @@ func (p *Provider) Close(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if err := mapError(client.Close()); err != nil {
+	if err := mapError(closeRedisClient(client)); err != nil {
 		return err
 	}
 	p.client = nil
@@ -453,48 +456,69 @@ func (p *Provider) Pipeline(ctx context.Context, commands []provider.PipelineCom
 			}
 			results[i].Bool = true
 		case provider.PipelineGet, provider.PipelineHGet:
-			stringCmd, ok := queued[i].(*redis.StringCmd)
-			if !ok {
-				return nil, fmt.Errorf("unexpected pipeline result type for %q", commandType)
-			}
-			value, err := stringCmd.Result()
-			if errors.Is(err, redis.Nil) {
-				continue
-			}
-			if err != nil {
-				return nil, mapError(err)
-			}
-			results[i].Found = true
-			results[i].Value = value
-			if commandType == provider.PipelineGet {
-				results[i].Values = []provider.Value{{Value: value, Found: true}}
+			if err := applyPipelineStringResult(&results[i], commandType, queued[i]); err != nil {
+				return nil, err
 			}
 		case provider.PipelineHSet, provider.PipelineRPush, provider.PipelineIncr:
-			intCmd, ok := queued[i].(*redis.IntCmd)
-			if !ok {
-				return nil, fmt.Errorf("unexpected pipeline result type for %q", commandType)
-			}
-			value, err := intCmd.Result()
-			if err != nil {
-				return nil, mapError(err)
-			}
-			results[i].Int = value
-			if commandType == provider.PipelineHSet || commandType == provider.PipelineRPush {
-				results[i].Count = value
+			if err := applyPipelineIntResult(&results[i], commandType, queued[i]); err != nil {
+				return nil, err
 			}
 		case provider.PipelineLRange:
-			stringSliceCmd, ok := queued[i].(*redis.StringSliceCmd)
-			if !ok {
-				return nil, fmt.Errorf("unexpected pipeline result type for %q", commandType)
+			if err := applyPipelineStringSliceResult(&results[i], commandType, queued[i]); err != nil {
+				return nil, err
 			}
-			values, err := stringSliceCmd.Result()
-			if err != nil {
-				return nil, mapError(err)
-			}
-			results[i].Strings = values
 		}
 	}
 	return results, nil
+}
+
+func applyPipelineStringResult(result *provider.PipelineResult, commandType provider.PipelineCommandType, cmd redis.Cmder) error {
+	stringCmd, ok := cmd.(*redis.StringCmd)
+	if !ok {
+		return fmt.Errorf("unexpected pipeline result type for %q", commandType)
+	}
+	value, err := stringCmd.Result()
+	if errors.Is(err, redis.Nil) {
+		return nil
+	}
+	if err != nil {
+		return mapError(err)
+	}
+	result.Found = true
+	result.Value = value
+	if commandType == provider.PipelineGet {
+		result.Values = []provider.Value{{Value: value, Found: true}}
+	}
+	return nil
+}
+
+func applyPipelineIntResult(result *provider.PipelineResult, commandType provider.PipelineCommandType, cmd redis.Cmder) error {
+	intCmd, ok := cmd.(*redis.IntCmd)
+	if !ok {
+		return fmt.Errorf("unexpected pipeline result type for %q", commandType)
+	}
+	value, err := intCmd.Result()
+	if err != nil {
+		return mapError(err)
+	}
+	result.Int = value
+	if commandType == provider.PipelineHSet || commandType == provider.PipelineRPush {
+		result.Count = value
+	}
+	return nil
+}
+
+func applyPipelineStringSliceResult(result *provider.PipelineResult, commandType provider.PipelineCommandType, cmd redis.Cmder) error {
+	stringSliceCmd, ok := cmd.(*redis.StringSliceCmd)
+	if !ok {
+		return fmt.Errorf("unexpected pipeline result type for %q", commandType)
+	}
+	values, err := stringSliceCmd.Result()
+	if err != nil {
+		return mapError(err)
+	}
+	result.Strings = values
+	return nil
 }
 
 func (p *Provider) AcquireLock(ctx context.Context, key string, token string, ttl time.Duration) (bool, error) {
@@ -661,8 +685,6 @@ func mapError(err error) error {
 		strings.Contains(message, "invalid username-password pair"),
 		strings.Contains(message, "auth"):
 		return fmt.Errorf("%w: %w", provider.ErrAuth, err)
-	case strings.Contains(message, "wrongtype"):
-		return fmt.Errorf("%w: %w", provider.ErrWrongType, err)
 	case strings.Contains(message, "not an integer"),
 		strings.Contains(message, "out of range"):
 		return fmt.Errorf("%w: %w", provider.ErrInvalidInt, err)

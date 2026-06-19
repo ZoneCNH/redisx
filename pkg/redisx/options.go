@@ -24,6 +24,10 @@ type options struct {
 	providerSet bool
 }
 
+var newRedisProvider = func(cfg redisprovider.Config) (Provider, error) {
+	return redisprovider.New(cfg)
+}
+
 func defaultOptions() options {
 	return options{
 		metrics: NoopMetrics{},
@@ -56,7 +60,7 @@ func (o options) providerForConfig(cfg Config) (Provider, error) {
 		return o.provider, nil
 	}
 	if cfg.Redis.Enabled() {
-		return redisprovider.New(redisprovider.Config{
+		return newRedisProvider(redisprovider.Config{
 			Addr:         cfg.Redis.Addr,
 			Username:     cfg.Redis.Username,
 			Password:     cfg.Redis.Password,

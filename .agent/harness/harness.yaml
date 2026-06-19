@@ -18,6 +18,9 @@ required_gates:
   - id: race
     command: "make race"
     purpose: "race detector"
+  - id: coverage_check
+    command: "GOWORK=off make coverage-check"
+    purpose: "100% Redis runtime/API package coverage gate"
   - id: docs_check
     command: "GOWORK=off make docs-check"
     purpose: "required docs, links, v3.1 runtime and release protocol"
@@ -171,7 +174,7 @@ final_gates:
   - id: release_final_check
     command: "XLIB_CONTEXT=release_verify GOWORK=off make release-final-check"
   - id: release_preflight
-    command: "XLIB_CONTEXT=release_verify GOWORK=off make release-preflight VERSION=v1.0.2"
+    command: "XLIB_CONTEXT=release_verify GOWORK=off make release-preflight VERSION=v1.0.3"
   - id: score
     command: "goalcli score --min 9.8"
   - id: kernel_downstream

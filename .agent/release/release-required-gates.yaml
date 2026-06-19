@@ -2,12 +2,12 @@ schema_version: "1.0"
 module: redisx
 source_harness: .agent/harness/harness.yaml
 truth_state: .agent/evidence/truth-state.yaml
-purpose: "列出 release required gate 与 first-PR/MVA 当前证据等级；本文件不运行 gate、不改变 release-check。"
+purpose: "列出 release required gate 与 first-PR/MVA 当前证据等级；同步 release-check/release-final-check 的必跑门禁。"
 
 mva_assertions:
   does_not_run_release_gates: true
   does_not_generate_release_manifest: true
-  does_not_change_release_check: true
+  does_not_change_release_check: false
   does_not_cut_release_manifest_over: true
 
 required_release_evidence:
@@ -47,6 +47,11 @@ gates:
     release_usable: false
   - id: race
     command: "make race"
+    required_for_release: true
+    current_mva_state: not_run
+    release_usable: false
+  - id: coverage_check
+    command: "GOWORK=off make coverage-check"
     required_for_release: true
     current_mva_state: not_run
     release_usable: false
@@ -116,7 +121,7 @@ gates:
     current_mva_state: not_run
     release_usable: false
   - id: release_preflight
-    command: "XLIB_CONTEXT=release_verify GOWORK=off make release-preflight VERSION=v0.4.3"
+    command: "XLIB_CONTEXT=release_verify GOWORK=off make release-preflight VERSION=v1.0.3"
     required_for_release: true
     current_mva_state: not_run
     release_usable: false
