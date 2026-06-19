@@ -27,17 +27,6 @@ jobs:
           --health-timeout 3s
           --health-retries 20
 
-    services:
-      redis:
-        image: redis:7.2-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 5s
-          --health-timeout 3s
-          --health-retries 20
-
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # tag v6.0.3
 
@@ -50,7 +39,7 @@ jobs:
       - name: Integration
         env:
           REDISX_INTEGRATION: "1"
-          REDISX_REDIS_ADDR: "127.0.0.1:6379"
+          REDISX_REDIS_ADDR: 127.0.0.1:6379
           REDISX_REDIS_DB: "0"
         run: GOWORK=off make integration
 

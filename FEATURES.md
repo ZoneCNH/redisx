@@ -1,19 +1,25 @@
-# redisx v1.1.1 Features
+# Redisx v1.1.1 功能清单
 
-## Production-ready Redis surface
+`redisx` v1.1.1 的发布面聚焦 Redis L2-T2 生产就绪：显式配置、可验证写入语义、运行时健康信号、以及不泄露密钥的 CI/集成证据。
 
-- String, TTL, multi-key, counter, hash, list, pipeline, cache-aside codec, lock token, and fixed-window rate-limit helpers remain the supported `pkg/redisx` public surface for v1.1.1.
-- Durable Redis evidence covers non-TTL string, hash, list, counter, and pipeline writes across restart recovery.
-- TTL-scoped locks, rate-limit windows, and pub/sub remain transient state and are not represented as durable persistence guarantees.
+## Runtime 能力
 
-## Release and governance gates
+- 显式 Redis 配置：地址、用户名、密码、DB、TLS、超时和连接池参数均由调用方或外部环境提供；库不内置生产凭证。
+- KV / TTL：字符串读写、过期时间、存在性判断与删除语义覆盖基础缓存和状态存储场景。
+- Multi-key / pipeline：批量读写与 pipeline writes 支持低往返延迟的多键操作。
+- Counter / hash / list：计数器、Hash 字段、List push/pop/range 操作覆盖常见 Redis 数据结构。
+- Cache-aside：`JSONCodec`、`Codec[T]`、`Cache[T]` 与 `NewCacheClient[T]` 支持 typed JSON cache-aside。
+- Coordination：自动 token lock、显式 token `AcquireLock` / `ReleaseLock`、fixed-window rate limiter 都使用 TTL-scoped key。
+- Health / observability：health check、metrics hooks 和 typed error/sanitize 边界用于 runtime diagnostics。
 
-- `GOWORK=off make coverage-check` enforces 100% coverage on the configured runtime/API package set.
-- `GOWORK=off make integration` now has deterministic CI Redis service coverage through `.github/workflows/integration.yml`.
-- `GOWORK=off make test-dev-env-integration` provides a local, redacted bridge to `/home/ZoneCNH/sre/secrets/env/dev.md` without printing or committing secret values.
-- `XLIB_CONTEXT=release_verify GOWORK=off make release-preflight VERSION=v1.1.1` is the release preflight anchor.
+## 发布边界
 
-## Evidence boundaries
+- Durable persistence evidence 覆盖 string、hash、list、counter 和 pipeline writes 的 restart recovery。
+- Pub/sub 不属于 v1.1.1 durable write surface。
+- 集成证据只允许记录 profile、命令、覆盖项和环境变量名；不得记录 Redis 密码、API key 或 `/home/ZoneCNH/sre/secrets/env/dev.md` 的值。
 
-- Runtime evidence remains under `.agent/evidence/l2/` and records profile status, coverage names, and environment variable names only.
-- Secret values, passwords, TLS material, and raw dev env file contents are excluded from docs, logs, release manifests, and commits.
+## CI / Release gates
+
+- `GOWORK=off make coverage-check` 必须保持 configured package set 的 100% coverage gate。
+- GitHub Integration workflow 使用 Redis service 运行 live integration profile，并运行 persistence restart recovery profile。
+- Release readiness 由 unit、contract、integration、persistence、docs、release preflight 共同证明；接受标准见 `ACCEPTANCE.md`。

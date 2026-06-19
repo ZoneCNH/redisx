@@ -6,16 +6,9 @@
 
 ## v1.1.1 - 2026-06-19
 
-### 治理
-
-- 同步项目发布版本、release manifest 默认版本、goalcli 治理版本、API 文档、Harness final gate 和 release preflight 示例到 `v1.1.1`。
-- 将 Integration workflow 固定为 GitHub Actions Redis 7.2 service + `REDISX_INTEGRATION=1`，避免无 Redis 环境下只产生 skip evidence。
-- 增加本地 dev env Redis integration wrapper；只从 `/home/ZoneCNH/sre/secrets/env/dev.md` 加载允许的 `REDISX_REDIS_*` 键名，不打印或提交 secret 值。
-- 增加根目录 `FEATURES.md` 与 `ACCEPTANCE.md`，固定 production-readiness feature surface、验收命令和脱敏 Evidence 规则。
-
-### 兼容性
-
-- 本版本不改变 `pkg/redisx` 公共 API 形状；仅更新发布版本元数据、CI runtime 和脱敏验收入口。
+- 将 release/version anchors 同步到 `v1.1.1`，覆盖 `redisx.Version`、goalcli governance version、release manifest template、README、API 与 release 文档。
+- 为 GitHub Integration workflow 固定 Redis service，并在 CI 中显式运行 live Redis integration 与 persistence restart recovery profile。
+- 补齐根目录 `FEATURES.md` 与 `ACCEPTANCE.md`，记录 v1.1.1 功能范围、GOWORK=off 验证命令和外部 dev env 文件的 redacted-only 处理约束。
 
 ## v1.1.0 - 2026-06-19
 
