@@ -11,6 +11,17 @@ REDISX_INTEGRATION=1 GOWORK=off make test-integration
 
 可选环境变量：`REDISX_REDIS_USERNAME`、`REDISX_REDIS_PASSWORD`、`REDISX_REDIS_DB`。认证值只能来自本地环境或受控 secret store，不写入代码、文档或证据文件，也不在测试输出中打印。
 
+
+## 受控 dev secret 验证
+
+`/home/ZoneCNH/sre/secrets/env/dev.md` 只能作为本地受控凭据来源使用。验证时关闭 shell tracing，只把需要的 `REDISX_REDIS_*` 值注入当前进程；不要 `cat`、echo、tee、提交或粘贴该文件内容，也不要把 secret value 写入 Evidence。若该文件不是 shell-env 格式，使用本地批准的 secret loader 导出变量后再运行下列 gate。
+
+```bash
+set +x
+REDISX_INTEGRATION=1 GOWORK=off make test-integration
+REDISX_PERSISTENCE_INTEGRATION=1 GOWORK=off make test-persistence-integration
+```
+
 本地 Docker 验证路径：
 
 ```bash
