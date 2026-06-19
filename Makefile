@@ -235,6 +235,7 @@ debt-lifecycle-check:
 
 secret-check:
 	$(GOALCLI) secret-check
+	./scripts/secret-scope-check.sh
 
 security:
 	$(GOALCLI) security

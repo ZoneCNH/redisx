@@ -85,7 +85,7 @@ required_gates:
     alias_of: p2_runtime_check
     semantic_role: "P2 chain alias for the same p2_runtime_check target."
   - id: integration
-    command: "make integration"
+    command: "GOWORK=off make integration"
     purpose: "generator 和 downstream smoke"
   - id: score_check
     command: "go run ./cmd/goalcli score --min 9.8"
