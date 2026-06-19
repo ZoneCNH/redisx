@@ -39,6 +39,7 @@ jobs:
       - name: Integration
         env:
           REDISX_INTEGRATION: "1"
+          REDISX_INTEGRATION_REQUIRED: "1"
           REDISX_REDIS_ADDR: 127.0.0.1:6379
           REDISX_REDIS_DB: "0"
         run: GOWORK=off make integration

@@ -22,4 +22,5 @@
 
 - `GOWORK=off make coverage-check` 必须保持 configured package set 的 100% coverage gate。
 - GitHub Integration workflow 使用 Redis service 运行 live integration profile，并运行 persistence restart recovery profile。
+- `make test-dev-env-integration` 可读取外部 dev env 文件、生成 redacted-only 配置报告，并在未发现 Redis endpoint 时返回 `not_applicable`。
 - Release readiness 由 unit、contract、integration、persistence、docs、release preflight 共同证明；接受标准见 `ACCEPTANCE.md`。

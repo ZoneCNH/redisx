@@ -85,13 +85,6 @@ integration:
 	$(GOALCLI) integration
 	GOWORK=$${GOWORK:-off} $(MAKE) test-integration
 
-
-DEV_ENV_FILE ?= /home/ZoneCNH/sre/secrets/env/dev.md
-
-.PHONY: test-dev-env-integration
-test-dev-env-integration:
-	DEV_ENV_FILE="$(DEV_ENV_FILE)" GOWORK=$${GOWORK:-off} ./scripts/run_dev_redis_integration.sh
-
 .PHONY: docker-toolchain-check
 docker-toolchain-check:
 	./scripts/docker/check_toolchain.sh
@@ -280,7 +273,7 @@ test-integration:
 
 .PHONY: test-dev-env-integration
 test-dev-env-integration:
-	DEV_ENV_FILE="$(DEV_ENV_FILE)" ./scripts/run_dev_redis_integration.sh
+	DEV_ENV_FILE="$(DEV_ENV_FILE)" GOWORK=$${GOWORK:-off} ./scripts/run_dev_redis_integration.sh
 
 .PHONY: test-persistence-integration
 test-persistence-integration:
