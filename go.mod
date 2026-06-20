@@ -2,7 +2,10 @@ module github.com/ZoneCNH/redisx
 
 go 1.23
 
-require github.com/redis/go-redis/v9 v9.7.3
+require (
+	github.com/ZoneCNH/observex v0.3.4
+	github.com/redis/go-redis/v9 v9.7.3
+)
 
 require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
