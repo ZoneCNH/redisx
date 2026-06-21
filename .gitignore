@@ -98,6 +98,7 @@ override.tf.json
 # OS files
 .DS_Store
 Thumbs.db
+.xlib-render-untracked-marker-*
 
 # Editor/IDE
 .idea/

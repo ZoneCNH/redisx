@@ -3,6 +3,8 @@ set -euo pipefail
 
 required_files=(
   "README.md"
+  "FEATURES.md"
+  "ACCEPTANCE.md"
   "docs/standard/README.md"
   "docs/standard/redisx.md"
   "docs/standard/repository-roles.md"

@@ -16,8 +16,23 @@ concurrency:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
     env:
+      GOWORK: off
       XLIB_ENABLE_VULNCHECK: "0"
+      REDISX_INTEGRATION: "1"
+      REDISX_REDIS_ADDR: 127.0.0.1:6379
+      REDISX_REDIS_DB: "0"
+      REDISX_INTEGRATION_REQUIRED: "1"
 
     steps:
       - name: Checkout
@@ -84,12 +99,26 @@ jobs:
 
   docker-contract:
     runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
     env:
       DOCKER_BUILDKIT: "1"
       COMPOSE_DOCKER_CLI_BUILD: "1"
       GOWORK: off
       XLIB_CONTEXT: ci_pull_request
       XLIB_ENABLE_VULNCHECK: "0"
+      REDISX_INTEGRATION: "1"
+      REDISX_REDIS_ADDR: 127.0.0.1:6379
+      REDISX_REDIS_DB: "0"
+      REDISX_INTEGRATION_REQUIRED: "1"
 
     steps:
       - name: Checkout

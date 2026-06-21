@@ -85,7 +85,7 @@ required_gates:
     alias_of: p2_runtime_check
     semantic_role: "P2 chain alias for the same p2_runtime_check target."
   - id: integration
-    command: "make integration"
+    command: "GOWORK=off make integration"
     purpose: "generator 和 downstream smoke"
   - id: score_check
     command: "go run ./cmd/goalcli score --min 9.8"
@@ -174,7 +174,7 @@ final_gates:
   - id: release_final_check
     command: "XLIB_CONTEXT=release_verify GOWORK=off make release-final-check"
   - id: release_preflight
-    command: "XLIB_CONTEXT=release_verify GOWORK=off make release-preflight VERSION=v1.1.0"
+    command: "XLIB_CONTEXT=release_verify GOWORK=off make release-preflight VERSION=v1.1.2"
   - id: score
     command: "goalcli score --min 9.8"
   - id: kernel_downstream

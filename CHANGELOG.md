@@ -4,6 +4,16 @@
 
 - 暂无。
 
+## v1.1.2 - 2026-06-21
+
+- 将 release/version anchors 同步到 `v1.1.2`，覆盖 `redisx.Version`、goalcli governance version、release manifest template、README、API 与 release 文档。
+
+## v1.1.1 - 2026-06-19
+
+- 将 release/version anchors 同步到 `v1.1.1`，覆盖 `redisx.Version`、goalcli governance version、release manifest template、README、API 与 release 文档。
+- 为 GitHub Integration workflow 固定 Redis service，并在 CI 中显式运行 live Redis integration 与 persistence restart recovery profile。
+- 补齐根目录 `FEATURES.md` 与 `ACCEPTANCE.md`，记录 v1.1.1 功能范围、GOWORK=off 验证命令和外部 dev env 文件的 redacted-only 处理约束。
+
 ## v1.1.0 - 2026-06-19
 
 ### 治理

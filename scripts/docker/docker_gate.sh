@@ -19,6 +19,10 @@ export DOCKER_BUILDKIT=1
 
 "$repo_root/scripts/docker/check_toolchain.sh"
 
+redisx_env_file="$(mktemp)"
+trap 'rm -f "$redisx_env_file"' EXIT
+env | awk -F= '/^REDISX_/ { print }' > "$redisx_env_file"
+
 docker buildx build \
   --load \
   --target toolchain \
@@ -33,6 +37,7 @@ docker run --rm \
   --volume "$repo_root:/workspace" \
   --volume go-build-cache:/root/.cache/go-build \
   --volume go-mod-cache:/go/pkg/mod \
+  --env-file "$redisx_env_file" \
   --env "GOWORK=${GOWORK:-off}" \
   --env "XLIB_CONTEXT=${XLIB_CONTEXT:-docker_toolchain}" \
   --env "VERSION=${VERSION:-}" \

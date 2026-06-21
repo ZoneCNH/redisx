@@ -65,6 +65,27 @@ command = os.environ["REDISX_REPORT_COMMAND"]
 path = Path(os.environ["REDISX_REPORT_PATH"])
 scenario_status = "pass" if status == "pass" else ("not_applicable" if status == "not_applicable" else "fail")
 
+
+def write_stable_json_report(path, data):
+    try:
+        existing = json.loads(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError, OSError):
+        existing = None
+
+    generated_at = datetime.now(timezone.utc).isoformat()
+    if isinstance(existing, dict):
+        existing_body = dict(existing)
+        existing_body.pop("generated_at", None)
+        data_body = dict(data)
+        data_body.pop("generated_at", None)
+        if existing_body == data_body and existing.get("generated_at"):
+            generated_at = existing["generated_at"]
+
+    data["generated_at"] = generated_at
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, sort_keys=False) + "\n", encoding="utf-8")
+
+
 data = {
     "schema_version": "1.0",
     "adapter": "redisx",
@@ -84,7 +105,6 @@ data = {
         "docker-compose.test.yml",
         ".agent/evidence/l2/compliance-matrix.json",
     ],
-    "generated_at": datetime.now(timezone.utc).isoformat(),
     "runtime": "Redis with AOF and RDB enabled on retained test storage",
     "credential_source": "local ephemeral Redis without external credentials",
     "checklist": [
@@ -111,8 +131,7 @@ data = {
 if reason:
     data["detail"] = reason
 
-path.parent.mkdir(parents=True, exist_ok=True)
-path.write_text(json.dumps(data, indent=2, sort_keys=False) + "\n", encoding="utf-8")
+write_stable_json_report(path, data)
 PY
 }
 
