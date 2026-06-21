@@ -4,6 +4,10 @@
 
 - 暂无。
 
+## v1.1.2 - 2026-06-21
+
+- 将 release/version anchors 同步到 `v1.1.2`，覆盖 `redisx.Version`、goalcli governance version、release manifest template、README、API 与 release 文档。
+
 ## v1.1.1 - 2026-06-19
 
 - 将 release/version anchors 同步到 `v1.1.1`，覆盖 `redisx.Version`、goalcli governance version、release manifest template、README、API 与 release 文档。

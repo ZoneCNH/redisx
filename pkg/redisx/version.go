@@ -2,5 +2,5 @@ package redisx
 
 const (
 	ModuleName = "github.com/ZoneCNH/redisx"
-	Version    = "v1.1.1"
+	Version    = "v1.1.2"
 )

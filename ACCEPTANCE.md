@@ -1,6 +1,6 @@
-# Redisx v1.1.1 验收标准
+# Redisx v1.1.2 验收标准
 
-v1.1.1 发布候选必须在 `GOWORK=off` 下完成以下验证，并保留 redacted-only evidence。
+v1.1.2 发布候选必须在 `GOWORK=off` 下完成以下验证，并保留 redacted-only evidence。
 
 ## 必需验证命令
 
@@ -14,7 +14,7 @@ GOWORK=off REDISX_PERSISTENCE_INTEGRATION=1 make test-persistence-integration
 GOWORK=off make docs-check
 XLIB_CONTEXT=release_verify GOWORK=off REDISX_INTEGRATION_DOCKER=1 make release-check
 XLIB_CONTEXT=release_verify GOWORK=off REDISX_INTEGRATION_DOCKER=1 make release-final-check
-XLIB_CONTEXT=release_verify GOWORK=off REDISX_INTEGRATION_DOCKER=1 make release-preflight VERSION=v1.1.1
+XLIB_CONTEXT=release_verify GOWORK=off REDISX_INTEGRATION_DOCKER=1 make release-preflight VERSION=v1.1.2
 ```
 
 ## CI 验收
@@ -31,6 +31,6 @@ XLIB_CONTEXT=release_verify GOWORK=off REDISX_INTEGRATION_DOCKER=1 make release-
 
 ## 完成条件
 
-- Version anchors 一致指向 `v1.1.1`：`redisx.Version`、goalcli governance release、release manifest template、README/API/release docs 与 changelog。
+- Version anchors 一致指向 `v1.1.2`：`redisx.Version`、goalcli governance release、release manifest template、README/API/release docs 与 changelog。
 - `FEATURES.md` 和 `ACCEPTANCE.md` 位于仓库根目录并描述当前 release surface 与验收命令。
 - 所有验证失败都必须修复或以明确、可复现的环境缺口记录为 `Not-tested`。

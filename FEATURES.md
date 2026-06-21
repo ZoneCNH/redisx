@@ -1,6 +1,6 @@
-# Redisx v1.1.1 功能清单
+# Redisx v1.1.2 功能清单
 
-`redisx` v1.1.1 的发布面聚焦 Redis L2-T2 生产就绪：显式配置、可验证写入语义、运行时健康信号、以及不泄露密钥的 CI/集成证据。
+`redisx` v1.1.2 的发布面聚焦 Redis L2-T2 生产就绪：显式配置、可验证写入语义、运行时健康信号、以及不泄露密钥的 CI/集成证据。
 
 ## Runtime 能力
 
@@ -15,7 +15,7 @@
 ## 发布边界
 
 - Durable persistence evidence 覆盖 string、hash、list、counter 和 pipeline writes 的 restart recovery。
-- Pub/sub 不属于 v1.1.1 durable write surface。
+- Pub/sub 不属于 v1.1.2 durable write surface。
 - 集成证据只允许记录 profile、命令、覆盖项和环境变量名；不得记录 Redis 密码、API key 或 `/home/ZoneCNH/sre/secrets/env/dev.md` 的值。
 
 ## CI / Release gates

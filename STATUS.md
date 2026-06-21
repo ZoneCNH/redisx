@@ -38,7 +38,7 @@
 
 ## 持久化对齐
 
-`redisx` 不实现本地持久化层；所有写入和删除命令统一走 Redis 数据面，持久化能力由被测 Redis 后端的 AOF/RDB 配置提供。当前 v1.1.1 release gate 要求 persistence profile 通过 restart recovery，并证明永久 string、hash、list、counter 和 pipeline 写入在同一存储上重启后仍保持一致。TTL-scoped lock token 和 fixed-window rate-limit key 是临时协调状态，不作为 durable persistence 证据；pub/sub 语义不在当前公共持久化承诺中。
+`redisx` 不实现本地持久化层；所有写入和删除命令统一走 Redis 数据面，持久化能力由被测 Redis 后端的 AOF/RDB 配置提供。当前 v1.1.2 release gate 要求 persistence profile 通过 restart recovery，并证明永久 string、hash、list、counter 和 pipeline 写入在同一存储上重启后仍保持一致。TTL-scoped lock token 和 fixed-window rate-limit key 是临时协调状态，不作为 durable persistence 证据；pub/sub 语义不在当前公共持久化承诺中。
 
 | 命令类别 | 持久化边界 | 当前状态 |
 | --- | --- | --- |

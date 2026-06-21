@@ -20,7 +20,7 @@ GOWORK=off make release-check
 GOWORK=off go run ./cmd/goalcli score --min 9.8
 GOWORK=off make release-check-extended
 GOWORK=off make release-final-check
-GOWORK=off make release-preflight VERSION=v1.1.1
+GOWORK=off make release-preflight VERSION=v1.1.2
 ```
 
 `release-check` 内置 `score-check`，默认要求 `score >= 9.8`。`release-final-check` 会在 clean workspace 约束之外再次校验 manifest 内的 score threshold；release score 只能作为发布治理完整性信号，不能替代 `make ci`、`make security`、integration、race 或人工语义审查。

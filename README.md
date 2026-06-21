@@ -48,8 +48,8 @@
 - [Evidence 协议](docs/standard/evidence-protocol.md)：`DONE with evidence:` 和 release manifest 要求。
 - [测试策略](docs/testing.md)：单元、示例 smoke、release quality 和 release manifest fixture 隔离要求。
 - [当前状态](STATUS.md)：Redis L2-T2 能力、integration、persistence、Evidence 和 release-readiness 对齐快照。
-- [功能矩阵](FEATURES.md)：`v1.1.1` Redis L2 public feature surface、durable persistence scope 和 release evidence gate。
-- [生产验收矩阵](ACCEPTANCE.md)：`v1.1.1` readiness stop condition、GOWORK=off verification、CI/CD 和 secret hygiene 验收清单。
+- [功能矩阵](FEATURES.md)：`v1.1.2` Redis L2 public feature surface、durable persistence scope 和 release evidence gate。
+- [生产验收矩阵](ACCEPTANCE.md)：`v1.1.2` readiness stop condition、GOWORK=off verification、CI/CD 和 secret hygiene 验收清单。
 - [Redis L2 执行方案](docs/l2/04_redisx_execution_plan.md)：Redis adapter 的 L2-T2 profile、真实 Redis integration、persistence recovery 和 release-readiness 证据口径。
 - [Redis integration 测试](test/integration/README.md)：环境变量门禁、Docker-backed Redis、真实 Redis 占位符命令和覆盖清单。
 - [L2 Evidence 目录](.agent/evidence/l2/README.md)：`unit`、`contract`、`integration`、`persistence` profiles 的 evidence 文件与通过标准。
@@ -93,7 +93,7 @@ REDISX_PERSISTENCE_INTEGRATION=1 GOWORK=off make test-persistence-integration
 GOWORK=off make l2-check
 XLIB_CONTEXT=release_verify GOWORK=off make release-check
 XLIB_CONTEXT=release_verify GOWORK=off make release-final-check
-XLIB_CONTEXT=release_verify GOWORK=off make release-preflight VERSION=v1.1.1
+XLIB_CONTEXT=release_verify GOWORK=off make release-preflight VERSION=v1.1.2
 make evidence
 ```
 
@@ -124,13 +124,13 @@ XLIB_CONTEXT=release_verify GOWORK=off make release-check
 
 完成需要 release manifest 和 CI Evidence。`release/manifest/latest.json` 是生成产物，不提交到源码历史；对应的 `release/manifest/latest.json.sha256` 也是生成产物，两者都必须保持在 `.gitignore` 中。manifest 会记录 module、commit、tree SHA、源码摘要、contract 指纹、`dependencies`、`tools`、生成时间、工作区状态、gate 结果、`standard_impact`、`downstream_sync_required`、`generator_evidence`、`score`、`workflow` 和这两个 Evidence artifact；其中 `standard_impact.downstream_release_decision` 只能使用 `required` 或 `not_required`，`standard_impact.repository_rules_release_decision` 只能使用 `audit_required` 或 `not_required`。`release-check` 会生成并校验 checksum，CI 会上传两者作为 artifact。`make release-evidence-check` 会验证 manifest 与当前仓库事实一致，`make release-final-check` 会额外要求工作区为 `clean`。Release manifest 测试必须在临时 fixture 仓库中构造所需 `.omc` state，不得依赖当前工作区的 Agent 运行态文件。最终完成声明必须包含 `DONE with evidence:`。
 
-Redis L2 evidence 固定在 `.agent/evidence/l2/`：`integration-report.json` 记录 live Redis command coverage，`persistence-report.json` 记录 restart recovery，`release-readiness.json` 汇总 `unit`、`contract`、`integration`、`persistence` 必需 profile。v1.1.1 公共写入面覆盖 strings、hashes、lists、counters 和 pipeline writes；cache-aside JSON codec helpers 建立在 string values 上。Lock token 和 fixed-window rate-limit key 是 TTL-scoped 协调状态，pub/sub 不纳入 durable persistence 承诺。公开 Evidence 只记录 profile 状态、覆盖项和占位符变量名。
+Redis L2 evidence 固定在 `.agent/evidence/l2/`：`integration-report.json` 记录 live Redis command coverage，`persistence-report.json` 记录 restart recovery，`release-readiness.json` 汇总 `unit`、`contract`、`integration`、`persistence` 必需 profile。v1.1.2 公共写入面覆盖 strings、hashes、lists、counters 和 pipeline writes；cache-aside JSON codec helpers 建立在 string values 上。Lock token 和 fixed-window rate-limit key 是 TTL-scoped 协调状态，pub/sub 不纳入 durable persistence 承诺。公开 Evidence 只记录 profile 状态、覆盖项和占位符变量名。
 
 Full Goal Runtime v3.1 位于 [.agent](.agent/)，其中 [goal-runtime](.agent/runtime/goal-runtime.md)、[object-model](.agent/runtime/object-model.md)、[state-machine](.agent/runtime/state-machine.md)、[traceability-matrix](.agent/traceability/traceability-matrix.md)、[harness](.agent/harness/harness.yaml)、[evidence-protocol](.agent/evidence/evidence-protocol.md)、[release-template](.agent/release/release-template.md)、[retrospective-template](.agent/docs/retrospective-template.md)、[risk-register](.agent/traceability/risk-register.md)、[decision-log](.agent/traceability/decision-log.md)、[rollback-protocol](.agent/runtime/rollback-protocol.md) 和 patch 文档用于把标准、执行、评审、发布和复盘连接到同一套 Evidence 协议。
 
-## v1.1.1 Redis 写入支持
+## v1.1.2 Redis 写入支持
 
-`pkg/redisx` 的 v1.1.1 release surface 覆盖字符串 KV、multi-key、counter、Hash、List、Pipeline 和 TTL 相关写入。公共辅助包括 `KeyBuilder`、`JSONCodec` / `Codec[T]`、cache-aside `Cache[T]` 与 `NewCacheClient[T]`、自动 token 的 `NewLock` / `Lock`、显式 token 的 `AcquireLock` / `ReleaseLock`，以及 fixed-window `FixedWindowRateLimiter`。
+`pkg/redisx` 的 v1.1.2 release surface 覆盖字符串 KV、multi-key、counter、Hash、List、Pipeline 和 TTL 相关写入。公共辅助包括 `KeyBuilder`、`JSONCodec` / `Codec[T]`、cache-aside `Cache[T]` 与 `NewCacheClient[T]`、自动 token 的 `NewLock` / `Lock`、显式 token 的 `AcquireLock` / `ReleaseLock`，以及 fixed-window `FixedWindowRateLimiter`。
 
 持久化边界保持在 Redis 后端：非 TTL 的 string、MSet、hash、list、counter 和 pipeline 写入由被测 Redis 的 AOF/RDB 保证 restart recovery；lock token、rate-limit window 与 pub/sub 是 TTL-scoped / transient state，不作为 durable evidence。
 
