@@ -34,6 +34,15 @@
 - `.agent/`：Full Goal Runtime v3.1 工件、Evidence、评审、发布、回滚和复盘模板。
 - `release/manifest/`：release manifest 模板；`latest.json` 由 release gate 生成并作为 Evidence artifact 保存。
 
+## Sentinel / Cluster fallback 与降级矩阵
+
+| 模式 | 触发信号 | fallback 策略 | 健康状态 |
+| --- | --- | --- | --- |
+| `sentinel` | master 不可达、sentinel quorum 不足或 leader 切换中 | 在调用方 timeout 内复用最近一次已验证 master；超时后停止写入 fallback | `degraded health` |
+| `cluster` | slot map 过期、`MOVED/ASK` 重定向或节点短暂不可达 | 刷新 slot map 并对 `MOVED/ASK` 重试一次；slot owner 未确认时禁止静默 fallback | `degraded health` |
+
+降级期间 metrics 和 health payload 必须显式暴露 `sentinel` / `cluster` 模式、fallback 命中次数、最近错误和 `degraded health` 原因，避免把拓扑不确定性伪装成 healthy。
+
 ## 文档入口
 
 - [基础库标准索引](docs/standard/README.md)：P0 标准入口，覆盖仓库角色、分层、DoD、Harness、Evidence、release、安全和 generator 契约。
