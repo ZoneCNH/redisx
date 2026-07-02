@@ -131,7 +131,7 @@ func renderDashboardMarkdown(report dashboardReport) string {
 	b.WriteString(markdownCell(report.Mode))
 	b.WriteString(" |\n")
 	b.WriteString("| write_evidence | ")
-	b.WriteString(fmt.Sprintf("%t", report.WriteEvidence))
+	fmt.Fprintf(b, "%t", report.WriteEvidence)
 	b.WriteString(" |\n\n")
 	b.WriteString("## Components\n\n")
 	b.WriteString("| component | status | summary |\n")
