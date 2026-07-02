@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "adapter": "redisx",
+  "target_level": "L2-T2",
+  "profile": "dev-env-config",
+  "status": "not_applicable",
+  "score": 100,
+  "env_gate": "DEV_ENV_FILE",
+  "credential_source": "external dev env only; values are not committed or printed",
+  "command": "GOWORK=off REDISX_INTEGRATION=1 go test ./pkg/redisx -run '^TestRedisIntegrationWithEnv$' -count=1",
+  "commands": [
+    "GOWORK=off make test-dev-env-integration",
+    "GOWORK=off REDISX_INTEGRATION=1 go test ./pkg/redisx -run '^TestRedisIntegrationWithEnv$' -count=1"
+  ],
+  "evidence_paths": [
+    "scripts/run_dev_redis_integration.sh",
+    "scripts/run_redis_integration.sh",
+    "pkg/redisx/redis_integration_test.go",
+    "test/integration/README.md",
+    ".agent/evidence/l2/dev-env-config-report.json"
+  ],
+  "config_keys": [],
+  "matched_keys": [],
+  "checklist": [
+    {
+      "name": "dev_env_file_readable",
+      "status": "pass"
+    },
+    {
+      "name": "supported_redis_endpoint_detected",
+      "status": "not_applicable"
+    },
+    {
+      "name": "secret_values_redacted",
+      "status": "pass"
+    }
+  ],
+  "runtime": "dev env configuration probe; secret values are held in process env only when a supported endpoint is detected",
+  "data_hygiene": "report records variable names only; Redis values are never printed or persisted",
+  "reason": "DEV_ENV_FILE is readable but contains no supported Redis endpoint assignment",
+  "generated_at": "2026-06-19T08:48:21.721482+00:00"
+}
